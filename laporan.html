@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan — HRIS PT KMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary:    #1d4ed8;
+      --primary-dk: #1e3a8a;
+      --sidebar-w:  240px;
+      --header-h:   64px;
+      --bg:         #f1f5f9;
+      --card-bg:    #ffffff;
+      --text:       #0f172a;
+      --muted:      #64748b;
+      --border:     #e2e8f0;
+      --radius:     12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--primary-dk);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overflow: hidden;
+    }
+    .sidebar-brand {
+      padding: 1.25rem 1.25rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
+    }
+    .sidebar-brand .logo-row { display: flex; align-items: center; gap: 0.6rem; }
+    .sidebar-brand .logo-icon {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .sidebar-brand .logo-text { font-size: 0.82rem; font-weight: 700; line-height: 1.3; }
+    .sidebar-brand .logo-sub { font-size: 0.68rem; opacity: 0.5; font-weight: 400; letter-spacing: 0.5px; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 0.75rem 0; }
+    .nav-section-label {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; opacity: 0.4; padding: 0.75rem 1.25rem 0.4rem;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 1.25rem; font-size: 0.875rem; font-weight: 500;
+      color: rgba(255,255,255,0.7); text-decoration: none;
+      cursor: pointer; transition: background 0.15s, color 0.15s; position: relative;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+    .nav-item.active { background: rgba(255,255,255,0.12); color: white; }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: #60a5fa; border-radius: 0 2px 2px 0;
+    }
+    .nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+    .sidebar-user { display: flex; align-items: center; gap: 0.7rem; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,0.15); display: grid; place-items: center;
+      font-size: 1rem; flex-shrink: 0; font-weight: 600;
+    }
+    .sidebar-user .user-info { flex: 1; min-width: 0; }
+    .sidebar-user .user-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-user .user-role { font-size: 0.7rem; opacity: 0.5; }
+    .btn-logout { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1rem; padding: 4px; transition: color 0.15s; }
+    .btn-logout:hover { color: #f87171; }
+
+    /* ===== MAIN LAYOUT ===== */
+    .main-wrapper { margin-left: var(--sidebar-w); min-height: 100vh; display: flex; flex-direction: column; }
+    .top-header {
+      height: var(--header-h); background: white; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.75rem; position: sticky; top: 0; z-index: 50;
+    }
+    .header-left h1 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .header-left .breadcrumb { font-size: 0.75rem; color: var(--muted); }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .date-chip { background: #eff6ff; color: var(--primary); font-size: 0.78rem; font-weight: 600; padding: 0.35rem 0.8rem; border-radius: 20px; }
+    .main-content { flex: 1; padding: 1.75rem; }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+      display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;
+    }
+    .filter-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .filter-field label { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .filter-field select, .filter-field input {
+      padding: 0.5rem 0.75rem; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.875rem; color: var(--text); background: white; outline: none; font-family: inherit;
+    }
+    .filter-field select:focus, .filter-field input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .filter-spacer { flex: 1; }
+    .btn {
+      padding: 0.55rem 1rem; border: none; border-radius: 8px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s, transform 0.1s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-outline { background: white; color: var(--primary); border: 1.5px solid #bfdbfe; }
+    .btn-outline:hover { background: #eff6ff; }
+
+    /* ===== TABS ===== */
+    .tabs { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border); }
+    .tab {
+      padding: 0.7rem 1.1rem; font-size: 0.875rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; border: none; background: none; font-family: inherit;
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.15s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* ===== STATS ===== */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 1.1rem 1.25rem; border: 1px solid var(--border); }
+    .stat-card .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .stat-card .stat-label { font-size: 0.76rem; color: var(--muted); margin-top: 5px; }
+
+    /* ===== TABLE ===== */
+    .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .card-header h3 { font-size: 0.9rem; font-weight: 700; }
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+      text-align: left; padding: 0.7rem 1rem; font-size: 0.72rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px;
+      background: #f8fafc; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    tbody td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tfoot td { padding: 0.7rem 1rem; font-weight: 700; background: #f8fafc; border-top: 2px solid var(--border); white-space: nowrap; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-yellow { background: #fef9c3; color: #a16207; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-gray   { background: #f1f5f9; color: #64748b; }
+
+    .empty-state { padding: 3rem 1.5rem; text-align: center; color: var(--muted); }
+    .empty-state .es-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+    /* Loading overlay */
+    #loadingOverlay { position: fixed; inset: 0; background: white; display: grid; place-items: center; z-index: 9999; }
+    .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem;
+      border-radius: 10px; font-size: 0.875rem; font-weight: 500; color: white;
+      z-index: 9999; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.12); max-width: 320px;
+    }
+    #toast.success { background: #16a34a; }
+    #toast.error   { background: #dc2626; }
+
+    /* Access denied */
+    #denied { display: none; place-items: center; min-height: 70vh; text-align: center; padding: 2rem; }
+    #denied .es-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ===== PRINT ===== */
+    @media print {
+      .sidebar, .sidebar-overlay, .top-header, .filter-bar, .tabs,
+      .bottom-nav, .menu-btn, #toast, .card-header .btn { display: none !important; }
+      .main-wrapper { margin-left: 0 !important; }
+      .main-content { padding: 0 !important; }
+      .card, .stat-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+      body { background: white !important; }
+    }
+  </style>
+  <link rel="stylesheet" href="hris.css">
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay">
+  <div>
+    <div class="spinner" style="margin: 0 auto 1rem;"></div>
+    <p style="color:#64748b; font-size:0.875rem; text-align:center;">Memuat laporan...</p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-row">
+      <div class="logo-icon">🏢</div>
+      <div>
+        <div class="logo-text">PT Kawan Menengah Atas</div>
+        <div class="logo-sub">HRIS v1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Menu Utama</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="karyawan.html"><span class="nav-icon">👥</span> Data Karyawan</a>
+    <a class="nav-item" href="absensi.html"><span class="nav-icon">📍</span> Absensi</a>
+
+    <div class="nav-section-label" style="margin-top:0.5rem;">Manajemen SDM</div>
+    <a class="nav-item" href="cuti.html"><span class="nav-icon">🏖️</span> Cuti &amp; Izin</a>
+    <a class="nav-item" href="payroll.html"><span class="nav-icon">💰</span> Payroll</a>
+    <a class="nav-item" href="pelatihan.html"><span class="nav-icon">📚</span> Pelatihan</a>
+
+    <div class="nav-section-label" style="margin-top:0.5rem;">Administrasi</div>
+    <a class="nav-item" href="lokasi.html"><span class="nav-icon">🗺️</span> Lokasi Kantor</a>
+    <a class="nav-item active" href="laporan.html"><span class="nav-icon">📊</span> Laporan</a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="avatar" id="sidebarAvatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebarName">Memuat...</div>
+        <div class="user-role" id="sidebarRole">—</div>
+      </div>
+      <button class="btn-logout" title="Keluar" id="btnLogout">⏻</button>
+    </div>
+  </div>
+</aside>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ===== MAIN ===== -->
+<div class="main-wrapper">
+  <header class="top-header">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <div class="header-left">
+      <h1>Laporan HR</h1>
+      <div class="breadcrumb">PT Kawan Menengah Atas · HRIS</div>
+    </div>
+    <div class="header-right">
+      <div class="date-chip" id="headerDate">—</div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Access denied (non HR Admin) -->
+    <div id="denied">
+      <div>
+        <div class="es-icon">🔒</div>
+        <h2 style="margin-bottom:0.4rem;">Akses Terbatas</h2>
+        <p style="color:var(--muted); max-width:380px; margin:0 auto 1.25rem;">
+          Halaman Laporan hanya dapat diakses oleh HR Admin. Silakan kembali ke dashboard.
+        </p>
+        <a href="dashboard.html" class="btn btn-primary" style="text-decoration:none;">← Kembali ke Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Report content -->
+    <div id="reportArea" style="display:none;">
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="filter-field">
+          <label for="selBulan">Bulan</label>
+          <select id="selBulan"></select>
+        </div>
+        <div class="filter-field">
+          <label for="selTahun">Tahun</label>
+          <select id="selTahun"></select>
+        </div>
+        <div class="filter-field" style="flex:1; min-width:180px;">
+          <label for="searchBox">Cari nama / NIK</label>
+          <input type="text" id="searchBox" placeholder="Ketik untuk memfilter tabel...">
+        </div>
+        <button class="btn btn-primary" id="btnTerapkan">🔄 Terapkan</button>
+        <button class="btn btn-outline" id="btnExport">⬇️ Export CSV</button>
+        <button class="btn btn-outline" id="btnPrint">🖨️ Cetak</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="absensi">📍 Rekap Absensi</button>
+        <button class="tab" data-tab="cuti">🏖️ Rekap Cuti</button>
+        <button class="tab" data-tab="payroll">💰 Rekap Payroll</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <!-- Table card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 id="tableTitle">Rekap Absensi</h3>
+          <span class="badge badge-gray" id="periodeBadge">—</span>
+        </div>
+        <div class="tbl-wrap" id="tableWrap">
+          <div class="empty-state"><div class="es-icon">⏳</div>Memuat data...</div>
+        </div>
+      </div>
+
+    </div><!-- /reportArea -->
+  </main>
+</div>
+
+
+<script>
+// ============================================================
+// KONFIGURASI SUPABASE — samakan dengan index.html
+// ============================================================
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+// ============================================================
+
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// ---- State ----
+let currentUser  = null
+let currentKaryw = null
+let activeTab    = 'absensi'
+let lastRows     = []   // baris data tab aktif (untuk export & filter)
+let lastCols     = []   // definisi kolom tab aktif
+
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+
+// ---- Helpers ----
+function toast (msg, type = 'success') {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.className = type; el.style.display = 'block'
+  setTimeout(() => { el.style.display = 'none' }, 4000)
+}
+function getInitial (n) { return n ? n.charAt(0).toUpperCase() : '?' }
+function roleLabel (r) { return ({ hr_admin:'HR Admin', manager:'Manager', karyawan:'Karyawan' })[r] || r }
+function rupiah (n) { return 'Rp ' + (Number(n)||0).toLocaleString('id-ID') }
+function esc (s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
+function periodeRange () {
+  const b = +document.getElementById('selBulan').value
+  const t = +document.getElementById('selTahun').value
+  const awal  = new Date(t, b, 1)
+  const akhir = new Date(t, b + 1, 0)
+  const fmt = d => d.toISOString().split('T')[0]
+  return { bulan: b + 1, tahun: t, awal: fmt(awal), akhir: fmt(akhir), label: `${BULAN[b]} ${t}` }
+}
+
+// ---- Init period selectors ----
+function initFilters () {
+  const selB = document.getElementById('selBulan')
+  const selT = document.getElementById('selTahun')
+  const now = new Date()
+  BULAN.forEach((m, i) => selB.add(new Option(m, i)))
+  selB.value = now.getMonth()
+  const yNow = now.getFullYear()
+  for (let y = yNow - 3; y <= yNow + 1; y++) selT.add(new Option(y, y))
+  selT.value = yNow
+}
+
+// ============================================================
+// TAB: REKAP ABSENSI
+// ============================================================
+async function loadAbsensi () {
+  const p = periodeRange()
+  setLoading()
+
+  // Semua karyawan aktif
+  const { data: karyawan, error: e1 } = await sb
+    .from('karyawan')
+    .select('id, nama_lengkap, nik, divisi(nama)')
+    .eq('status', 'aktif')
+    .order('nama_lengkap')
+
+  // Absensi pada periode
+  const { data: absensi, error: e2 } = await sb
+    .from('absensi')
+    .select('karyawan_id, status, durasi_kerja_menit')
+    .gte('tanggal', p.awal).lte('tanggal', p.akhir)
+
+  if (e1 || e2) { toast('Gagal memuat data absensi', 'error'); return }
+
+  // Agregasi per karyawan
+  const map = {}
+  ;(karyawan || []).forEach(k => {
+    map[k.id] = {
+      nama: k.nama_lengkap, nik: k.nik, divisi: k.divisi?.nama || '—',
+      hadir: 0, terlambat: 0, izin: 0, alpha: 0, menit: 0
+    }
+  })
+  ;(absensi || []).forEach(a => {
+    const r = map[a.karyawan_id]; if (!r) return
+    if (['hadir','terlambat','pulang_awal'].includes(a.status)) r.hadir++
+    if (a.status === 'terlambat') r.terlambat++
+    if (['izin','cuti'].includes(a.status)) r.izin++
+    if (a.status === 'tidak_hadir') r.alpha++
+    r.menit += a.durasi_kerja_menit || 0
+  })
+
+  const rows = Object.values(map).map(r => ({
+    Nama: r.nama, NIK: r.nik, Divisi: r.divisi,
+    Hadir: r.hadir, Terlambat: r.terlambat, 'Izin/Cuti': r.izin,
+    'Tidak Hadir': r.alpha, 'Total Jam': Math.round(r.menit / 60)
+  }))
+
+  lastCols = [
+    { key:'Nama' }, { key:'NIK' }, { key:'Divisi' },
+    { key:'Hadir', num:true }, { key:'Terlambat', num:true },
+    { key:'Izin/Cuti', num:true }, { key:'Tidak Hadir', num:true },
+    { key:'Total Jam', num:true }
+  ]
+  lastRows = rows
+
+  const tot = rows.reduce((a, r) => ({
+    Hadir: a.Hadir + r.Hadir, Terlambat: a.Terlambat + r.Terlambat,
+    izin: a.izin + r['Izin/Cuti'], alpha: a.alpha + r['Tidak Hadir']
+  }), { Hadir:0, Terlambat:0, izin:0, alpha:0 })
+
+  renderStats([
+    { value: rows.length, label: 'Karyawan Aktif' },
+    { value: tot.Hadir, label: 'Total Kehadiran', color:'#16a34a' },
+    { value: tot.Terlambat, label: 'Total Terlambat', color:'#f59e0b' },
+    { value: tot.alpha, label: 'Total Tidak Hadir', color:'#ef4444' }
+  ])
+
+  const footer = { Nama:'TOTAL', NIK:'', Divisi:'',
+    Hadir:tot.Hadir, Terlambat:tot.Terlambat, 'Izin/Cuti':tot.izin,
+    'Tidak Hadir':tot.alpha, 'Total Jam':rows.reduce((s,r)=>s+r['Total Jam'],0) }
+  renderTable(footer)
+}
+
+// ============================================================
+// TAB: REKAP CUTI
+// ============================================================
+async function loadCuti () {
+  const p = periodeRange()
+  setLoading()
+
+  const { data, error } = await sb
+    .from('pengajuan_cuti')
+    .select('tanggal_mulai, tanggal_selesai, jumlah_hari, status, alasan, karyawan(nama_lengkap, nik), jenis_cuti(nama)')
+    .gte('tanggal_mulai', p.awal).lte('tanggal_mulai', p.akhir)
+    .order('tanggal_mulai', { ascending: false })
+
+  if (error) { toast('Gagal memuat data cuti', 'error'); return }
+
+  const statusBadge = {
+    pending:'badge-yellow', disetujui:'badge-green', ditolak:'badge-red', dibatalkan:'badge-gray'
+  }
+
+  const rows = (data || []).map(c => ({
+    Nama: c.karyawan?.nama_lengkap || '—',
+    NIK: c.karyawan?.nik || '—',
+    Jenis: c.jenis_cuti?.nama || '—',
+    Mulai: c.tanggal_mulai,
+    Selesai: c.tanggal_selesai,
+    Hari: c.jumlah_hari,
+    Status: c.status,
+    _statusClass: statusBadge[c.status] || 'badge-gray'
+  }))
+
+  lastCols = [
+    { key:'Nama' }, { key:'NIK' }, { key:'Jenis' },
+    { key:'Mulai' }, { key:'Selesai' }, { key:'Hari', num:true },
+    { key:'Status', badge:true }
+  ]
+  lastRows = rows
+
+  const cnt = (data || []).reduce((a, c) => { a[c.status] = (a[c.status]||0)+1; return a }, {})
+  renderStats([
+    { value: (data||[]).length, label: 'Total Pengajuan' },
+    { value: cnt.disetujui || 0, label: 'Disetujui', color:'#16a34a' },
+    { value: cnt.pending || 0, label: 'Menunggu', color:'#f59e0b' },
+    { value: cnt.ditolak || 0, label: 'Ditolak', color:'#ef4444' }
+  ])
+  renderTable(null)
+}
+
+// ============================================================
+// TAB: REKAP PAYROLL
+// ============================================================
+async function loadPayroll () {
+  const p = periodeRange()
+  setLoading()
+
+  // Cari periode payroll bulan/tahun
+  const { data: periode } = await sb
+    .from('payroll_periode')
+    .select('id, status')
+    .eq('bulan', p.bulan).eq('tahun', p.tahun)
+    .maybeSingle()
+
+  if (!periode) {
+    lastCols = []; lastRows = []
+    renderStats([
+      { value: '—', label: 'Periode Payroll' },
+      { value: '0', label: 'Slip Gaji' },
+      { value: 'Rp 0', label: 'Total Gaji Bersih' },
+      { value: 'Rp 0', label: 'Total PPh 21' }
+    ])
+    document.getElementById('tableWrap').innerHTML =
+      `<div class="empty-state"><div class="es-icon">📭</div>
+       Belum ada periode payroll untuk <strong>${p.label}</strong>.<br>
+       Buat & proses payroll di halaman <a href="payroll.html" style="color:var(--primary);">Payroll</a> terlebih dahulu.</div>`
+    return
+  }
+
+  const { data, error } = await sb
+    .from('slip_gaji')
+    .select('gaji_pokok, total_tunjangan, total_potongan, pph21, gaji_bersih, karyawan(nama_lengkap, nik)')
+    .eq('periode_id', periode.id)
+
+  if (error) { toast('Gagal memuat data payroll', 'error'); return }
+
+  const rows = (data || []).map(s => ({
+    Nama: s.karyawan?.nama_lengkap || '—',
+    NIK: s.karyawan?.nik || '—',
+    'Gaji Pokok': s.gaji_pokok,
+    Tunjangan: s.total_tunjangan,
+    Potongan: s.total_potongan,
+    'PPh 21': s.pph21,
+    'Gaji Bersih': s.gaji_bersih,
+    _rupiah: ['Gaji Pokok','Tunjangan','Potongan','PPh 21','Gaji Bersih']
+  }))
+
+  lastCols = [
+    { key:'Nama' }, { key:'NIK' },
+    { key:'Gaji Pokok', num:true, rupiah:true }, { key:'Tunjangan', num:true, rupiah:true },
+    { key:'Potongan', num:true, rupiah:true }, { key:'PPh 21', num:true, rupiah:true },
+    { key:'Gaji Bersih', num:true, rupiah:true }
+  ]
+  lastRows = rows
+
+  const sum = (data || []).reduce((a, s) => ({
+    pokok: a.pokok + (+s.gaji_pokok||0), tunj: a.tunj + (+s.total_tunjangan||0),
+    pot: a.pot + (+s.total_potongan||0), pph: a.pph + (+s.pph21||0), bersih: a.bersih + (+s.gaji_bersih||0)
+  }), { pokok:0, tunj:0, pot:0, pph:0, bersih:0 })
+
+  renderStats([
+    { value: periode.status === 'final' ? 'Final' : 'Draft', label: `Periode ${p.label}`, color: periode.status==='final' ? '#16a34a' : '#f59e0b' },
+    { value: rows.length, label: 'Slip Gaji' },
+    { value: rupiah(sum.bersih), label: 'Total Gaji Bersih', color:'#16a34a' },
+    { value: rupiah(sum.pph), label: 'Total PPh 21', color:'#ef4444' }
+  ])
+
+  const footer = { Nama:'TOTAL', NIK:'',
+    'Gaji Pokok':sum.pokok, Tunjangan:sum.tunj, Potongan:sum.pot, 'PPh 21':sum.pph, 'Gaji Bersih':sum.bersih }
+  renderTable(footer)
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function setLoading () {
+  document.getElementById('tableWrap').innerHTML =
+    `<div class="empty-state"><div class="es-icon">⏳</div>Memuat data...</div>`
+  document.getElementById('periodeBadge').textContent = periodeRange().label
+}
+
+function renderStats (items) {
+  document.getElementById('statsGrid').innerHTML = items.map(s => `
+    <div class="stat-card">
+      <div class="stat-value" style="color:${s.color || 'var(--text)'}">${esc(s.value)}</div>
+      <div class="stat-label">${esc(s.label)}</div>
+    </div>`).join('')
+}
+
+function fmtCell (col, val) {
+  if (col.rupiah) return rupiah(val)
+  return esc(val)
+}
+
+let currentFooter = null
+function renderTable (footer) {
+  if (footer !== undefined) currentFooter = footer
+  const search = document.getElementById('searchBox').value.trim().toLowerCase()
+  let rows = lastRows
+  if (search) {
+    rows = rows.filter(r =>
+      String(r.Nama||'').toLowerCase().includes(search) ||
+      String(r.NIK||'').toLowerCase().includes(search))
+  }
+
+  if (!lastCols.length || !rows.length) {
+    document.getElementById('tableWrap').innerHTML =
+      `<div class="empty-state"><div class="es-icon">📭</div>Tidak ada data untuk ditampilkan.</div>`
+    return
+  }
+
+  const head = lastCols.map(c => `<th class="${c.num?'num':''}">${esc(c.key)}</th>`).join('')
+  const body = rows.map(r => `<tr>${
+    lastCols.map(c => {
+      if (c.badge) return `<td><span class="badge ${r._statusClass}">${esc(r[c.key])}</span></td>`
+      return `<td class="${c.num?'num':''}">${fmtCell(c, r[c.key])}</td>`
+    }).join('')
+  }</tr>`).join('')
+
+  let foot = ''
+  if (currentFooter) {
+    foot = `<tfoot><tr>${
+      lastCols.map(c => `<td class="${c.num?'num':''}">${currentFooter[c.key]!==undefined ? fmtCell(c, currentFooter[c.key]) : ''}</td>`).join('')
+    }</tr></tfoot>`
+  }
+
+  document.getElementById('tableWrap').innerHTML =
+    `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody>${foot}</table>`
+}
+
+// ---- Switch tab ----
+function switchTab (tab) {
+  activeTab = tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab))
+  const titles = { absensi:'Rekap Absensi', cuti:'Rekap Cuti', payroll:'Rekap Payroll' }
+  document.getElementById('tableTitle').textContent = titles[tab]
+  if (tab === 'absensi') loadAbsensi()
+  else if (tab === 'cuti') loadCuti()
+  else loadPayroll()
+}
+
+// ---- Export CSV ----
+function exportCSV () {
+  if (!lastCols.length || !lastRows.length) { toast('Tidak ada data untuk diexport', 'error'); return }
+  const p = periodeRange()
+  const headers = lastCols.map(c => c.key)
+  const lines = [headers.join(',')]
+  lastRows.forEach(r => {
+    lines.push(lastCols.map(c => {
+      let v = r[c.key] ?? ''
+      v = String(v).replace(/"/g, '""')
+      return /[",\n]/.test(v) ? `"${v}"` : v
+    }).join(','))
+  })
+  const csv = '﻿' + lines.join('\n')   // BOM agar Excel baca UTF-8
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Laporan_${activeTab}_${p.bulan}_${p.tahun}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+  toast('✅ File CSV berhasil diunduh')
+}
+
+// ---- Events ----
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  await sb.auth.signOut(); window.location.href = 'index.html'
+})
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)))
+document.getElementById('btnTerapkan').addEventListener('click', () => switchTab(activeTab))
+document.getElementById('btnExport').addEventListener('click', exportCSV)
+document.getElementById('btnPrint').addEventListener('click', () => window.print())
+document.getElementById('searchBox').addEventListener('input', () => renderTable())
+
+// ============================================================
+// INIT
+// ============================================================
+async function init () {
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.href = 'index.html'; return }
+  currentUser = session.user
+
+  const { data: karyw } = await sb
+    .from('karyawan').select('nama_lengkap, role').eq('id', currentUser.id).single()
+
+  document.getElementById('headerDate').textContent =
+    new Date().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+
+  if (karyw) {
+    currentKaryw = karyw
+    document.getElementById('sidebarName').textContent   = karyw.nama_lengkap
+    document.getElementById('sidebarRole').textContent   = roleLabel(karyw.role)
+    document.getElementById('sidebarAvatar').textContent = getInitial(karyw.nama_lengkap)
+  }
+
+  document.getElementById('loadingOverlay').style.display = 'none'
+
+  // Hanya HR Admin
+  if (!karyw || karyw.role !== 'hr_admin') {
+    document.getElementById('denied').style.display = 'grid'
+    return
+  }
+
+  document.getElementById('reportArea').style.display = ''
+  initFilters()
+  switchTab('absensi')
+}
+
+init()
+
+// ===== MOBILE SIDEBAR TOGGLE =====
+function toggleSidebar() { document.body.classList.toggle('nav-open') }
+function closeSidebar()  { document.body.classList.remove('nav-open') }
+;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(el=>{ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
+</script>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item" href="dashboard.html"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></a>
+  <a class="bn-item" href="absensi.html"><span class="bn-icon">📍</span><span class="bn-label">Absensi</span></a>
+  <a class="bn-item" href="cuti.html"><span class="bn-icon">🏖️</span><span class="bn-label">Cuti</span></a>
+  <a class="bn-item" href="payroll.html"><span class="bn-icon">💰</span><span class="bn-label">Payroll</span></a>
+  <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon">☰</span><span class="bn-label">Menu</span></button>
+</nav>
+</body>
+</html>

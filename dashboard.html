@@ -589,7 +589,6 @@
     </a>
     <a class="nav-item" href="laporan.html" id="navLaporan" style="display:none;">
       <span class="nav-icon">📊</span> Laporan
-      <span class="coming-soon-label">Soon</span>
     </a>
   </nav>
 
@@ -767,12 +766,7 @@ function toast (msg, type = 'success') {
 }
 
 function go (url) {
-  // Untuk halaman yang belum dibangun, tampilkan notifikasi
-  const comingSoon = ['laporan.html']
-  if (comingSoon.some(p => url.includes(p))) {
-    toast('🚧 Modul ini sedang dalam pengembangan', 'error')
-    return
-  }
+  // Semua modul sudah tersedia
   window.location.href = url
 }
 
