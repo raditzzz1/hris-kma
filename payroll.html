@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payroll — HRIS PT KMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --primary:#1d4ed8; --primary-dk:#1e3a8a; --sidebar-w:240px; --bg:#f1f5f9; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --radius:12px; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    .sidebar { position:fixed; left:0; top:0; bottom:0; width:var(--sidebar-w); background:var(--primary-dk); color:white; display:flex; flex-direction:column; z-index:100; }
+    .sidebar-brand { padding:1.25rem; border-bottom:1px solid rgba(255,255,255,.08); }
+    .logo-row { display:flex; align-items:center; gap:.6rem; }
+    .logo-icon { width:36px; height:36px; background:rgba(255,255,255,.12); border-radius:10px; display:grid; place-items:center; font-size:1.1rem; }
+    .logo-text { font-size:.82rem; font-weight:700; line-height:1.3; }
+    .logo-sub  { font-size:.68rem; opacity:.5; }
+    .sidebar-nav { flex:1; overflow-y:auto; padding:.75rem 0; }
+    .nav-label { font-size:.65rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; opacity:.4; padding:.75rem 1.25rem .4rem; }
+    .nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem 1.25rem; font-size:.875rem; font-weight:500; color:rgba(255,255,255,.7); text-decoration:none; cursor:pointer; transition:background .15s; position:relative; }
+    .nav-item:hover { background:rgba(255,255,255,.07); color:white; }
+    .nav-item.active { background:rgba(255,255,255,.12); color:white; }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#60a5fa; border-radius:0 2px 2px 0; }
+    .nav-icon { font-size:1rem; width:20px; text-align:center; }
+    .soon { margin-left:auto; font-size:.62rem; background:rgba(255,255,255,.08); padding:1px 6px; border-radius:4px; opacity:.6; }
+    .sidebar-footer { padding:1rem 1.25rem; border-top:1px solid rgba(255,255,255,.08); }
+    .sidebar-user { display:flex; align-items:center; gap:.7rem; }
+    .s-av { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.15); display:grid; place-items:center; font-size:.9rem; font-weight:600; }
+    .u-name { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .u-role { font-size:.7rem; opacity:.5; }
+    .btn-lo { background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:1rem; }
+    .btn-lo:hover { color:#f87171; }
+
+    .main-wrap { margin-left:var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; }
+    .top-bar { height:64px; background:white; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 1.75rem; position:sticky; top:0; z-index:50; }
+    .top-bar h1 { font-size:1.1rem; font-weight:700; }
+    .bc { font-size:.75rem; color:var(--muted); }
+    .main { flex:1; padding:1.75rem; }
+
+    .card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); }
+    .card-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+    .card-head h3 { font-size:.9rem; font-weight:700; }
+    .card-body { padding:1.25rem; }
+
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; }
+    .stat-label { font-size:.75rem; color:var(--muted); font-weight:600; margin-bottom:.4rem; }
+    .stat-val { font-size:1.4rem; font-weight:800; }
+    .stat-sub { font-size:.72rem; color:var(--muted); margin-top:.2rem; }
+    .c-blue{color:#2563eb;} .c-green{color:#16a34a;} .c-yellow{color:#d97706;} .c-purple{color:#7c3aed;}
+
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.875rem; }
+    th { padding:.65rem 1rem; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); background:#f8fafc; border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:.75rem 1rem; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafafa; }
+    .empty-row td { text-align:center; padding:2rem; color:var(--muted); }
+
+    .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
+    .badge.draft  { background:#fef3c7; color:#d97706; }
+    .badge.final  { background:#dcfce7; color:#16a34a; }
+
+    .filter-bar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem; }
+    .inp { padding:.55rem .85rem; border:1.5px solid var(--border); border-radius:9px; font-size:.875rem; color:var(--text); outline:none; transition:border-color .2s; background:white; }
+    .inp:focus { border-color:var(--primary); }
+    .inp-sm { padding:.45rem .75rem; font-size:.82rem; }
+    .inp-full { width:100%; }
+
+    .btn-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.1rem; background:var(--primary); color:white; border:none; border-radius:9px; font-size:.875rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-secondary { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1rem; background:white; color:var(--text); border:1.5px solid var(--border); border-radius:9px; font-size:.82rem; font-weight:600; cursor:pointer; transition:all .15s; }
+    .btn-secondary:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-sm { padding:.3rem .7rem; font-size:.75rem; border-radius:7px; border:1px solid var(--border); background:white; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .btn-sm:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-danger { color:#dc2626; border-color:#fca5a5; }
+    .btn-danger:hover { background:#fee2e2; }
+
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; place-items:center; z-index:1000; padding:1rem; overflow-y:auto; }
+    .modal-overlay.open { display:grid; }
+    .modal { background:white; border-radius:var(--radius); width:100%; max-width:560px; box-shadow:0 20px 60px rgba(0,0,0,.15); overflow:hidden; }
+    .modal-lg { max-width:780px; }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.4rem; border-bottom:1px solid var(--border); }
+    .modal-head h3 { font-size:1rem; font-weight:700; }
+    .modal-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--muted); }
+    .modal-body { padding:1.4rem; max-height:70vh; overflow-y:auto; }
+    .modal-foot { padding:.9rem 1.4rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:.6rem; }
+
+    .fg { margin-bottom:.9rem; }
+    .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--muted); margin-bottom:.35rem; }
+    .inp-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+
+    /* SLIP GAJI LAYOUT */
+    .slip-wrap { font-size:.875rem; }
+    .slip-header { text-align:center; padding-bottom:1rem; border-bottom:2px solid var(--text); margin-bottom:1rem; }
+    .slip-header h2 { font-size:1.1rem; font-weight:800; }
+    .slip-header p { font-size:.8rem; color:var(--muted); }
+    .slip-info { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:1rem; font-size:.82rem; }
+    .slip-info-row { display:flex; gap:.5rem; }
+    .slip-info-lbl { color:var(--muted); min-width:120px; }
+    .slip-section { margin-bottom:1rem; }
+    .slip-section-title { font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); border-bottom:1px solid var(--border); padding-bottom:.3rem; margin-bottom:.5rem; }
+    .slip-row { display:flex; justify-content:space-between; padding:.3rem 0; font-size:.82rem; }
+    .slip-row.total { font-weight:700; border-top:1px solid var(--border); padding-top:.5rem; margin-top:.25rem; }
+    .slip-takehome { background:var(--primary); color:white; border-radius:10px; padding:.85rem 1rem; display:flex; justify-content:space-between; align-items:center; margin-top:1rem; }
+    .slip-takehome-lbl { font-size:.82rem; opacity:.85; }
+    .slip-takehome-val { font-size:1.2rem; font-weight:800; }
+    .slip-footer { text-align:center; font-size:.72rem; color:var(--muted); margin-top:1rem; padding-top:.75rem; border-top:1px solid var(--border); }
+
+    /* PERIODE LIST */
+    .periode-item { border:1px solid var(--border); border-radius:10px; padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; transition:all .15s; cursor:pointer; }
+    .periode-item:hover { border-color:var(--primary); background:#fafafa; }
+    .periode-item:last-child { margin-bottom:0; }
+    .periode-name { font-weight:700; font-size:.95rem; }
+    .periode-meta { font-size:.78rem; color:var(--muted); margin-top:.2rem; }
+
+    /* SALDO KOMPONEN */
+    .komp-item { display:flex; align-items:center; gap:.75rem; padding:.6rem 0; border-bottom:1px solid var(--border); }
+    .komp-item:last-child { border-bottom:none; }
+    .komp-name { flex:1; font-size:.875rem; }
+    .komp-tipe { font-size:.72rem; padding:2px 8px; border-radius:6px; font-weight:600; }
+    .tipe-t { background:#dcfce7; color:#16a34a; }
+    .tipe-p { background:#fee2e2; color:#dc2626; }
+
+    #toast { position:fixed; bottom:1.5rem; right:1.5rem; padding:.75rem 1.25rem; border-radius:10px; font-size:.875rem; font-weight:500; color:white; z-index:9999; display:none; box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    #toast.success { background:#16a34a; }
+    #toast.error   { background:#dc2626; }
+    #lo { position:fixed; inset:0; background:white; display:grid; place-items:center; z-index:9999; }
+    .spin { width:36px; height:36px; border:3px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    @media print {
+      body * { visibility:hidden; }
+      #printArea, #printArea * { visibility:visible; }
+      #printArea { position:absolute; inset:0; padding:2rem; }
+    }
+  </style>
+  <link rel="stylesheet" href="hris.css">
+</head>
+<body>
+<div id="lo"><div><div class="spin"></div><p style="color:#64748b;font-size:.875rem;text-align:center;">Memuat...</p></div></div>
+<div id="toast"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-row">
+      <div class="logo-icon">🏢</div>
+      <div><div class="logo-text">PT Kawan Menengah Atas</div><div class="logo-sub">HRIS v1.0</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="karyawan.html"><span class="nav-icon">👥</span> Data Karyawan</a>
+    <a class="nav-item" href="absensi.html"><span class="nav-icon">📍</span> Absensi</a>
+    <div class="nav-label" style="margin-top:.5rem;">Manajemen SDM</div>
+    <a class="nav-item" href="cuti.html"><span class="nav-icon">🏖️</span> Cuti & Izin</a>
+    <a class="nav-item active" href="payroll.html"><span class="nav-icon">💰</span> Payroll</a>
+    <a class="nav-item" href="pelatihan.html"><span class="nav-icon">📚</span> Pelatihan</a>
+    <div class="nav-label" style="margin-top:.5rem;">Administrasi</div>
+    <a class="nav-item" href="lokasi.html"><span class="nav-icon">🗺️</span> Lokasi Kantor</a>
+    <a class="nav-item" href="#" onclick="cs()"><span class="nav-icon">📊</span> Laporan<span class="soon">Soon</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="s-av" id="sbAv">?</div>
+      <div style="flex:1;min-width:0;"><div class="u-name" id="sbName">—</div><div class="u-role" id="sbRole">—</div></div>
+      <button class="btn-lo" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <div><h1>💰 Payroll</h1><div class="bc" id="topBc">—</div></div>
+    <div id="topActions"></div>
+  </header>
+  <main class="main" id="mainContent"></main>
+</div>
+
+<!-- MODAL: Buat Periode Baru -->
+<div class="modal-overlay" id="modalPeriode">
+  <div class="modal">
+    <div class="modal-head"><h3>📅 Buat Periode Payroll</h3><button class="modal-close" onclick="cm('modalPeriode')">×</button></div>
+    <div class="modal-body">
+      <div class="inp-row">
+        <div class="fg"><label>Bulan *</label>
+          <select class="inp inp-full" id="pBulan">
+            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+          </select>
+        </div>
+        <div class="fg"><label>Tahun *</label>
+          <input class="inp inp-full" type="number" id="pTahun" value="2026" min="2020" max="2030">
+        </div>
+      </div>
+      <div class="fg"><label>Catatan</label><input class="inp inp-full" type="text" id="pCatatan" placeholder="Opsional"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalPeriode')">Batal</button>
+      <button class="btn-primary" onclick="buatPeriode()">✅ Buat & Generate Slip</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Slip Gaji Detail -->
+<div class="modal-overlay" id="modalSlip">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h3 id="slipTitle">Slip Gaji</h3><button class="modal-close" onclick="cm('modalSlip')">×</button></div>
+    <div class="modal-body" id="printArea"><div id="slipContent"></div></div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalSlip')">Tutup</button>
+      <button class="btn-primary" onclick="window.print()">🖨️ Cetak Slip</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Komponen Karyawan -->
+<div class="modal-overlay" id="modalKomp">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h3 id="kompTitle">⚙️ Komponen Gaji Karyawan</h3><button class="modal-close" onclick="cm('modalKomp')">×</button></div>
+    <div class="modal-body" id="kompBody"></div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalKomp')">Tutup</button>
+      <button class="btn-primary" onclick="saveKomp()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// ============================================================
+// KONSTANTA TARIF — Edit di sini untuk mengubah tarif
+// ============================================================
+const TARIF = {
+  BPJS_KES_KARYAWAN:    0.01,   // 1%
+  BPJS_KES_PERUSAHAAN:  0.04,   // 4%
+  BPJS_KES_MAX_GAJI:    12000000,
+
+  BPJS_JHT_KARYAWAN:    0.02,   // 2%
+  BPJS_JHT_PERUSAHAAN:  0.037,  // 3.7%
+
+  BPJS_JP_KARYAWAN:     0.01,   // 1%
+  BPJS_JP_PERUSAHAAN:   0.02,   // 2%
+  BPJS_JP_MAX_GAJI:     10042300,
+
+  BIAYA_JABATAN_PCT:    0.05,   // 5%
+  BIAYA_JABATAN_MAX:    500000, // max per bulan
+
+  PTKP: {
+    'TK/0': 54000000, 'TK/1': 58500000, 'TK/2': 63000000, 'TK/3': 67500000,
+    'K/0':  58500000, 'K/1':  63000000, 'K/2':  67500000, 'K/3':  72000000,
+    'K/I/0':63000000, 'K/I/1':67500000, 'K/I/2':72000000, 'K/I/3':76500000
+  }
+}
+
+let myProfile = null
+let allKaryawan = [], allKomponen = [], editKompKaryawanId = null
+
+function toast(msg, t='success') {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.className = t; el.style.display = 'block'
+  setTimeout(() => el.style.display='none', 4000)
+}
+function cs() { toast('🚧 Segera hadir','error'); return false }
+async function logout() { await sb.auth.signOut(); window.location.href='index.html' }
+function om(id) { document.getElementById(id).classList.add('open') }
+function cm(id) { document.getElementById(id).classList.remove('open') }
+
+const IDR = v => 'Rp ' + Math.round(v).toLocaleString('id-ID')
+const BULAN_NAMA = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
+
+// ============================================================
+// KALKULASI PPh 21 (Metode Progresif Tahunan)
+// ============================================================
+function hitungPPh21Bulanan(gajiPokok, totalTunjangan, bpjsKesK, bpjsJhtK, bpjsJpK, statusPtkp) {
+  const brutoSetahun = (gajiPokok + totalTunjangan) * 12
+  const biayaJabatanBulan = Math.min(gajiPokok * TARIF.BIAYA_JABATAN_PCT, TARIF.BIAYA_JABATAN_MAX)
+  const biayaJabatanSetahun = biayaJabatanBulan * 12
+  const bpjsSetahun = (bpjsKesK + bpjsJhtK + bpjsJpK) * 12
+  const nettoSetahun = brutoSetahun - biayaJabatanSetahun - bpjsSetahun
+  const ptkp = TARIF.PTKP[statusPtkp] || TARIF.PTKP['TK/0']
+  const pkp = Math.max(0, Math.floor((nettoSetahun - ptkp) / 1000) * 1000)
+
+  let pph = 0
+  if (pkp <= 60000000)          pph = pkp * 0.05
+  else if (pkp <= 250000000)    pph = 60000000*0.05 + (pkp-60000000)*0.15
+  else if (pkp <= 500000000)    pph = 60000000*0.05 + 190000000*0.15 + (pkp-250000000)*0.25
+  else if (pkp <= 5000000000)   pph = 60000000*0.05 + 190000000*0.15 + 250000000*0.25 + (pkp-500000000)*0.30
+  else                          pph = 60000000*0.05 + 190000000*0.15 + 250000000*0.25 + 4500000000*0.30 + (pkp-5000000000)*0.35
+
+  return { pphBulanan: Math.round(pph/12), nettoSetahun, ptkp, pkp }
+}
+
+// ============================================================
+// HITUNG SLIP SATU KARYAWAN
+// ============================================================
+function hitungSlip(karyawan, komponenKaryawan) {
+  const gajiPokok = parseFloat(karyawan.gaji_pokok) || 0
+  const statusPtkp = karyawan.status_ptkp || 'TK/0'
+
+  // Tunjangan & potongan dari komponen
+  let totalTunjanganKenaPajak = 0, totalTunjanganBebasPajak = 0
+  let totalPotonganLain = 0
+  const detailTunjangan = [], detailPotongan = []
+
+  komponenKaryawan.forEach(kk => {
+    const k = allKomponen.find(k => k.id === kk.komponen_id)
+    if (!k || !k.aktif) return
+    const nilai = parseFloat(kk.nilai) || 0
+    if (k.tipe === 'tunjangan') {
+      if (k.kena_pajak) totalTunjanganKenaPajak += nilai
+      else totalTunjanganBebasPajak += nilai
+      detailTunjangan.push({ nama: k.nama, nilai, kena_pajak: k.kena_pajak })
+    } else {
+      totalPotonganLain += nilai
+      detailPotongan.push({ nama: k.nama, nilai })
+    }
+  })
+
+  const totalTunjangan = totalTunjanganKenaPajak + totalTunjanganBebasPajak
+  const totalPendapatan = gajiPokok + totalTunjangan
+
+  // BPJS
+  const gajiCapKes = Math.min(gajiPokok, TARIF.BPJS_KES_MAX_GAJI)
+  const gajiCapJp  = Math.min(gajiPokok, TARIF.BPJS_JP_MAX_GAJI)
+
+  const bpjsKesK = Math.round(gajiCapKes * TARIF.BPJS_KES_KARYAWAN)
+  const bpjsJhtK = Math.round(gajiPokok  * TARIF.BPJS_JHT_KARYAWAN)
+  const bpjsJpK  = Math.round(gajiCapJp  * TARIF.BPJS_JP_KARYAWAN)
+
+  const bpjsKesP = Math.round(gajiCapKes * TARIF.BPJS_KES_PERUSAHAAN)
+  const bpjsJhtP = Math.round(gajiPokok  * TARIF.BPJS_JHT_PERUSAHAAN)
+  const bpjsJpP  = Math.round(gajiCapJp  * TARIF.BPJS_JP_PERUSAHAAN)
+
+  // PPh 21
+  const { pphBulanan, nettoSetahun, ptkp, pkp } = hitungPPh21Bulanan(
+    gajiPokok, totalTunjanganKenaPajak, bpjsKesK, bpjsJhtK, bpjsJpK, statusPtkp
+  )
+
+  const totalPotongan = bpjsKesK + bpjsJhtK + bpjsJpK + pphBulanan + totalPotonganLain
+  const gajiBersih    = totalPendapatan - totalPotongan
+
+  return {
+    gaji_pokok: gajiPokok, total_tunjangan: totalTunjangan,
+    detail_tunjangan: detailTunjangan, detail_potongan: detailPotongan,
+    bpjs_kes_karyawan: bpjsKesK, bpjs_jht_karyawan: bpjsJhtK, bpjs_jp_karyawan: bpjsJpK,
+    bpjs_kes_perusahaan: bpjsKesP, bpjs_jht_perusahaan: bpjsJhtP, bpjs_jp_perusahaan: bpjsJpP,
+    pph21: pphBulanan, total_potongan_lain: totalPotonganLain,
+    total_pendapatan: totalPendapatan, total_potongan: totalPotongan, gaji_bersih: gajiBersih,
+    status_ptkp: statusPtkp, penghasilan_netto_setahun: nettoSetahun, ptkp, pkp
+  }
+}
+
+// ============================================================
+// RENDER KONTEN UTAMA
+// ============================================================
+async function renderPage() {
+  if (myProfile.role === 'hr_admin') renderHR()
+  else renderKaryawan()
+}
+
+// ============================================================
+// VIEW HR ADMIN
+// ============================================================
+async function renderHR() {
+  document.getElementById('topBc').textContent = 'Generate & kelola payroll bulanan'
+  document.getElementById('topActions').innerHTML = `
+    <div style="display:flex;gap:.6rem;">
+      <button class="btn-secondary" onclick="om('modalKomp');loadKompModal()">⚙️ Komponen Gaji</button>
+      <button class="btn-primary"   onclick="om('modalPeriode')">➕ Periode Baru</button>
+    </div>`
+
+  const { data: periodes } = await sb.from('payroll_periode')
+    .select('*').order('tahun',{ascending:false}).order('bulan',{ascending:false})
+
+  const totalFinal = periodes?.filter(p=>p.status==='final').length || 0
+  const totalDraft  = periodes?.filter(p=>p.status==='draft').length  || 0
+
+  const periodeHtml = periodes?.length
+    ? periodes.map(p => `
+      <div class="periode-item" onclick="bukaDetailPeriode('${p.id}')">
+        <div>
+          <div class="periode-name">📅 ${BULAN_NAMA[p.bulan]} ${p.tahun}</div>
+          <div class="periode-meta">${p.catatan || 'Tanpa catatan'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span class="badge ${p.status}">${p.status==='final'?'✅ Final':'⏳ Draft'}</span>
+          ${p.status==='draft'
+            ? `<button class="btn-sm" onclick="event.stopPropagation();finalisasi('${p.id}')">🔒 Finalisasi</button>`
+            : ''}
+          <button class="btn-sm" onclick="event.stopPropagation();hapusPeriode('${p.id}','${BULAN_NAMA[p.bulan]} ${p.tahun}',${p.status==='final'})">🗑️</button>
+        </div>
+      </div>`).join('')
+    : '<div style="color:var(--muted);font-size:.875rem;padding:1rem 0;">Belum ada periode payroll. Klik "Periode Baru" untuk mulai.</div>'
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Total Periode</div><div class="stat-val c-blue">${periodes?.length||0}</div></div>
+      <div class="stat-card"><div class="stat-label">Sudah Final</div><div class="stat-val c-green">${totalFinal}</div></div>
+      <div class="stat-card"><div class="stat-label">Masih Draft</div><div class="stat-val c-yellow">${totalDraft}</div></div>
+      <div class="stat-card"><div class="stat-label">Karyawan Aktif</div><div class="stat-val c-purple">${allKaryawan.length}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>📋 Daftar Periode Payroll</h3></div>
+      <div class="card-body">${periodeHtml}</div>
+    </div>`
+}
+
+// ============================================================
+// DETAIL PERIODE — Tabel slip semua karyawan
+// ============================================================
+async function bukaDetailPeriode(periodeId) {
+  const { data: periode } = await sb.from('payroll_periode').select('*').eq('id',periodeId).single()
+  const { data: slips } = await sb.from('slip_gaji')
+    .select('*, karyawan:karyawan_id(nama_lengkap,nik,jabatan_id,divisi_id)')
+    .eq('periode_id', periodeId)
+    .order('created_at')
+
+  const totalBruto   = slips?.reduce((s,sl)=>s+(sl.total_pendapatan||0),0) || 0
+  const totalBersih  = slips?.reduce((s,sl)=>s+(sl.gaji_bersih||0),0)      || 0
+  const totalPPh     = slips?.reduce((s,sl)=>s+(sl.pph21||0),0)            || 0
+
+  const tblHtml = slips?.length
+    ? slips.map(sl => `
+      <tr>
+        <td><div style="font-weight:600">${sl.karyawan?.nama_lengkap||'—'}</div><div style="font-size:.75rem;color:var(--muted)">${sl.karyawan?.nik||''}</div></td>
+        <td style="text-align:right">${IDR(sl.gaji_pokok)}</td>
+        <td style="text-align:right">${IDR(sl.total_tunjangan)}</td>
+        <td style="text-align:right;color:#dc2626">${IDR(sl.total_potongan)}</td>
+        <td style="text-align:right;font-weight:700;color:#16a34a">${IDR(sl.gaji_bersih)}</td>
+        <td>
+          <div style="display:flex;gap:.4rem;">
+            <button class="btn-sm" onclick="lihatSlip('${sl.id}')">👁 Lihat</button>
+            ${periode.status==='draft'
+              ? `<button class="btn-sm" onclick="editSlipKomp('${sl.karyawan_id}','${periodeId}')">✏️ Edit</button>`
+              : ''}
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="6">Tidak ada data slip</td></tr>'
+
+  document.getElementById('mainContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
+      <button class="btn-secondary" onclick="renderHR()">← Kembali</button>
+      <h2 style="font-size:1rem;font-weight:700;">📅 ${BULAN_NAMA[periode.bulan]} ${periode.tahun}</h2>
+      <span class="badge ${periode.status}">${periode.status==='final'?'✅ Final':'⏳ Draft'}</span>
+    </div>
+    <div class="stats-grid" style="margin-bottom:1.25rem;">
+      <div class="stat-card"><div class="stat-label">Total Karyawan</div><div class="stat-val c-blue">${slips?.length||0}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Bruto</div><div class="stat-val c-purple" style="font-size:1rem;">${IDR(totalBruto)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total PPh 21</div><div class="stat-val c-yellow" style="font-size:1rem;">${IDR(totalPPh)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Take-Home</div><div class="stat-val c-green" style="font-size:1rem;">${IDR(totalBersih)}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>🧾 Daftar Slip Gaji</h3></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Karyawan</th><th style="text-align:right">Gaji Pokok</th><th style="text-align:right">Tunjangan</th><th style="text-align:right">Potongan</th><th style="text-align:right">Gaji Bersih</th><th>Aksi</th></tr></thead>
+          <tbody>${tblHtml}</tbody>
+        </table>
+      </div>
+    </div>`
+}
+
+// ============================================================
+// BUAT PERIODE & GENERATE SLIP
+// ============================================================
+async function buatPeriode() {
+  const bulan  = parseInt(document.getElementById('pBulan').value)
+  const tahun  = parseInt(document.getElementById('pTahun').value)
+  const catatan = document.getElementById('pCatatan').value.trim()
+
+  // Cek duplikat
+  const { data: exists } = await sb.from('payroll_periode')
+    .select('id').eq('bulan',bulan).eq('tahun',tahun).single()
+  if (exists) { toast(`Periode ${BULAN_NAMA[bulan]} ${tahun} sudah ada`, 'error'); return }
+
+  // Buat periode
+  const { data: periode, error } = await sb.from('payroll_periode').insert({
+    bulan, tahun, status:'draft', catatan:catatan||null, dibuat_oleh:myProfile.id
+  }).select().single()
+  if (error) { toast('Gagal buat periode: '+error.message,'error'); return }
+
+  // Generate slip untuk semua karyawan aktif
+  const { data: karyawans } = await sb.from('karyawan')
+    .select('*').eq('status','aktif').neq('gaji_pokok',0)
+  if (!karyawans?.length) {
+    toast('Periode dibuat. Tidak ada karyawan aktif dengan gaji.','error')
+    cm('modalPeriode'); renderHR(); return
+  }
+
+  // Ambil semua komponen karyawan sekaligus
+  const { data: semuaKomp } = await sb.from('karyawan_komponen')
+    .select('*').in('karyawan_id', karyawans.map(k=>k.id))
+
+  const slips = karyawans.map(k => {
+    const kompK = (semuaKomp||[]).filter(kk=>kk.karyawan_id===k.id)
+    const slip = hitungSlip(k, kompK)
+    return { periode_id: periode.id, karyawan_id: k.id, ...slip }
+  })
+
+  const { error: slipErr } = await sb.from('slip_gaji').insert(slips)
+  if (slipErr) { toast('Periode dibuat tapi slip gagal: '+slipErr.message,'error'); return }
+
+  toast(`✅ Periode ${BULAN_NAMA[bulan]} ${tahun} dibuat — ${slips.length} slip di-generate`)
+  cm('modalPeriode')
+  renderHR()
+}
+
+// ============================================================
+// FINALISASI PERIODE
+// ============================================================
+async function finalisasi(periodeId) {
+  if (!confirm('Finalisasi periode ini? Slip tidak bisa diubah setelah final.')) return
+  const { error } = await sb.from('payroll_periode').update({status:'final'}).eq('id',periodeId)
+  if (error) { toast('Gagal: '+error.message,'error'); return }
+  toast('✅ Periode berhasil difinalisasi')
+  renderHR()
+}
+
+async function hapusPeriode(id, nama, isFinal) {
+  if (isFinal) { toast('Periode final tidak bisa dihapus','error'); return }
+  if (!confirm(`Hapus periode "${nama}"? Semua slip akan ikut terhapus.`)) return
+  await sb.from('payroll_periode').delete().eq('id',id)
+  toast('🗑️ Periode dihapus')
+  renderHR()
+}
+
+// ============================================================
+// LIHAT SLIP GAJI
+// ============================================================
+async function lihatSlip(slipId) {
+  const { data: sl } = await sb.from('slip_gaji')
+    .select('*, karyawan:karyawan_id(nama_lengkap,nik,jabatan:jabatan_id(nama),divisi:divisi_id(nama)), periode:periode_id(*)')
+    .eq('id',slipId).single()
+  if (!sl) return
+
+  document.getElementById('slipTitle').textContent =
+    `Slip Gaji — ${sl.karyawan?.nama_lengkap} — ${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}`
+
+  const tunjanganRows = (sl.detail_tunjangan||[]).map(t =>
+    `<div class="slip-row"><span>${t.nama}</span><span>${IDR(t.nilai)}</span></div>`).join('')
+  const potonganLainRows = (sl.detail_potongan||[]).map(p =>
+    `<div class="slip-row"><span>${p.nama}</span><span style="color:#dc2626">- ${IDR(p.nilai)}</span></div>`).join('')
+
+  document.getElementById('slipContent').innerHTML = `
+    <div class="slip-wrap">
+      <div class="slip-header">
+        <h2>PT KAWAN MENENGAH ATAS</h2>
+        <p>Slip Gaji — ${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}</p>
+      </div>
+      <div class="slip-info">
+        <div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Nama</span><span>${sl.karyawan?.nama_lengkap||'—'}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">NIK</span><span>${sl.karyawan?.nik||'—'}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Jabatan</span><span>${sl.karyawan?.jabatan?.nama||'—'}</span></div>
+        </div>
+        <div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Divisi</span><span>${sl.karyawan?.divisi?.nama||'—'}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Status PTKP</span><span>${sl.status_ptkp||'—'}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Periode</span><span>${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}</span></div>
+        </div>
+      </div>
+
+      <div class="slip-section">
+        <div class="slip-section-title">Pendapatan</div>
+        <div class="slip-row"><span>Gaji Pokok</span><span>${IDR(sl.gaji_pokok)}</span></div>
+        ${tunjanganRows}
+        <div class="slip-row total"><span>Total Pendapatan</span><span>${IDR(sl.total_pendapatan)}</span></div>
+      </div>
+
+      <div class="slip-section">
+        <div class="slip-section-title">Potongan</div>
+        <div class="slip-row"><span>BPJS Kesehatan (1%)</span><span style="color:#dc2626">- ${IDR(sl.bpjs_kes_karyawan)}</span></div>
+        <div class="slip-row"><span>BPJS JHT (2%)</span><span style="color:#dc2626">- ${IDR(sl.bpjs_jht_karyawan)}</span></div>
+        <div class="slip-row"><span>BPJS JP (1%)</span><span style="color:#dc2626">- ${IDR(sl.bpjs_jp_karyawan)}</span></div>
+        <div class="slip-row"><span>PPh 21</span><span style="color:#dc2626">- ${IDR(sl.pph21)}</span></div>
+        ${potonganLainRows}
+        <div class="slip-row total"><span>Total Potongan</span><span style="color:#dc2626">- ${IDR(sl.total_potongan)}</span></div>
+      </div>
+
+      <div class="slip-section">
+        <div class="slip-section-title">Kontribusi Perusahaan (Informasi)</div>
+        <div class="slip-row"><span>BPJS Kesehatan Perusahaan (4%)</span><span>${IDR(sl.bpjs_kes_perusahaan)}</span></div>
+        <div class="slip-row"><span>BPJS JHT Perusahaan (3.7%)</span><span>${IDR(sl.bpjs_jht_perusahaan)}</span></div>
+        <div class="slip-row"><span>BPJS JP Perusahaan (2%)</span><span>${IDR(sl.bpjs_jp_perusahaan)}</span></div>
+      </div>
+
+      <div class="slip-section">
+        <div class="slip-section-title">Detail PPh 21</div>
+        <div class="slip-row"><span>Penghasilan Netto Setahun</span><span>${IDR(sl.penghasilan_netto_setahun)}</span></div>
+        <div class="slip-row"><span>PTKP (${sl.status_ptkp})</span><span>- ${IDR(sl.ptkp)}</span></div>
+        <div class="slip-row"><span>PKP (Penghasilan Kena Pajak)</span><span>${IDR(sl.pkp)}</span></div>
+        <div class="slip-row total"><span>PPh 21 Bulanan</span><span>${IDR(sl.pph21)}</span></div>
+      </div>
+
+      <div class="slip-takehome">
+        <span class="slip-takehome-lbl">GAJI BERSIH (Take-Home Pay)</span>
+        <span class="slip-takehome-val">${IDR(sl.gaji_bersih)}</span>
+      </div>
+      <div class="slip-footer">Slip ini diterbitkan secara otomatis oleh sistem HRIS PT Kawan Menengah Atas</div>
+    </div>`
+
+  om('modalSlip')
+}
+
+// ============================================================
+// EDIT KOMPONEN KARYAWAN (dari detail periode)
+// ============================================================
+async function editSlipKomp(karyawanId, periodeId) {
+  const k = allKaryawan.find(k=>k.id===karyawanId)
+  editKompKaryawanId = karyawanId
+  await loadKompModal(karyawanId)
+  document.getElementById('kompTitle').textContent = `⚙️ Komponen Gaji — ${k?.nama_lengkap||''}`
+  document.getElementById('modalKomp')._periodeId = periodeId
+  om('modalKomp')
+}
+
+// ============================================================
+// MODAL KOMPONEN GAJI
+// ============================================================
+async function loadKompModal(karyawanId=null) {
+  if (karyawanId) editKompKaryawanId = karyawanId
+  const kid = editKompKaryawanId
+
+  const { data: existing } = kid
+    ? await sb.from('karyawan_komponen').select('*').eq('karyawan_id',kid)
+    : { data: [] }
+
+  const selHtml = kid
+    ? `<div class="fg" style="margin-bottom:1rem;">
+        <label>Karyawan</label>
+        <select class="inp inp-full" id="kompKary" onchange="loadKompModal(this.value)">
+          ${allKaryawan.map(k=>`<option value="${k.id}"${k.id===kid?' selected':''}>${k.nama_lengkap}</option>`).join('')}
+        </select>
+      </div>`
+    : `<div class="fg" style="margin-bottom:1rem;">
+        <label>Pilih Karyawan</label>
+        <select class="inp inp-full" id="kompKary" onchange="loadKompModal(this.value)">
+          <option value="">— Pilih Karyawan —</option>
+          ${allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')}
+        </select>
+      </div>`
+
+  const kompHtml = allKomponen.map(komp => {
+    const ex = existing?.find(e=>e.komponen_id===komp.id)
+    return `
+      <div class="komp-item">
+        <span class="komp-tipe ${komp.tipe==='tunjangan'?'tipe-t':'tipe-p'}">${komp.tipe==='tunjangan'?'↑':'↓'}</span>
+        <span class="komp-name">${komp.nama} ${komp.kena_pajak?'<span style="font-size:.7rem;color:var(--muted)">(kena pajak)</span>':''}</span>
+        <input type="number" class="inp inp-sm" style="width:140px;text-align:right"
+          data-komp="${komp.id}" value="${ex?.nilai||0}" min="0" placeholder="0">
+      </div>`
+  }).join('')
+
+  document.getElementById('kompBody').innerHTML = selHtml + kompHtml
+}
+
+async function saveKomp() {
+  const kid = editKompKaryawanId || document.getElementById('kompKary')?.value
+  if (!kid) { toast('Pilih karyawan dulu','error'); return }
+
+  const inputs = document.querySelectorAll('#kompBody input[data-komp]')
+  const upserts = []
+  inputs.forEach(inp => {
+    const nilai = parseFloat(inp.value)||0
+    upserts.push({ karyawan_id:kid, komponen_id:inp.dataset.komp, nilai })
+  })
+
+  const { error } = await sb.from('karyawan_komponen')
+    .upsert(upserts, { onConflict:'karyawan_id,komponen_id' })
+  if (error) { toast('Gagal simpan: '+error.message,'error'); return }
+
+  // Jika dipanggil dari detail periode (edit slip), regenerate slip karyawan ini
+  const periodeId = document.getElementById('modalKomp')._periodeId
+  if (periodeId) {
+    await regenerateSlip(kid, periodeId)
+    toast('✅ Komponen gaji disimpan & slip diperbarui')
+    cm('modalKomp')
+    document.getElementById('modalKomp')._periodeId = null
+    bukaDetailPeriode(periodeId)
+  } else {
+    toast('✅ Komponen gaji disimpan')
+    cm('modalKomp')
+  }
+}
+
+// Regenerate slip untuk satu karyawan di satu periode
+async function regenerateSlip(karyawanId, periodeId) {
+  const { data: k } = await sb.from('karyawan').select('*').eq('id', karyawanId).single()
+  if (!k) return
+
+  const { data: kompK } = await sb.from('karyawan_komponen').select('*').eq('karyawan_id', karyawanId)
+  const slip = hitungSlip(k, kompK || [])
+
+  const { error } = await sb.from('slip_gaji')
+    .update(slip)
+    .eq('periode_id', periodeId)
+    .eq('karyawan_id', karyawanId)
+
+  if (error) toast('⚠️ Slip gagal diperbarui: '+error.message, 'error')
+}
+
+// ============================================================
+// VIEW KARYAWAN
+// ============================================================
+async function renderKaryawan() {
+  document.getElementById('topBc').textContent = 'Riwayat slip gaji saya'
+  document.getElementById('topActions').innerHTML = ''
+
+  const { data: allSlips } = await sb.from('slip_gaji')
+    .select('*, periode:periode_id(*)')
+    .eq('karyawan_id', myProfile.id)
+    .order('created_at', {ascending:false})
+
+  // Karyawan hanya melihat slip yang sudah final
+  const slips = (allSlips || []).filter(sl => sl.periode?.status === 'final')
+
+  const tblHtml = slips.length
+    ? slips.map(sl => `
+      <tr>
+        <td>${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}</td>
+        <td style="text-align:right">${IDR(sl.gaji_pokok)}</td>
+        <td style="text-align:right">${IDR(sl.total_tunjangan)}</td>
+        <td style="text-align:right;color:#dc2626">${IDR(sl.total_potongan)}</td>
+        <td style="text-align:right;font-weight:700;color:#16a34a">${IDR(sl.gaji_bersih)}</td>
+        <td><button class="btn-sm" onclick="lihatSlip('${sl.id}')">👁 Lihat Slip</button></td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="6">Belum ada slip gaji yang diterbitkan</td></tr>'
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>🧾 Riwayat Slip Gaji Saya</h3></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Periode</th><th style="text-align:right">Gaji Pokok</th><th style="text-align:right">Tunjangan</th><th style="text-align:right">Potongan</th><th style="text-align:right">Take-Home</th><th>Aksi</th></tr></thead>
+          <tbody>${tblHtml}</tbody>
+        </table>
+      </div>
+    </div>`
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession()
+  if (!session) { window.location.href='index.html'; return }
+
+  const [{ data:k },{ data:karys },{ data:komps }] = await Promise.all([
+    sb.from('karyawan').select('*').eq('id',session.user.id).single(),
+    sb.from('karyawan').select('id,nama_lengkap,nik,gaji_pokok,status_ptkp,jabatan_id,divisi_id').eq('status','aktif').order('nama_lengkap'),
+    sb.from('komponen_gaji').select('*').eq('aktif',true).order('tipe').order('nama')
+  ])
+
+  myProfile    = k
+  allKaryawan  = karys || []
+  allKomponen  = komps || []
+
+  document.getElementById('sbName').textContent = k.nama_lengkap
+  document.getElementById('sbRole').textContent = k.role==='hr_admin'?'HR Admin':'Karyawan'
+  document.getElementById('sbAv').textContent   = k.nama_lengkap?.charAt(0).toUpperCase()||'?'
+
+  // Set bulan default di modal periode ke bulan sekarang
+  document.getElementById('pBulan').value = new Date().getMonth()+1
+
+  await renderPage()
+  document.getElementById('lo').style.display = 'none'
+}
+
+init()
+
+// ===== MOBILE SIDEBAR TOGGLE =====
+function toggleSidebar() { document.body.classList.toggle('nav-open') }
+function closeSidebar()   { document.body.classList.remove('nav-open') }
+;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(el=>{ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
+</script>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item" href="dashboard.html"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></a>
+  <a class="bn-item" href="absensi.html"><span class="bn-icon">📍</span><span class="bn-label">Absensi</span></a>
+  <a class="bn-item" href="cuti.html"><span class="bn-icon">🏖️</span><span class="bn-label">Cuti</span></a>
+  <a class="bn-item" href="payroll.html"><span class="bn-icon">💰</span><span class="bn-label">Payroll</span></a>
+  <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon">☰</span><span class="bn-label">Menu</span></button>
+</nav>
+</body>
+</html>

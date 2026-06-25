@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lokasi Kantor — HRIS PT KMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --primary:#1d4ed8; --primary-dk:#1e3a8a; --sidebar-w:240px; --bg:#f1f5f9; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --radius:12px; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar { position:fixed; left:0; top:0; bottom:0; width:var(--sidebar-w); background:var(--primary-dk); color:white; display:flex; flex-direction:column; z-index:100; }
+    .sidebar-brand { padding:1.25rem; border-bottom:1px solid rgba(255,255,255,.08); }
+    .logo-row { display:flex; align-items:center; gap:.6rem; }
+    .logo-icon { width:36px; height:36px; background:rgba(255,255,255,.12); border-radius:10px; display:grid; place-items:center; font-size:1.1rem; }
+    .logo-text { font-size:.82rem; font-weight:700; line-height:1.3; }
+    .logo-sub  { font-size:.68rem; opacity:.5; }
+    .sidebar-nav { flex:1; overflow-y:auto; padding:.75rem 0; }
+    .nav-label { font-size:.65rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; opacity:.4; padding:.75rem 1.25rem .4rem; }
+    .nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem 1.25rem; font-size:.875rem; font-weight:500; color:rgba(255,255,255,.7); text-decoration:none; cursor:pointer; transition:background .15s; position:relative; }
+    .nav-item:hover { background:rgba(255,255,255,.07); color:white; }
+    .nav-item.active { background:rgba(255,255,255,.12); color:white; }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#60a5fa; border-radius:0 2px 2px 0; }
+    .nav-icon { font-size:1rem; width:20px; text-align:center; }
+    .soon { margin-left:auto; font-size:.62rem; background:rgba(255,255,255,.08); padding:1px 6px; border-radius:4px; opacity:.6; }
+    .sidebar-footer { padding:1rem 1.25rem; border-top:1px solid rgba(255,255,255,.08); }
+    .sidebar-user { display:flex; align-items:center; gap:.7rem; }
+    .s-av { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.15); display:grid; place-items:center; font-size:.9rem; font-weight:600; }
+    .u-name { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .u-role { font-size:.7rem; opacity:.5; }
+    .btn-lo { background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:1rem; transition:color .15s; }
+    .btn-lo:hover { color:#f87171; }
+
+    /* MAIN */
+    .main-wrap { margin-left:var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; }
+    .top-bar { height:64px; background:white; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 1.75rem; position:sticky; top:0; z-index:50; }
+    .top-bar h1 { font-size:1.1rem; font-weight:700; }
+    .bc { font-size:.75rem; color:var(--muted); }
+    .main { flex:1; padding:1.75rem; }
+
+    .page-grid { display:grid; grid-template-columns:380px 1fr; gap:1.25rem; align-items:start; }
+
+    /* CARD */
+    .card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
+    .card-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+    .card-head h3 { font-size:.9rem; font-weight:700; }
+    .card-body { padding:1.25rem; }
+
+    /* FORM */
+    .fg { margin-bottom:.9rem; }
+    .fg:last-child { margin-bottom:0; }
+    .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--muted); margin-bottom:.35rem; }
+    .inp { width:100%; padding:.65rem .85rem; border:1.5px solid var(--border); border-radius:9px; font-size:.875rem; color:var(--text); outline:none; transition:border-color .2s; background:white; }
+    .inp:focus { border-color:var(--primary); }
+    .inp:disabled { background:#f8fafc; color:var(--muted); }
+    .inp-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+
+    .btn-primary { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; padding:.72rem; background:var(--primary); color:white; border:none; border-radius:9px; font-size:.9rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-secondary { display:flex; align-items:center; justify-content:center; gap:.4rem; width:100%; padding:.72rem; background:white; color:var(--text); border:1.5px solid var(--border); border-radius:9px; font-size:.875rem; font-weight:600; cursor:pointer; transition:all .15s; margin-top:.6rem; }
+    .btn-secondary:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-danger { background:#fef2f2; color:#dc2626; border:1.5px solid #fecaca; }
+    .btn-danger:hover { background:#fee2e2; border-color:#f87171; }
+
+    /* MAP */
+    #map { height:420px; border-radius:var(--radius); z-index:1; }
+    .map-info { background:#eff6ff; border:1px solid #bfdbfe; border-radius:9px; padding:.75rem 1rem; font-size:.82rem; color:#1e40af; line-height:1.6; margin-bottom:1rem; }
+
+    /* LOKASI LIST */
+    .lokasi-item { border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:.75rem; cursor:pointer; transition:all .15s; }
+    .lokasi-item:hover { border-color:var(--primary); background:#f8fafc; }
+    .lokasi-item.active { border-color:var(--primary); background:#eff6ff; }
+    .lokasi-item:last-child { margin-bottom:0; }
+    .lok-name { font-weight:700; font-size:.9rem; margin-bottom:.25rem; }
+    .lok-addr { font-size:.78rem; color:var(--muted); margin-bottom:.4rem; }
+    .lok-meta { display:flex; gap:.75rem; font-size:.75rem; }
+    .lok-badge { background:#f1f5f9; color:var(--muted); padding:2px 8px; border-radius:6px; font-weight:600; }
+    .lok-aktif { background:#dcfce7; color:#15803d; }
+    .lok-actions { display:flex; gap:.5rem; margin-top:.75rem; }
+    .btn-sm { padding:.3rem .75rem; border:1px solid var(--border); border-radius:7px; font-size:.75rem; cursor:pointer; background:white; transition:all .15s; }
+    .btn-sm:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-sm.del:hover { border-color:#ef4444; color:#ef4444; }
+
+    .divider { height:1px; background:var(--border); margin:1rem 0; }
+    .section-lbl { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:.75rem; }
+
+    /* GPS current */
+    .gps-current { display:flex; align-items:center; gap:.6rem; padding:.6rem .85rem; border-radius:8px; font-size:.82rem; font-weight:600; margin-bottom:.75rem; }
+    .gps-current.ok   { background:#f0fdf4; color:#15803d; border:1px solid #86efac; }
+    .gps-current.wait { background:#f1f5f9; color:var(--muted); border:1px solid var(--border); }
+    .gps-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .ok .gps-dot { background:#22c55e; }
+    .wait .gps-dot { background:#94a3b8; animation:pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* Toast & Loading */
+    #toast { position:fixed; bottom:1.5rem; right:1.5rem; padding:.75rem 1.25rem; border-radius:10px; font-size:.875rem; font-weight:500; color:white; z-index:9999; display:none; box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    #toast.success { background:#16a34a; }
+    #toast.error   { background:#dc2626; }
+    #lo { position:fixed; inset:0; background:white; display:grid; place-items:center; z-index:9999; }
+    .spin { width:36px; height:36px; border:3px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .empty { text-align:center; padding:1.5rem; color:var(--muted); font-size:.875rem; }
+  </style>
+  <link rel="stylesheet" href="hris.css">
+</head>
+<body>
+<div id="lo"><div><div class="spin"></div><p style="color:#64748b;font-size:.875rem;text-align:center;">Memuat...</p></div></div>
+<div id="toast"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-row">
+      <div class="logo-icon">🏢</div>
+      <div><div class="logo-text">PT Kawan Menengah Atas</div><div class="logo-sub">HRIS v1.0</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="karyawan.html"><span class="nav-icon">👥</span> Data Karyawan</a>
+    <a class="nav-item" href="absensi.html"><span class="nav-icon">📍</span> Absensi</a>
+    <div class="nav-label" style="margin-top:.5rem;">Manajemen SDM</div>
+    <a class="nav-item" href="cuti.html"><span class="nav-icon">🏖️</span> Cuti & Izin</a>
+    <a class="nav-item" href="payroll.html"><span class="nav-icon">💰</span> Payroll</a>
+    <a class="nav-item" href="pelatihan.html"><span class="nav-icon">📚</span> Pelatihan</a>
+    <div class="nav-label" style="margin-top:.5rem;">Administrasi</div>
+    <a class="nav-item active" href="lokasi.html"><span class="nav-icon">🗺️</span> Lokasi Kantor</a>
+    <a class="nav-item" href="#" onclick="cs()"><span class="nav-icon">📊</span> Laporan<span class="soon">Soon</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="s-av" id="sbAv">?</div>
+      <div style="flex:1;min-width:0;"><div class="u-name" id="sbName">—</div><div class="u-role" id="sbRole">—</div></div>
+      <button class="btn-lo" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <div><h1>🗺️ Lokasi Kantor</h1><div class="bc">Pengaturan geofencing absensi</div></div>
+  </header>
+
+  <main class="main">
+    <div class="page-grid">
+
+      <!-- PANEL KIRI: Form + Daftar -->
+      <div>
+        <!-- Form Tambah/Edit -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-head">
+            <h3 id="formTitle">➕ Tambah Lokasi Kantor</h3>
+            <button id="btnReset" onclick="resetForm()" style="display:none;font-size:.75rem;color:var(--muted);background:none;border:none;cursor:pointer;">Reset</button>
+          </div>
+          <div class="card-body">
+            <input type="hidden" id="editId">
+
+            <div class="fg">
+              <label>Nama Lokasi *</label>
+              <input class="inp" type="text" id="fNama" placeholder="Contoh: Kantor Pusat">
+            </div>
+            <div class="fg">
+              <label>Alamat</label>
+              <input class="inp" type="text" id="fAlamat" placeholder="Alamat lengkap kantor">
+            </div>
+            <div class="inp-row">
+              <div class="fg">
+                <label>Latitude *</label>
+                <input class="inp" type="number" step="0.000001" id="fLat" placeholder="-6.200000">
+              </div>
+              <div class="fg">
+                <label>Longitude *</label>
+                <input class="inp" type="number" step="0.000001" id="fLng" placeholder="106.800000">
+              </div>
+            </div>
+            <div class="fg">
+              <label>Radius Absensi (meter) *</label>
+              <input class="inp" type="number" id="fRadius" value="100" min="50" max="1000">
+              <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;">Karyawan hanya bisa absen dalam radius ini. Disarankan 50–200 meter.</div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-lbl">Gunakan Lokasi Saat Ini</div>
+            <div class="gps-current wait" id="gpsStatus">
+              <div class="gps-dot"></div>
+              <span id="gpsStatusText">Mendapatkan lokasi GPS Anda...</span>
+            </div>
+            <button class="btn-secondary" id="btnUseGPS" onclick="useMyGPS()" disabled>
+              📍 Pakai Koordinat Lokasi Saya Sekarang
+            </button>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:.4rem;line-height:1.5;">
+              Atau klik langsung pada peta di sebelah kanan untuk menentukan titik koordinat kantor.
+            </div>
+
+            <div class="divider"></div>
+            <button class="btn-primary" onclick="saveLokasi()">💾 Simpan Lokasi</button>
+          </div>
+        </div>
+
+        <!-- Daftar Lokasi -->
+        <div class="card">
+          <div class="card-head"><h3>📋 Daftar Lokasi</h3></div>
+          <div class="card-body" id="lokasiList">
+            <div class="empty">Memuat...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL KANAN: Peta -->
+      <div>
+        <div class="card">
+          <div class="card-head"><h3>🗺️ Peta Lokasi Kantor</h3><span style="font-size:.75rem;color:var(--muted);">Klik peta untuk set koordinat</span></div>
+          <div class="card-body" style="padding:.75rem;">
+            <div class="map-info">
+              💡 <strong>Cara menggunakan peta:</strong><br>
+              Klik pada peta untuk menentukan koordinat kantor, atau gunakan tombol "Pakai Koordinat Lokasi Saya". Lingkaran biru menunjukkan radius absensi.
+            </div>
+            <div id="map"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+
+<script>
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+let map, markerKantor, circleRadius, markerSaya
+let myLat = null, myLng = null
+let lokasiData = []
+
+function toast (msg, t='success') {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.className = t; el.style.display = 'block'
+  setTimeout(() => el.style.display = 'none', 4000)
+}
+function cs () { toast('🚧 Modul ini segera hadir','error'); return false }
+async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
+
+// ====== INISIALISASI PETA ======
+function initMap (lat=-6.2, lng=106.816) {
+  map = L.map('map').setView([lat, lng], 15)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(map)
+
+  // Klik peta → set koordinat
+  map.on('click', e => {
+    setMarker(e.latlng.lat, e.latlng.lng)
+    document.getElementById('fLat').value = e.latlng.lat.toFixed(7)
+    document.getElementById('fLng').value = e.latlng.lng.toFixed(7)
+  })
+}
+
+function setMarker (lat, lng, radius) {
+  if (markerKantor) { markerKantor.remove() }
+  if (circleRadius)  { circleRadius.remove() }
+
+  const icon = L.divIcon({
+    className: '',
+    html: '<div style="width:32px;height:32px;background:#1d4ed8;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);display:grid;place-items:center;font-size:1rem;">🏢</div>',
+    iconSize: [32,32], iconAnchor: [16,16]
+  })
+  markerKantor = L.marker([lat, lng], { icon }).addTo(map)
+    .bindPopup('<b>Lokasi Kantor</b>')
+
+  const r = radius || parseInt(document.getElementById('fRadius').value) || 100
+  circleRadius = L.circle([lat, lng], {
+    radius: r, color: '#1d4ed8', fillColor: '#3b82f6', fillOpacity: 0.12, weight: 2
+  }).addTo(map)
+
+  map.setView([lat, lng], 16)
+}
+
+function updateCircleRadius () {
+  const lat = parseFloat(document.getElementById('fLat').value)
+  const lng = parseFloat(document.getElementById('fLng').value)
+  if (!isNaN(lat) && !isNaN(lng)) setMarker(lat, lng)
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('fRadius').addEventListener('input', updateCircleRadius)
+  document.getElementById('fLat').addEventListener('change', updateCircleRadius)
+  document.getElementById('fLng').addEventListener('change', updateCircleRadius)
+})
+
+// ====== GPS ======
+function startGPS () {
+  if (!navigator.geolocation) return
+  navigator.geolocation.getCurrentPosition(pos => {
+    myLat = pos.coords.latitude; myLng = pos.coords.longitude
+    const el = document.getElementById('gpsStatus')
+    el.className = 'gps-current ok'
+    document.getElementById('gpsStatusText').textContent =
+      `GPS aktif — ${myLat.toFixed(6)}, ${myLng.toFixed(6)}`
+    document.getElementById('btnUseGPS').disabled = false
+
+    // Tampilkan posisi saya di peta
+    if (markerSaya) markerSaya.remove()
+    const iconSaya = L.divIcon({
+      className:'',
+      html:'<div style="width:24px;height:24px;background:#22c55e;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);"></div>',
+      iconSize:[24,24], iconAnchor:[12,12]
+    })
+    markerSaya = L.marker([myLat, myLng], { icon: iconSaya }).addTo(map)
+      .bindPopup('<b>Posisi Anda sekarang</b>')
+  }, () => {
+    document.getElementById('gpsStatusText').textContent = 'Tidak dapat mengakses GPS'
+  }, { enableHighAccuracy:true, timeout:10000 })
+}
+
+function useMyGPS () {
+  if (!myLat) { toast('GPS belum aktif','error'); return }
+  document.getElementById('fLat').value = myLat.toFixed(7)
+  document.getElementById('fLng').value = myLng.toFixed(7)
+  setMarker(myLat, myLng)
+  toast('✅ Koordinat diisi dari lokasi Anda saat ini')
+}
+
+// ====== LOAD DAFTAR LOKASI ======
+async function loadLokasi () {
+  const { data } = await sb.from('lokasi_kantor').select('*').order('created_at')
+  lokasiData = data || []
+  renderLokasiList()
+
+  // Tampilkan semua lokasi di peta
+  lokasiData.forEach(lok => {
+    setMarkerAll(lok)
+  })
+}
+
+function setMarkerAll (lok) {
+  const lat = parseFloat(lok.latitude), lng = parseFloat(lok.longitude)
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="background:#1d4ed8;color:white;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);font-size:.75rem;font-weight:700;">${lok.nama.charAt(0)}</div>`,
+    iconSize:[30,30], iconAnchor:[15,15]
+  })
+  L.marker([lat,lng], { icon }).addTo(map).bindPopup(`<b>${lok.nama}</b><br>Radius: ${lok.radius_meter}m`)
+  L.circle([lat,lng], { radius:lok.radius_meter, color:'#1d4ed8', fillColor:'#3b82f6', fillOpacity:.1, weight:1.5 }).addTo(map)
+}
+
+function renderLokasiList () {
+  const el = document.getElementById('lokasiList')
+  if (!lokasiData.length) {
+    el.innerHTML = '<div class="empty">Belum ada lokasi kantor.<br>Tambahkan lokasi pertama Anda.</div>'
+    return
+  }
+  el.innerHTML = lokasiData.map(lok => `
+    <div class="lokasi-item" id="lok-${lok.id}">
+      <div class="lok-name">${lok.nama}</div>
+      <div class="lok-addr">${lok.alamat || '—'}</div>
+      <div class="lok-meta">
+        <span class="lok-badge">📍 ${parseFloat(lok.latitude).toFixed(5)}, ${parseFloat(lok.longitude).toFixed(5)}</span>
+        <span class="lok-badge">⭕ ${lok.radius_meter}m</span>
+        <span class="lok-badge ${lok.aktif ? 'lok-aktif' : ''}">${lok.aktif ? '✅ Aktif' : '⛔ Nonaktif'}</span>
+      </div>
+      <div class="lok-actions">
+        <button class="btn-sm" onclick="editLokasi('${lok.id}')">✏️ Edit</button>
+        <button class="btn-sm" onclick="toggleAktif('${lok.id}',${lok.aktif})">${lok.aktif ? '⛔ Nonaktifkan' : '✅ Aktifkan'}</button>
+        <button class="btn-sm del" onclick="deleteLokasi('${lok.id}')">🗑️ Hapus</button>
+      </div>
+    </div>
+  `).join('')
+}
+
+// ====== SAVE LOKASI ======
+async function saveLokasi () {
+  const id     = document.getElementById('editId').value
+  const nama   = document.getElementById('fNama').value.trim()
+  const alamat = document.getElementById('fAlamat').value.trim()
+  const lat    = parseFloat(document.getElementById('fLat').value)
+  const lng    = parseFloat(document.getElementById('fLng').value)
+  const radius = parseInt(document.getElementById('fRadius').value)
+
+  if (!nama || isNaN(lat) || isNaN(lng) || !radius) {
+    toast('Isi nama, koordinat, dan radius','error'); return
+  }
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    toast('Koordinat tidak valid','error'); return
+  }
+
+  const payload = { nama, alamat: alamat||null, latitude:lat, longitude:lng, radius_meter:radius }
+
+  let error
+  if (id) {
+    const res = await sb.from('lokasi_kantor').update(payload).eq('id', id)
+    error = res.error
+  } else {
+    const res = await sb.from('lokasi_kantor').insert({ ...payload, aktif:true })
+    error = res.error
+  }
+
+  if (error) { toast('Gagal simpan: '+error.message,'error'); return }
+  toast(`✅ Lokasi "${nama}" berhasil ${id ? 'diupdate' : 'ditambahkan'}`)
+  resetForm()
+  map.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.Circle) l.remove() })
+  await loadLokasi()
+  if (markerSaya) markerSaya.addTo(map)
+}
+
+// ====== EDIT ======
+function editLokasi (id) {
+  const lok = lokasiData.find(l => l.id === id)
+  if (!lok) return
+  document.getElementById('editId').value  = id
+  document.getElementById('fNama').value   = lok.nama
+  document.getElementById('fAlamat').value = lok.alamat || ''
+  document.getElementById('fLat').value    = lok.latitude
+  document.getElementById('fLng').value    = lok.longitude
+  document.getElementById('fRadius').value = lok.radius_meter
+  document.getElementById('formTitle').textContent = '✏️ Edit Lokasi Kantor'
+  document.getElementById('btnReset').style.display = ''
+  setMarker(parseFloat(lok.latitude), parseFloat(lok.longitude), lok.radius_meter)
+  window.scrollTo({ top:0, behavior:'smooth' })
+}
+
+function resetForm () {
+  document.getElementById('editId').value  = ''
+  document.getElementById('fNama').value   = ''
+  document.getElementById('fAlamat').value = ''
+  document.getElementById('fLat').value    = ''
+  document.getElementById('fLng').value    = ''
+  document.getElementById('fRadius').value = '100'
+  document.getElementById('formTitle').textContent = '➕ Tambah Lokasi Kantor'
+  document.getElementById('btnReset').style.display = 'none'
+  if (markerKantor) markerKantor.remove()
+  if (circleRadius) circleRadius.remove()
+}
+
+// ====== TOGGLE AKTIF ======
+async function toggleAktif (id, aktif) {
+  const { error } = await sb.from('lokasi_kantor').update({ aktif: !aktif }).eq('id', id)
+  if (error) { toast('Gagal update','error'); return }
+  toast(`✅ Lokasi ${aktif ? 'dinonaktifkan' : 'diaktifkan'}`)
+  await loadLokasi()
+}
+
+// ====== DELETE ======
+async function deleteLokasi (id) {
+  const lok = lokasiData.find(l => l.id === id)
+  if (!confirm(`Hapus lokasi "${lok?.nama}"? Tindakan ini tidak dapat dibatalkan.`)) return
+  const { error } = await sb.from('lokasi_kantor').delete().eq('id', id)
+  if (error) { toast('Gagal hapus','error'); return }
+  toast('🗑️ Lokasi dihapus')
+  map.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.Circle) l.remove() })
+  await loadLokasi()
+}
+
+// ====== INIT ======
+async function init () {
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.href='index.html'; return }
+
+  const { data: k } = await sb.from('karyawan').select('*').eq('id', session.user.id).single()
+  if (k?.role !== 'hr_admin') { window.location.href='dashboard.html'; return }
+
+  document.getElementById('sbName').textContent  = k.nama_lengkap
+  document.getElementById('sbRole').textContent  = 'HR Admin'
+  document.getElementById('sbAv').textContent    = k.nama_lengkap?.charAt(0).toUpperCase() || '?'
+
+  // Init map (default Jakarta)
+  initMap(-6.2, 106.816)
+
+  // Load lokasi & GPS
+  await loadLokasi()
+  startGPS()
+
+  document.getElementById('lo').style.display = 'none'
+}
+
+init()
+
+// ===== MOBILE SIDEBAR TOGGLE =====
+function toggleSidebar() { document.body.classList.toggle('nav-open') }
+function closeSidebar()   { document.body.classList.remove('nav-open') }
+;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(el=>{ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
+</script>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item" href="dashboard.html"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></a>
+  <a class="bn-item" href="absensi.html"><span class="bn-icon">📍</span><span class="bn-label">Absensi</span></a>
+  <a class="bn-item" href="cuti.html"><span class="bn-icon">🏖️</span><span class="bn-label">Cuti</span></a>
+  <a class="bn-item" href="payroll.html"><span class="bn-icon">💰</span><span class="bn-label">Payroll</span></a>
+  <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon">☰</span><span class="bn-label">Menu</span></button>
+</nav>
+</body>
+</html>

@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pelatihan & Pengembangan — HRIS PT KMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --primary:#1d4ed8; --primary-dk:#1e3a8a; --sidebar-w:240px; --bg:#f1f5f9; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --radius:12px; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    .sidebar { position:fixed; left:0; top:0; bottom:0; width:var(--sidebar-w); background:var(--primary-dk); color:white; display:flex; flex-direction:column; z-index:100; }
+    .sidebar-brand { padding:1.25rem; border-bottom:1px solid rgba(255,255,255,.08); }
+    .logo-row { display:flex; align-items:center; gap:.6rem; }
+    .logo-icon { width:36px; height:36px; background:rgba(255,255,255,.12); border-radius:10px; display:grid; place-items:center; font-size:1.1rem; }
+    .logo-text { font-size:.82rem; font-weight:700; line-height:1.3; }
+    .logo-sub  { font-size:.68rem; opacity:.5; }
+    .sidebar-nav { flex:1; overflow-y:auto; padding:.75rem 0; }
+    .nav-label { font-size:.65rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; opacity:.4; padding:.75rem 1.25rem .4rem; }
+    .nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem 1.25rem; font-size:.875rem; font-weight:500; color:rgba(255,255,255,.7); text-decoration:none; cursor:pointer; transition:background .15s; position:relative; }
+    .nav-item:hover { background:rgba(255,255,255,.07); color:white; }
+    .nav-item.active { background:rgba(255,255,255,.12); color:white; }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#60a5fa; border-radius:0 2px 2px 0; }
+    .nav-icon { font-size:1rem; width:20px; text-align:center; }
+    .soon { margin-left:auto; font-size:.62rem; background:rgba(255,255,255,.08); padding:1px 6px; border-radius:4px; opacity:.6; }
+    .sidebar-footer { padding:1rem 1.25rem; border-top:1px solid rgba(255,255,255,.08); }
+    .sidebar-user { display:flex; align-items:center; gap:.7rem; }
+    .s-av { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.15); display:grid; place-items:center; font-size:.9rem; font-weight:600; }
+    .u-name { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .u-role { font-size:.7rem; opacity:.5; }
+    .btn-lo { background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:1rem; }
+    .btn-lo:hover { color:#f87171; }
+
+    .main-wrap { margin-left:var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; }
+    .top-bar { height:64px; background:white; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 1.75rem; position:sticky; top:0; z-index:50; }
+    .top-bar h1 { font-size:1.1rem; font-weight:700; }
+    .bc { font-size:.75rem; color:var(--muted); }
+    .main { flex:1; padding:1.75rem; }
+
+    .card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); }
+    .card-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+    .card-head h3 { font-size:.9rem; font-weight:700; }
+    .card-body { padding:1.25rem; }
+
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; }
+    .stat-label { font-size:.75rem; color:var(--muted); font-weight:600; margin-bottom:.4rem; }
+    .stat-val { font-size:1.6rem; font-weight:800; }
+    .c-blue{color:#2563eb;} .c-green{color:#16a34a;} .c-yellow{color:#d97706;} .c-purple{color:#7c3aed;}
+
+    /* PROGRAM CARDS */
+    .program-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1rem; }
+    .program-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem; transition:all .15s; }
+    .program-card:hover { border-color:var(--primary); box-shadow:0 4px 16px rgba(29,78,216,.08); }
+    .prog-kat { display:inline-flex; align-items:center; padding:2px 10px; border-radius:99px; font-size:.7rem; font-weight:700; margin-bottom:.75rem; }
+    .kat-internal    { background:#eff6ff; color:#1d4ed8; }
+    .kat-eksternal   { background:#faf5ff; color:#7c3aed; }
+    .kat-online      { background:#f0fdf4; color:#16a34a; }
+    .kat-sertifikasi { background:#fff7ed; color:#c2410c; }
+    .prog-nama { font-size:.95rem; font-weight:700; margin-bottom:.4rem; }
+    .prog-desc { font-size:.8rem; color:var(--muted); margin-bottom:.85rem; line-height:1.5; }
+    .prog-meta { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.85rem; }
+    .prog-meta-item { font-size:.72rem; color:var(--muted); background:#f1f5f9; padding:2px 8px; border-radius:6px; }
+    .prog-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+
+    /* TABEL */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.875rem; }
+    th { padding:.65rem 1rem; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); background:#f8fafc; border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:.75rem 1rem; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafafa; }
+    .empty-row td { text-align:center; padding:2rem; color:var(--muted); }
+
+    .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
+    .badge.terdaftar          { background:#dbeafe; color:#1d4ed8; }
+    .badge.sedang_berlangsung { background:#fef3c7; color:#d97706; }
+    .badge.selesai            { background:#dcfce7; color:#16a34a; }
+    .badge.tidak_lulus        { background:#fee2e2; color:#dc2626; }
+
+    .filter-bar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem; }
+    .inp { padding:.55rem .85rem; border:1.5px solid var(--border); border-radius:9px; font-size:.875rem; color:var(--text); outline:none; transition:border-color .2s; background:white; }
+    .inp:focus { border-color:var(--primary); }
+    .inp-sm { padding:.45rem .75rem; font-size:.82rem; }
+    .inp-full { width:100%; }
+
+    .btn-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.1rem; background:var(--primary); color:white; border:none; border-radius:9px; font-size:.875rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-secondary { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1rem; background:white; color:var(--text); border:1.5px solid var(--border); border-radius:9px; font-size:.82rem; font-weight:600; cursor:pointer; transition:all .15s; }
+    .btn-secondary:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-sm { padding:.3rem .7rem; font-size:.75rem; border-radius:7px; border:1px solid var(--border); background:white; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .btn-sm:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-sm.del:hover { border-color:#ef4444; color:#ef4444; }
+
+    .tabs { display:flex; gap:.25rem; margin-bottom:1.25rem; background:white; border:1px solid var(--border); border-radius:10px; padding:.35rem; width:fit-content; }
+    .tab-btn { padding:.45rem 1rem; border-radius:7px; border:none; cursor:pointer; font-size:.82rem; font-weight:600; background:none; color:var(--muted); transition:all .15s; }
+    .tab-btn.active { background:var(--primary); color:white; }
+
+    /* SERTIFIKAT CARD */
+    .sertif-card { border:1px solid var(--border); border-radius:10px; padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:.75rem; }
+    .sertif-icon { width:44px; height:44px; background:#fff7ed; border-radius:10px; display:grid; place-items:center; font-size:1.4rem; flex-shrink:0; }
+    .sertif-nama { font-weight:700; font-size:.9rem; }
+    .sertif-meta { font-size:.78rem; color:var(--muted); margin-top:.2rem; }
+    .sertif-expired { font-size:.72rem; padding:2px 8px; border-radius:6px; font-weight:600; margin-top:.35rem; display:inline-block; }
+    .exp-ok   { background:#dcfce7; color:#16a34a; }
+    .exp-warn { background:#fef3c7; color:#d97706; }
+    .exp-dead { background:#fee2e2; color:#dc2626; }
+
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; place-items:center; z-index:1000; padding:1rem; overflow-y:auto; }
+    .modal-overlay.open { display:grid; }
+    .modal { background:white; border-radius:var(--radius); width:100%; max-width:540px; box-shadow:0 20px 60px rgba(0,0,0,.15); }
+    .modal-lg { max-width:680px; }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.4rem; border-bottom:1px solid var(--border); }
+    .modal-head h3 { font-size:1rem; font-weight:700; }
+    .modal-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--muted); }
+    .modal-body { padding:1.4rem; max-height:70vh; overflow-y:auto; }
+    .modal-foot { padding:.9rem 1.4rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:.6rem; }
+
+    .fg { margin-bottom:.9rem; }
+    .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--muted); margin-bottom:.35rem; }
+    .inp-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+    textarea.inp { resize:vertical; min-height:70px; }
+    .info-box { background:#eff6ff; border:1px solid #bfdbfe; border-radius:9px; padding:.75rem 1rem; font-size:.82rem; color:#1e40af; margin-bottom:1rem; line-height:1.6; }
+
+    #toast { position:fixed; bottom:1.5rem; right:1.5rem; padding:.75rem 1.25rem; border-radius:10px; font-size:.875rem; font-weight:500; color:white; z-index:9999; display:none; }
+    #toast.success { background:#16a34a; }
+    #toast.error   { background:#dc2626; }
+    #lo { position:fixed; inset:0; background:white; display:grid; place-items:center; z-index:9999; }
+    .spin { width:36px; height:36px; border:3px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+  </style>
+  <link rel="stylesheet" href="hris.css">
+</head>
+<body>
+<div id="lo"><div><div class="spin"></div><p style="color:#64748b;font-size:.875rem;text-align:center;">Memuat...</p></div></div>
+<div id="toast"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-row">
+      <div class="logo-icon">🏢</div>
+      <div><div class="logo-text">PT Kawan Menengah Atas</div><div class="logo-sub">HRIS v1.0</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="karyawan.html"><span class="nav-icon">👥</span> Data Karyawan</a>
+    <a class="nav-item" href="absensi.html"><span class="nav-icon">📍</span> Absensi</a>
+    <div class="nav-label" style="margin-top:.5rem;">Manajemen SDM</div>
+    <a class="nav-item" href="cuti.html"><span class="nav-icon">🏖️</span> Cuti & Izin</a>
+    <a class="nav-item" href="payroll.html"><span class="nav-icon">💰</span> Payroll</a>
+    <a class="nav-item active" href="pelatihan.html"><span class="nav-icon">📚</span> Pelatihan</a>
+    <div class="nav-label" style="margin-top:.5rem;">Administrasi</div>
+    <a class="nav-item" href="lokasi.html"><span class="nav-icon">🗺️</span> Lokasi Kantor</a>
+    <a class="nav-item" href="#" onclick="cs()"><span class="nav-icon">📊</span> Laporan<span class="soon">Soon</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="s-av" id="sbAv">?</div>
+      <div style="flex:1;min-width:0;"><div class="u-name" id="sbName">—</div><div class="u-role" id="sbRole">—</div></div>
+      <button class="btn-lo" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <div><h1>📚 Pelatihan & Pengembangan</h1><div class="bc" id="topBc">—</div></div>
+    <div id="topActions"></div>
+  </header>
+  <main class="main" id="mainContent"></main>
+</div>
+
+<!-- MODAL: Tambah/Edit Program -->
+<div class="modal-overlay" id="modalProgram">
+  <div class="modal">
+    <div class="modal-head"><h3 id="progModalTitle">➕ Program Pelatihan</h3><button class="modal-close" onclick="cm('modalProgram')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="progId">
+      <div class="fg"><label>Nama Program *</label><input class="inp inp-full" type="text" id="progNama"></div>
+      <div class="fg"><label>Deskripsi</label><textarea class="inp inp-full" id="progDesc"></textarea></div>
+      <div class="inp-row">
+        <div class="fg"><label>Kategori</label>
+          <select class="inp inp-full" id="progKat">
+            <option value="internal">Internal</option>
+            <option value="eksternal">Eksternal</option>
+            <option value="online">Online</option>
+            <option value="sertifikasi">Sertifikasi</option>
+          </select>
+        </div>
+        <div class="fg"><label>Durasi (jam)</label><input class="inp inp-full" type="number" id="progDurasi" value="0" min="0"></div>
+      </div>
+      <div class="inp-row">
+        <div class="fg"><label>Instruktur</label><input class="inp inp-full" type="text" id="progInstruktur"></div>
+        <div class="fg"><label>Maks Peserta</label><input class="inp inp-full" type="number" id="progMaks" placeholder="Kosong = tidak terbatas"></div>
+      </div>
+      <div class="fg"><label>Divisi (kosong = semua divisi)</label>
+        <select class="inp inp-full" id="progDivisi">
+          <option value="">Semua Divisi</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalProgram')">Batal</button>
+      <button class="btn-primary" onclick="saveProgram()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Daftar Peserta Program -->
+<div class="modal-overlay" id="modalPeserta">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h3 id="pesertaTitle">👥 Peserta Pelatihan</h3><button class="modal-close" onclick="cm('modalPeserta')">×</button></div>
+    <div class="modal-body" id="pesertaBody"></div>
+    <div class="modal-foot"><button class="btn-primary" onclick="cm('modalPeserta')">Tutup</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Daftarkan Karyawan -->
+<div class="modal-overlay" id="modalDaftar">
+  <div class="modal">
+    <div class="modal-head"><h3>➕ Daftarkan Karyawan</h3><button class="modal-close" onclick="cm('modalDaftar')">×</button></div>
+    <div class="modal-body">
+      <div class="info-box" id="daftarInfo"></div>
+      <div class="fg"><label>Pilih Karyawan *</label>
+        <select class="inp inp-full" id="daftarKary"></select>
+      </div>
+      <div class="fg"><label>Tanggal Daftar</label>
+        <input class="inp inp-full" type="date" id="daftarTgl">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalDaftar')">Batal</button>
+      <button class="btn-primary" onclick="saveDaftar()">✅ Daftarkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Update Status Peserta -->
+<div class="modal-overlay" id="modalUpdate">
+  <div class="modal">
+    <div class="modal-head"><h3>📝 Update Status Peserta</h3><button class="modal-close" onclick="cm('modalUpdate')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="updatePesertaId">
+      <div class="fg"><label>Status</label>
+        <select class="inp inp-full" id="updateStatus">
+          <option value="terdaftar">Terdaftar</option>
+          <option value="sedang_berlangsung">Sedang Berlangsung</option>
+          <option value="selesai">Selesai</option>
+          <option value="tidak_lulus">Tidak Lulus</option>
+        </select>
+      </div>
+      <div class="inp-row">
+        <div class="fg"><label>Tanggal Selesai</label><input class="inp inp-full" type="date" id="updateTglSelesai"></div>
+        <div class="fg"><label>Nilai (0-100)</label><input class="inp inp-full" type="number" id="updateNilai" min="0" max="100"></div>
+      </div>
+      <div class="fg"><label>Catatan</label><textarea class="inp inp-full" id="updateCatatan"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalUpdate')">Batal</button>
+      <button class="btn-primary" onclick="saveUpdate()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Tambah Sertifikasi -->
+<div class="modal-overlay" id="modalSertif">
+  <div class="modal">
+    <div class="modal-head"><h3 id="sertifTitle">🏆 Tambah Sertifikasi</h3><button class="modal-close" onclick="cm('modalSertif')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="sertifId">
+      <div class="fg"><label>Karyawan *</label><select class="inp inp-full" id="sertifKary"></select></div>
+      <div class="fg"><label>Nama Sertifikat *</label><input class="inp inp-full" type="text" id="sertifNama"></div>
+      <div class="inp-row">
+        <div class="fg"><label>Lembaga Penerbit</label><input class="inp inp-full" type="text" id="sertifLembaga"></div>
+        <div class="fg"><label>Nomor Sertifikat</label><input class="inp inp-full" type="text" id="sertifNomor"></div>
+      </div>
+      <div class="inp-row">
+        <div class="fg"><label>Tanggal Terbit</label><input class="inp inp-full" type="date" id="sertifTerbit"></div>
+        <div class="fg"><label>Tanggal Expired</label><input class="inp inp-full" type="date" id="sertifExpired" placeholder="Kosong = tidak expired"></div>
+      </div>
+      <div class="fg"><label>URL Dokumen / Link Sertifikat</label><input class="inp inp-full" type="url" id="sertifUrl" placeholder="https://..."></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalSertif')">Batal</button>
+      <button class="btn-primary" onclick="saveSertif()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+let myProfile = null, allKaryawan = [], allDivisi = [], allProgram = []
+let daftarProgramId = null
+
+function toast(msg, t='success') {
+  const el = document.getElementById('toast')
+  el.textContent=msg; el.className=t; el.style.display='block'
+  setTimeout(()=>el.style.display='none', 4000)
+}
+function cs() { toast('🚧 Segera hadir','error'); return false }
+async function logout() { await sb.auth.signOut(); window.location.href='index.html' }
+function om(id) { document.getElementById(id).classList.add('open') }
+function cm(id) { document.getElementById(id).classList.remove('open') }
+function fmtDate(d) { return d ? new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '—' }
+
+const KAT_LABEL = { internal:'Internal', eksternal:'Eksternal', online:'Online', sertifikasi:'Sertifikasi' }
+const KAT_CLASS = { internal:'kat-internal', eksternal:'kat-eksternal', online:'kat-online', sertifikasi:'kat-sertifikasi' }
+const STATUS_LABEL = { terdaftar:'Terdaftar', sedang_berlangsung:'Berlangsung', selesai:'Selesai', tidak_lulus:'Tidak Lulus' }
+
+// ============================================================
+// RENDER HALAMAN
+// ============================================================
+async function renderPage() {
+  if (myProfile.role === 'hr_admin') renderHR()
+  else renderKaryawan()
+}
+
+// ============================================================
+// VIEW HR ADMIN — Tab: Program | Sertifikasi
+// ============================================================
+let hrTab = 'program'
+async function renderHR(tab=hrTab) {
+  hrTab = tab
+  document.getElementById('topBc').textContent = 'Kelola program pelatihan & sertifikasi karyawan'
+  document.getElementById('topActions').innerHTML = tab === 'program'
+    ? `<div style="display:flex;gap:.6rem;">
+        <button class="btn-primary" onclick="bukaProgram()">➕ Program Baru</button>
+       </div>`
+    : `<button class="btn-primary" onclick="bukaSertif()">🏆 Tambah Sertifikasi</button>`
+
+  const tabsHtml = `
+    <div class="tabs">
+      <button class="tab-btn ${tab==='program'?'active':''}" onclick="renderHR('program')">📚 Program Pelatihan</button>
+      <button class="tab-btn ${tab==='sertifikasi'?'active':''}" onclick="renderHR('sertifikasi')">🏆 Sertifikasi</button>
+    </div>`
+
+  if (tab === 'program') {
+    await loadProgram()
+    const totalPeserta = await hitungTotalPeserta()
+
+    const statsHtml = `
+      <div class="stats-grid" style="margin-bottom:1.25rem;">
+        <div class="stat-card"><div class="stat-label">Total Program</div><div class="stat-val c-blue">${allProgram.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Aktif</div><div class="stat-val c-green">${allProgram.filter(p=>p.aktif).length}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Peserta</div><div class="stat-val c-purple">${totalPeserta}</div></div>
+        <div class="stat-card"><div class="stat-label">Karyawan Aktif</div><div class="stat-val c-yellow">${allKaryawan.length}</div></div>
+      </div>`
+
+    const cardsHtml = allProgram.length
+      ? `<div class="program-grid">${allProgram.map(p => `
+          <div class="program-card">
+            <div><span class="prog-kat ${KAT_CLASS[p.kategori]}">${KAT_LABEL[p.kategori]}</span></div>
+            <div class="prog-nama">${p.nama}</div>
+            <div class="prog-desc">${p.deskripsi||'Tidak ada deskripsi'}</div>
+            <div class="prog-meta">
+              ${p.durasi_jam?`<span class="prog-meta-item">⏱ ${p.durasi_jam} jam</span>`:''}
+              ${p.instruktur?`<span class="prog-meta-item">👤 ${p.instruktur}</span>`:''}
+              ${p.maks_peserta?`<span class="prog-meta-item">👥 Maks ${p.maks_peserta}</span>`:'<span class="prog-meta-item">👥 Tidak terbatas</span>'}
+              ${p.divisi?.nama?`<span class="prog-meta-item">🏢 ${p.divisi.nama}</span>`:'<span class="prog-meta-item">🏢 Semua Divisi</span>'}
+            </div>
+            <div class="prog-actions">
+              <button class="btn-sm" onclick="lihatPeserta('${p.id}','${p.nama}')">👥 Peserta</button>
+              <button class="btn-sm" onclick="daftarkanKaryawan('${p.id}','${p.nama}')">➕ Daftarkan</button>
+              <button class="btn-sm" onclick="bukaProgram('${p.id}')">✏️ Edit</button>
+              <button class="btn-sm del" onclick="hapusProgram('${p.id}','${p.nama}')">🗑️</button>
+            </div>
+          </div>`).join('')}</div>`
+      : '<div style="color:var(--muted);font-size:.875rem;padding:1rem;">Belum ada program pelatihan. Klik "Program Baru" untuk mulai.</div>'
+
+    document.getElementById('mainContent').innerHTML = tabsHtml + statsHtml + `
+      <div class="card"><div class="card-head"><h3>📚 Semua Program Pelatihan</h3></div>
+      <div class="card-body">${cardsHtml}</div></div>`
+
+  } else {
+    // Tab Sertifikasi
+    const { data: sertifs } = await sb.from('sertifikasi')
+      .select('*, karyawan:karyawan_id(nama_lengkap,nik), program:program_id(nama)')
+      .order('tanggal_terbit',{ascending:false})
+
+    const today = new Date()
+    const soonMs = 90 * 24 * 60 * 60 * 1000 // 90 hari
+
+    const tblHtml = sertifs?.length
+      ? sertifs.map(s => {
+          let expBadge = ''
+          if (s.tanggal_expired) {
+            const exp = new Date(s.tanggal_expired)
+            if (exp < today)                       expBadge = `<span class="sertif-expired exp-dead">⛔ Expired</span>`
+            else if (exp - today < soonMs)         expBadge = `<span class="sertif-expired exp-warn">⚠️ Segera expired ${fmtDate(s.tanggal_expired)}</span>`
+            else                                   expBadge = `<span class="sertif-expired exp-ok">✅ Aktif s/d ${fmtDate(s.tanggal_expired)}</span>`
+          } else expBadge = `<span class="sertif-expired exp-ok">✅ Tidak expired</span>`
+          return `<tr>
+            <td><div style="font-weight:600">${s.karyawan?.nama_lengkap||'—'}</div><div style="font-size:.75rem;color:var(--muted)">${s.karyawan?.nik||''}</div></td>
+            <td>${s.nama_sertifikat}</td>
+            <td>${s.lembaga_penerbit||'—'}</td>
+            <td>${fmtDate(s.tanggal_terbit)}</td>
+            <td>${expBadge}</td>
+            <td>
+              ${s.url_dokumen?`<a href="${s.url_dokumen}" target="_blank" class="btn-sm">🔗 Buka</a>`:''}&nbsp;
+              <button class="btn-sm del" onclick="hapusSertif('${s.id}')">🗑️</button>
+            </td>
+          </tr>`}).join('')
+      : '<tr class="empty-row"><td colspan="6">Belum ada data sertifikasi</td></tr>'
+
+    document.getElementById('mainContent').innerHTML = tabsHtml + `
+      <div class="card">
+        <div class="card-head"><h3>🏆 Data Sertifikasi Karyawan</h3></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Karyawan</th><th>Sertifikat</th><th>Lembaga</th><th>Terbit</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody>${tblHtml}</tbody>
+        </table></div>
+      </div>`
+  }
+}
+
+async function hitungTotalPeserta() {
+  const { count } = await sb.from('peserta_pelatihan').select('*',{count:'exact',head:true})
+  return count || 0
+}
+
+// ============================================================
+// VIEW KARYAWAN
+// ============================================================
+async function renderKaryawan() {
+  document.getElementById('topBc').textContent = 'Pelatihan & sertifikasi saya'
+
+  const [{ data: peserta }, { data: sertifs }] = await Promise.all([
+    sb.from('peserta_pelatihan')
+      .select('*, program:program_id(*)')
+      .eq('karyawan_id', myProfile.id)
+      .order('created_at',{ascending:false}),
+    sb.from('sertifikasi')
+      .select('*')
+      .eq('karyawan_id', myProfile.id)
+      .order('tanggal_terbit',{ascending:false})
+  ])
+
+  const selesai = peserta?.filter(p=>p.status==='selesai').length || 0
+  const aktif   = peserta?.filter(p=>p.status==='sedang_berlangsung'||p.status==='terdaftar').length || 0
+
+  const tblPeserta = peserta?.length
+    ? peserta.map(p => `
+      <tr>
+        <td><div style="font-weight:600">${p.program?.nama||'—'}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${KAT_LABEL[p.program?.kategori]||''} · ${p.program?.durasi_jam||0} jam</div>
+        </td>
+        <td>${fmtDate(p.tanggal_daftar)}</td>
+        <td>${fmtDate(p.tanggal_selesai)}</td>
+        <td style="text-align:center">${p.nilai!=null?p.nilai:'—'}</td>
+        <td><span class="badge ${p.status}">${STATUS_LABEL[p.status]||p.status}</span></td>
+        <td>${p.catatan||'—'}</td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="6">Belum terdaftar di pelatihan apapun</td></tr>'
+
+  const today = new Date()
+  const soonMs = 90 * 24 * 60 * 60 * 1000
+
+  const sertifHtml = sertifs?.length
+    ? sertifs.map(s => {
+        let expBadge = '<span class="sertif-expired exp-ok">Tidak expired</span>'
+        if (s.tanggal_expired) {
+          const exp = new Date(s.tanggal_expired)
+          if (exp < today) expBadge = `<span class="sertif-expired exp-dead">⛔ Expired ${fmtDate(s.tanggal_expired)}</span>`
+          else if (exp - today < soonMs) expBadge = `<span class="sertif-expired exp-warn">⚠️ Expired ${fmtDate(s.tanggal_expired)}</span>`
+          else expBadge = `<span class="sertif-expired exp-ok">✅ Aktif s/d ${fmtDate(s.tanggal_expired)}</span>`
+        }
+        return `
+        <div class="sertif-card">
+          <div class="sertif-icon">🏆</div>
+          <div style="flex:1">
+            <div class="sertif-nama">${s.nama_sertifikat}</div>
+            <div class="sertif-meta">${s.lembaga_penerbit||'—'} · Terbit ${fmtDate(s.tanggal_terbit)}</div>
+            ${expBadge}
+          </div>
+          ${s.url_dokumen?`<a href="${s.url_dokumen}" target="_blank" class="btn-sm">🔗 Lihat</a>`:''}
+        </div>`
+      }).join('')
+    : '<div style="color:var(--muted);font-size:.875rem;padding:1rem 0;">Belum ada sertifikasi</div>'
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="stats-grid" style="margin-bottom:1.25rem;">
+      <div class="stat-card"><div class="stat-label">Pelatihan Diikuti</div><div class="stat-val c-blue">${peserta?.length||0}</div></div>
+      <div class="stat-card"><div class="stat-label">Selesai</div><div class="stat-val c-green">${selesai}</div></div>
+      <div class="stat-card"><div class="stat-label">Sedang Berjalan</div><div class="stat-val c-yellow">${aktif}</div></div>
+      <div class="stat-card"><div class="stat-label">Sertifikasi</div><div class="stat-val c-purple">${sertifs?.length||0}</div></div>
+    </div>
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div class="card-head"><h3>📋 Riwayat Pelatihan Saya</h3></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Program</th><th>Tgl Daftar</th><th>Tgl Selesai</th><th style="text-align:center">Nilai</th><th>Status</th><th>Catatan</th></tr></thead>
+        <tbody>${tblPeserta}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>🏆 Sertifikasi Saya</h3></div>
+      <div class="card-body">${sertifHtml}</div>
+    </div>`
+}
+
+// ============================================================
+// CRUD PROGRAM
+// ============================================================
+async function loadProgram() {
+  const { data } = await sb.from('program_pelatihan')
+    .select('*, divisi:divisi_id(nama)').order('created_at',{ascending:false})
+  allProgram = data || []
+}
+
+async function bukaProgram(id=null) {
+  document.getElementById('progId').value = id||''
+  document.getElementById('progModalTitle').textContent = id ? '✏️ Edit Program' : '➕ Program Baru'
+
+  const selDiv = document.getElementById('progDivisi')
+  selDiv.innerHTML = '<option value="">Semua Divisi</option>' +
+    allDivisi.map(d=>`<option value="${d.id}">${d.nama}</option>`).join('')
+
+  if (id) {
+    const p = allProgram.find(p=>p.id===id)
+    if (p) {
+      document.getElementById('progNama').value       = p.nama
+      document.getElementById('progDesc').value       = p.deskripsi||''
+      document.getElementById('progKat').value        = p.kategori
+      document.getElementById('progDurasi').value     = p.durasi_jam||0
+      document.getElementById('progInstruktur').value = p.instruktur||''
+      document.getElementById('progMaks').value       = p.maks_peserta||''
+      document.getElementById('progDivisi').value     = p.divisi_id||''
+    }
+  } else {
+    document.getElementById('progNama').value=''; document.getElementById('progDesc').value=''
+    document.getElementById('progKat').value='internal'; document.getElementById('progDurasi').value=0
+    document.getElementById('progInstruktur').value=''; document.getElementById('progMaks').value=''
+  }
+  om('modalProgram')
+}
+
+async function saveProgram() {
+  const id   = document.getElementById('progId').value
+  const nama = document.getElementById('progNama').value.trim()
+  if (!nama) { toast('Nama program wajib diisi','error'); return }
+
+  const payload = {
+    nama,
+    deskripsi:    document.getElementById('progDesc').value.trim()||null,
+    kategori:     document.getElementById('progKat').value,
+    durasi_jam:   parseInt(document.getElementById('progDurasi').value)||0,
+    instruktur:   document.getElementById('progInstruktur').value.trim()||null,
+    maks_peserta: parseInt(document.getElementById('progMaks').value)||null,
+    divisi_id:    document.getElementById('progDivisi').value||null
+  }
+
+  const { error } = id
+    ? await sb.from('program_pelatihan').update(payload).eq('id',id)
+    : await sb.from('program_pelatihan').insert(payload)
+  if (error) { toast('Gagal: '+error.message,'error'); return }
+  toast('✅ Program disimpan')
+  cm('modalProgram'); renderHR('program')
+}
+
+async function hapusProgram(id, nama) {
+  if (!confirm(`Hapus program "${nama}"? Semua data peserta ikut terhapus.`)) return
+  await sb.from('program_pelatihan').delete().eq('id',id)
+  toast('🗑️ Program dihapus'); renderHR('program')
+}
+
+// ============================================================
+// PESERTA
+// ============================================================
+async function lihatPeserta(programId, namaProg) {
+  const { data: peserta } = await sb.from('peserta_pelatihan')
+    .select('*, karyawan:karyawan_id(nama_lengkap,nik)')
+    .eq('program_id', programId).order('tanggal_daftar')
+
+  document.getElementById('pesertaTitle').textContent = `👥 Peserta — ${namaProg}`
+  const tblHtml = peserta?.length
+    ? peserta.map(p => `
+      <tr>
+        <td><div style="font-weight:600">${p.karyawan?.nama_lengkap||'—'}</div></td>
+        <td>${fmtDate(p.tanggal_daftar)}</td>
+        <td>${fmtDate(p.tanggal_selesai)}</td>
+        <td style="text-align:center">${p.nilai!=null?p.nilai:'—'}</td>
+        <td><span class="badge ${p.status}">${STATUS_LABEL[p.status]}</span></td>
+        <td><button class="btn-sm" onclick="bukaUpdate('${p.id}','${p.status}',${p.nilai||0},'${p.catatan||''}')">✏️ Update</button></td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="6">Belum ada peserta terdaftar</td></tr>'
+
+  document.getElementById('pesertaBody').innerHTML = `
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Nama</th><th>Tgl Daftar</th><th>Tgl Selesai</th><th style="text-align:center">Nilai</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody>${tblHtml}</tbody>
+    </table></div>`
+  om('modalPeserta')
+}
+
+async function daftarkanKaryawan(programId, namaProg) {
+  daftarProgramId = programId
+  document.getElementById('daftarInfo').textContent = `Program: ${namaProg}`
+  document.getElementById('daftarKary').innerHTML =
+    allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
+  document.getElementById('daftarTgl').value = new Date().toISOString().split('T')[0]
+  om('modalDaftar')
+}
+
+async function saveDaftar() {
+  const karyawanId = document.getElementById('daftarKary').value
+  const tgl = document.getElementById('daftarTgl').value
+  if (!karyawanId) { toast('Pilih karyawan','error'); return }
+
+  const { error } = await sb.from('peserta_pelatihan').insert({
+    program_id: daftarProgramId, karyawan_id: karyawanId,
+    tanggal_daftar: tgl, status:'terdaftar'
+  })
+  if (error) {
+    toast(error.code==='23505' ? 'Karyawan sudah terdaftar di program ini' : 'Gagal: '+error.message, 'error')
+    return
+  }
+  toast('✅ Karyawan berhasil didaftarkan')
+  cm('modalDaftar')
+}
+
+function bukaUpdate(id, status, nilai, catatan) {
+  document.getElementById('updatePesertaId').value  = id
+  document.getElementById('updateStatus').value     = status
+  document.getElementById('updateNilai').value      = nilai||''
+  document.getElementById('updateCatatan').value    = catatan
+  document.getElementById('updateTglSelesai').value = status==='selesai' ? new Date().toISOString().split('T')[0] : ''
+  om('modalUpdate')
+}
+
+async function saveUpdate() {
+  const id     = document.getElementById('updatePesertaId').value
+  const status = document.getElementById('updateStatus').value
+  const nilai  = parseInt(document.getElementById('updateNilai').value)||null
+  const tgl    = document.getElementById('updateTglSelesai').value||null
+  const catatan= document.getElementById('updateCatatan').value.trim()||null
+
+  const { error } = await sb.from('peserta_pelatihan')
+    .update({ status, nilai, tanggal_selesai:tgl, catatan }).eq('id',id)
+  if (error) { toast('Gagal: '+error.message,'error'); return }
+  toast('✅ Status diupdate')
+  cm('modalUpdate')
+}
+
+// ============================================================
+// SERTIFIKASI
+// ============================================================
+async function bukaSertif(id=null) {
+  document.getElementById('sertifId').value = id||''
+  document.getElementById('sertifTitle').textContent = id ? '✏️ Edit Sertifikasi' : '🏆 Tambah Sertifikasi'
+  document.getElementById('sertifKary').innerHTML =
+    allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
+  if (!id) {
+    ['sertifNama','sertifLembaga','sertifNomor','sertifUrl'].forEach(f=>document.getElementById(f).value='')
+    document.getElementById('sertifTerbit').value   = new Date().toISOString().split('T')[0]
+    document.getElementById('sertifExpired').value  = ''
+  }
+  om('modalSertif')
+}
+
+async function saveSertif() {
+  const nama = document.getElementById('sertifNama').value.trim()
+  const kid  = document.getElementById('sertifKary').value
+  if (!nama||!kid) { toast('Nama sertifikat & karyawan wajib diisi','error'); return }
+
+  const { error } = await sb.from('sertifikasi').insert({
+    karyawan_id:      kid,
+    nama_sertifikat:  nama,
+    lembaga_penerbit: document.getElementById('sertifLembaga').value.trim()||null,
+    nomor_sertifikat: document.getElementById('sertifNomor').value.trim()||null,
+    tanggal_terbit:   document.getElementById('sertifTerbit').value||null,
+    tanggal_expired:  document.getElementById('sertifExpired').value||null,
+    url_dokumen:      document.getElementById('sertifUrl').value.trim()||null
+  })
+  if (error) { toast('Gagal: '+error.message,'error'); return }
+  toast('✅ Sertifikasi disimpan')
+  cm('modalSertif'); renderHR('sertifikasi')
+}
+
+async function hapusSertif(id) {
+  if (!confirm('Hapus sertifikasi ini?')) return
+  await sb.from('sertifikasi').delete().eq('id',id)
+  toast('🗑️ Sertifikasi dihapus'); renderHR('sertifikasi')
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession()
+  if (!session) { window.location.href='index.html'; return }
+
+  const [{ data:k },{ data:karys },{ data:divis }] = await Promise.all([
+    sb.from('karyawan').select('*').eq('id',session.user.id).single(),
+    sb.from('karyawan').select('id,nama_lengkap,nik').eq('status','aktif').order('nama_lengkap'),
+    sb.from('divisi').select('id,nama').order('nama')
+  ])
+
+  myProfile   = k
+  allKaryawan = karys||[]
+  allDivisi   = divis||[]
+
+  document.getElementById('sbName').textContent = k.nama_lengkap
+  document.getElementById('sbRole').textContent = k.role==='hr_admin'?'HR Admin':'Karyawan'
+  document.getElementById('sbAv').textContent   = k.nama_lengkap?.charAt(0).toUpperCase()||'?'
+
+  await renderPage()
+  document.getElementById('lo').style.display='none'
+}
+
+init()
+
+// ===== MOBILE SIDEBAR TOGGLE =====
+function toggleSidebar() { document.body.classList.toggle('nav-open') }
+function closeSidebar()   { document.body.classList.remove('nav-open') }
+;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(el=>{ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
+</script>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item" href="dashboard.html"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></a>
+  <a class="bn-item" href="absensi.html"><span class="bn-icon">📍</span><span class="bn-label">Absensi</span></a>
+  <a class="bn-item" href="cuti.html"><span class="bn-icon">🏖️</span><span class="bn-label">Cuti</span></a>
+  <a class="bn-item" href="payroll.html"><span class="bn-icon">💰</span><span class="bn-label">Payroll</span></a>
+  <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon">☰</span><span class="bn-label">Menu</span></button>
+</nav>
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — HRIS PT Kawan Menengah Atas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ---- LEFT PANEL ---- */
+    .left-panel {
+      flex: 0 0 42%;
+      background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem 2.5rem;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      width: 350px; height: 350px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      top: -100px; right: -100px;
+    }
+
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      width: 250px; height: 250px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      bottom: -60px; left: -60px;
+    }
+
+    .brand-logo {
+      width: 88px; height: 88px;
+      background: rgba(255,255,255,0.12);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.3px;
+      position: relative; z-index: 1;
+    }
+
+    .brand-sub {
+      font-size: 0.82rem;
+      font-weight: 400;
+      opacity: 0.65;
+      margin-top: 4px;
+      text-align: center;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      position: relative; z-index: 1;
+    }
+
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: rgba(255,255,255,0.25);
+      margin: 2rem auto;
+      border-radius: 2px;
+      position: relative; z-index: 1;
+    }
+
+    .features {
+      list-style: none;
+      width: 100%;
+      max-width: 270px;
+      position: relative; z-index: 1;
+    }
+
+    .features li {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.5rem 0;
+      font-size: 0.875rem;
+      opacity: 0.82;
+    }
+
+    .features li .icon {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .version-tag {
+      position: absolute;
+      bottom: 1.5rem;
+      font-size: 0.75rem;
+      opacity: 0.4;
+      z-index: 1;
+    }
+
+    /* ---- RIGHT PANEL ---- */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background: #f8fafc;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-card h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.4rem;
+    }
+
+    .login-card .subtitle {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      margin-bottom: 1.2rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .alert-error  { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+    .alert-success{ background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+
+    .form-group { margin-bottom: 1.1rem; }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.2px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap .input-icon {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.95rem;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.7rem 1rem 0.7rem 2.5rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.93rem;
+      color: #1e293b;
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    input::placeholder { color: #cbd5e1; }
+
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .forgot-link {
+      font-size: 0.78rem;
+      color: #2563eb;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    .btn-login {
+      width: 100%;
+      padding: 0.82rem;
+      background: linear-gradient(135deg, #1e40af, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.97rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      letter-spacing: 0.2px;
+    }
+
+    .btn-login:hover { opacity: 0.92; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); }
+    .btn-login:active { transform: scale(0.99); }
+    .btn-login:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.2s infinite;
+    }
+
+    @keyframes dots {
+      0%   { content: '.'; }
+      33%  { content: '..'; }
+      66%  { content: '...'; }
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    /* Set Password Form (untuk karyawan baru dari invite) */
+    #setPasswordSection { display: none; }
+    .password-strength {
+      height: 4px;
+      border-radius: 4px;
+      margin-top: 6px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .password-strength-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s, background 0.3s;
+      width: 0%;
+    }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .left-panel {
+        flex: 0 0 auto;
+        padding: 2rem;
+        min-height: auto;
+      }
+      .features { display: none; }
+      .divider  { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LEFT PANEL (Branding) ===== -->
+<div class="left-panel">
+  <div class="brand-logo">🏢</div>
+  <div class="brand-name">PT Kawan Menengah Atas</div>
+  <div class="brand-sub">Human Resource Information System</div>
+
+  <div class="divider"></div>
+
+  <ul class="features">
+    <li>
+      <div class="icon">👥</div>
+      Manajemen Data Karyawan
+    </li>
+    <li>
+      <div class="icon">📍</div>
+      Absensi Berbasis Lokasi GPS
+    </li>
+    <li>
+      <div class="icon">🏖️</div>
+      Pengajuan Cuti & Izin Online
+    </li>
+    <li>
+      <div class="icon">💰</div>
+      Payroll Otomatis (PPh21 & BPJS)
+    </li>
+    <li>
+      <div class="icon">📱</div>
+      Employee Self-Service Portal
+    </li>
+    <li>
+      <div class="icon">📚</div>
+      Pelatihan & Pengembangan SDM
+    </li>
+  </ul>
+
+  <div class="version-tag">HRIS v1.0</div>
+</div>
+
+<!-- ===== RIGHT PANEL (Login Form) ===== -->
+<div class="right-panel">
+  <div class="login-card">
+
+    <!-- FORM SET PASSWORD (muncul saat karyawan klik link invite) -->
+    <div id="setPasswordSection">
+      <h2>Buat Password 🔐</h2>
+      <p class="subtitle">Selamat datang! Buat password untuk akun Anda.</p>
+
+      <div class="alert alert-error"  id="alertErrorPwd"></div>
+      <div class="alert alert-success" id="alertSuccessPwd"></div>
+
+      <form id="setPasswordForm">
+        <div class="form-group">
+          <label for="newPassword">Password Baru</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="newPassword" placeholder="Minimal 8 karakter" required minlength="8">
+          </div>
+          <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Konfirmasi Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="confirmPassword" placeholder="Ulangi password" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-login" id="btnSetPassword">Simpan & Masuk</button>
+      </form>
+    </div>
+
+    <!-- FORM LOGIN BIASA -->
+    <div id="loginSection">
+      <h2>Selamat Datang 👋</h2>
+      <p class="subtitle">Masuk dengan akun karyawan Anda</p>
+
+      <div class="alert alert-error"  id="alertError"></div>
+      <div class="alert alert-success" id="alertSuccess"></div>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="email" name="email" placeholder="nama@perusahaan.com" autocomplete="email" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="row-between">
+            <label for="password">Password</label>
+            <a class="forgot-link" id="forgotLink">Lupa password?</a>
+          </div>
+          <div class="input-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-login" id="btnLogin">Masuk</button>
+      </form>
+    </div>
+
+    <div class="footer-note">
+      Hubungi HR jika Anda belum memiliki akun<br>
+      &copy; 2026 PT Kawan Menengah Atas
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ============================================================
+// KONFIGURASI SUPABASE
+// Ganti dua baris di bawah ini dengan URL dan Key dari project Anda
+// Lokasi: Supabase Dashboard → Project Settings → API
+// ============================================================
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+// ============================================================
+
+// ============================================================
+// BACA HASH URL DULU sebelum Supabase client dibuat
+// (Supabase JS otomatis proses & hapus hash saat createClient dipanggil)
+// ============================================================
+const _rawHash      = window.location.hash.substring(1)
+const _hp           = new URLSearchParams(_rawHash)
+const _accessToken  = _hp.get('access_token')
+const _refreshToken = _hp.get('refresh_token')
+const _urlType      = _hp.get('type')
+const _isInvite     = !!_accessToken && (_urlType === 'invite' || _urlType === 'recovery')
+
+// Tampilkan form yang benar SEBELUM Supabase diinit
+if (_isInvite) {
+  document.getElementById('setPasswordSection').style.display = 'block'
+  document.getElementById('loginSection').style.display       = 'none'
+  history.replaceState(null, '', window.location.pathname)
+}
+
+// Baru buat Supabase client
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// --- Helper: tampilkan pesan ---
+function showAlert (type, msg, section = 'login') {
+  const suffix = section === 'pwd' ? 'Pwd' : ''
+  const el = document.getElementById(type === 'error' ? `alertError${suffix}` : `alertSuccess${suffix}`)
+  if (!el) return
+  el.textContent = msg
+  el.style.display = 'flex'
+  setTimeout(() => { el.style.display = 'none' }, 6000)
+}
+
+// --- Init auth ---
+;(async () => {
+  if (_isInvite) {
+    // Set session dari token yang sudah kita baca tadi
+    const { error } = await sb.auth.setSession({
+      access_token:  _accessToken,
+      refresh_token: _refreshToken
+    })
+    if (error) {
+      // Token expired — kembalikan ke form login dengan pesan
+      document.getElementById('setPasswordSection').style.display = 'none'
+      document.getElementById('loginSection').style.display       = 'block'
+      showAlert('error', '⚠️ Link undangan sudah kadaluarsa. Minta HR kirim ulang invite.')
+    }
+    return
+  }
+
+  // Cek kalau sudah login biasa
+  const { data: { session } } = await sb.auth.getSession()
+  if (session) window.location.href = 'dashboard.html'
+})()
+
+// --- Password strength indicator ---
+document.getElementById('newPassword')?.addEventListener('input', function () {
+  const val = this.value
+  const bar = document.getElementById('strengthBar')
+  let strength = 0
+  if (val.length >= 8)  strength++
+  if (/[A-Z]/.test(val)) strength++
+  if (/[0-9]/.test(val)) strength++
+  if (/[^A-Za-z0-9]/.test(val)) strength++
+  const pct   = [0, 25, 50, 75, 100][strength]
+  const color = ['#e2e8f0', '#ef4444', '#f59e0b', '#3b82f6', '#22c55e'][strength]
+  bar.style.width      = pct + '%'
+  bar.style.background = color
+})
+
+// --- Handle: Set Password (dari invite) ---
+document.getElementById('setPasswordForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const newPwd  = document.getElementById('newPassword').value
+  const confPwd = document.getElementById('confirmPassword').value
+  const btn     = document.getElementById('btnSetPassword')
+
+  if (newPwd !== confPwd) {
+    showAlert('error', 'Password tidak cocok. Coba lagi.', 'pwd')
+    return
+  }
+  if (newPwd.length < 8) {
+    showAlert('error', 'Password minimal 8 karakter.', 'pwd')
+    return
+  }
+
+  btn.disabled = true; btn.textContent = 'Menyimpan...'
+
+  const { error } = await sb.auth.updateUser({ password: newPwd })
+
+  if (error) {
+    showAlert('error', 'Gagal menyimpan password: ' + error.message, 'pwd')
+    btn.disabled = false; btn.textContent = 'Simpan & Masuk'
+  } else {
+    showAlert('success', '✅ Password berhasil dibuat! Mengalihkan...', 'pwd')
+    setTimeout(() => { window.location.href = 'dashboard.html' }, 1500)
+  }
+})
+
+// --- Handle: Submit login ---
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault()
+
+  const email    = document.getElementById('email').value.trim()
+  const password = document.getElementById('password').value
+  const btn      = document.getElementById('btnLogin')
+
+  btn.disabled  = true
+  btn.innerHTML = '<span class="loading-dots">Memproses</span>'
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password })
+
+  if (error) {
+    let msg = 'Terjadi kesalahan, coba lagi.'
+    if (error.message.includes('Invalid login credentials')) msg = 'Email atau password salah.'
+    if (error.message.includes('Email not confirmed'))       msg = 'Email belum diverifikasi. Cek inbox Anda.'
+    if (error.message.includes('Too many requests'))         msg = 'Terlalu banyak percobaan. Coba lagi nanti.'
+    showAlert('error', msg)
+    btn.disabled  = false
+    btn.textContent = 'Masuk'
+  } else {
+    window.location.href = 'dashboard.html'
+  }
+})
+
+// --- Handle: Lupa password ---
+document.getElementById('forgotLink').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim()
+  if (!email) {
+    showAlert('error', 'Masukkan email Anda terlebih dahulu.')
+    return
+  }
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/reset-password.html'
+  })
+
+  if (error) {
+    showAlert('error', 'Gagal mengirim email. Coba lagi.')
+  } else {
+    showAlert('success', '✅ Link reset password sudah dikirim ke email Anda.')
+  }
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absensi — HRIS PT KMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #1d4ed8; --primary-dk: #1e3a8a;
+      --sidebar-w: 240px; --bg: #f1f5f9;
+      --card: #ffffff; --text: #0f172a;
+      --muted: #64748b; --border: #e2e8f0; --radius: 12px;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { position: fixed; left:0; top:0; bottom:0; width: var(--sidebar-w); background: var(--primary-dk); color: white; display:flex; flex-direction:column; z-index:100; }
+    .sidebar-brand { padding:1.25rem; border-bottom:1px solid rgba(255,255,255,.08); flex-shrink:0; }
+    .logo-row { display:flex; align-items:center; gap:.6rem; }
+    .logo-icon { width:36px; height:36px; background:rgba(255,255,255,.12); border-radius:10px; display:grid; place-items:center; font-size:1.1rem; flex-shrink:0; }
+    .logo-text { font-size:.82rem; font-weight:700; line-height:1.3; }
+    .logo-sub  { font-size:.68rem; opacity:.5; }
+    .sidebar-nav { flex:1; overflow-y:auto; padding:.75rem 0; }
+    .nav-label { font-size:.65rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; opacity:.4; padding:.75rem 1.25rem .4rem; }
+    .nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem 1.25rem; font-size:.875rem; font-weight:500; color:rgba(255,255,255,.7); text-decoration:none; cursor:pointer; transition:background .15s,color .15s; position:relative; }
+    .nav-item:hover { background:rgba(255,255,255,.07); color:white; }
+    .nav-item.active { background:rgba(255,255,255,.12); color:white; }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#60a5fa; border-radius:0 2px 2px 0; }
+    .nav-icon { font-size:1rem; width:20px; text-align:center; }
+    .soon { margin-left:auto; font-size:.62rem; background:rgba(255,255,255,.08); padding:1px 6px; border-radius:4px; opacity:.6; }
+    .sidebar-footer { padding:1rem 1.25rem; border-top:1px solid rgba(255,255,255,.08); flex-shrink:0; }
+    .sidebar-user { display:flex; align-items:center; gap:.7rem; }
+    .s-avatar { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.15); display:grid; place-items:center; font-size:.9rem; font-weight:600; flex-shrink:0; }
+    .u-name { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .u-role { font-size:.7rem; opacity:.5; }
+    .btn-logout { background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:1rem; transition:color .15s; }
+    .btn-logout:hover { color:#f87171; }
+
+    /* MAIN */
+    .main-wrap { margin-left: var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; }
+    .top-bar { height:64px; background:white; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 1.75rem; position:sticky; top:0; z-index:50; }
+    .top-bar h1 { font-size:1.1rem; font-weight:700; }
+    .top-bar .bc { font-size:.75rem; color:var(--muted); }
+    .main { flex:1; padding:1.75rem; }
+
+    /* GPS STATUS BAR */
+    .gps-bar { display:flex; align-items:center; gap:.75rem; padding:.85rem 1.25rem; border-radius: var(--radius); margin-bottom:1.25rem; font-size:.875rem; font-weight:600; transition:background .3s; }
+    .gps-bar.checking { background:#f1f5f9; border:1px solid var(--border); color:var(--muted); }
+    .gps-bar.inside   { background:#f0fdf4; border:1px solid #86efac; color:#15803d; }
+    .gps-bar.outside  { background:#fef2f2; border:1px solid #fca5a5; color:#dc2626; }
+    .gps-bar.error    { background:#fefce8; border:1px solid #fde047; color:#a16207; }
+    .gps-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .gps-bar.checking .gps-dot { background:#94a3b8; animation:pulse 1.5s infinite; }
+    .gps-bar.inside   .gps-dot { background:#22c55e; }
+    .gps-bar.outside  .gps-dot { background:#ef4444; }
+    .gps-bar.error    .gps-dot { background:#f59e0b; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .gps-detail { margin-left:auto; font-size:.75rem; font-weight:400; opacity:.7; }
+
+    /* LAYOUT GRIDS */
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+    .grid-3 { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+
+    /* CARDS */
+    .card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; }
+    .card-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+    .card-head h3 { font-size:.9rem; font-weight:700; }
+    .card-body { padding:1.25rem; }
+
+    /* ABSENSI CARD (karyawan) */
+    .absen-main { text-align:center; }
+    .absen-circle { width:96px; height:96px; border-radius:50%; margin:0 auto .75rem; display:grid; place-items:center; font-size:2.2rem; transition:all .3s; }
+    .absen-circle.belum  { background:#f1f5f9; border:3px dashed #cbd5e1; }
+    .absen-circle.masuk  { background:#f0fdf4; border:3px solid #22c55e; }
+    .absen-circle.keluar { background:#eff6ff; border:3px solid #3b82f6; }
+    .absen-status { font-size:.875rem; color:var(--muted); margin-bottom:1rem; }
+    .time-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:1.25rem; }
+    .time-box { background:var(--bg); border-radius:10px; padding:.75rem; text-align:center; }
+    .time-val { font-size:1.2rem; font-weight:700; color:var(--text); }
+    .time-lbl { font-size:.72rem; color:var(--muted); margin-top:2px; }
+    .btn-absen { width:100%; padding:.82rem; border:none; border-radius:10px; font-size:.97rem; font-weight:700; cursor:pointer; transition:all .2s; letter-spacing:.3px; }
+    .btn-masuk  { background:#22c55e; color:white; box-shadow:0 4px 14px rgba(34,197,94,.3); }
+    .btn-keluar { background:#3b82f6; color:white; box-shadow:0 4px 14px rgba(59,130,246,.3); }
+    .btn-done   { background:var(--bg); color:var(--muted); cursor:not-allowed; }
+    .btn-absen:hover:not(:disabled) { filter:brightness(1.07); transform:translateY(-1px); }
+    .btn-absen:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .absen-note { font-size:.72rem; color:var(--muted); text-align:center; margin-top:.6rem; }
+
+    /* STAT MINI CARDS */
+    .stat-mini { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); padding:1rem; display:flex; align-items:center; gap:.75rem; }
+    .stat-icon { width:42px; height:42px; border-radius:10px; display:grid; place-items:center; font-size:1.2rem; flex-shrink:0; }
+    .si-green  { background:#f0fdf4; }
+    .si-yellow { background:#fefce8; }
+    .si-red    { background:#fef2f2; }
+    .si-blue   { background:#eff6ff; }
+    .stat-val  { font-size:1.5rem; font-weight:700; line-height:1; }
+    .stat-lbl  { font-size:.75rem; color:var(--muted); margin-top:2px; }
+
+    /* CALENDAR */
+    .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.75rem; }
+    .cal-nav { background:none; border:1px solid var(--border); border-radius:8px; padding:.3rem .6rem; cursor:pointer; font-size:.8rem; transition:all .15s; }
+    .cal-nav:hover { background:var(--bg); }
+    .cal-month { font-size:.9rem; font-weight:700; }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+    .cal-day-label { text-align:center; font-size:.65rem; font-weight:700; color:var(--muted); padding:.3rem 0; text-transform:uppercase; }
+    .cal-day { aspect-ratio:1; border-radius:8px; display:grid; place-items:center; font-size:.78rem; font-weight:500; cursor:default; border:1px solid transparent; position:relative; }
+    .cal-day.empty     { background:transparent; border-color:transparent; }
+    .cal-day.weekend   { background:#f8fafc; color:#94a3b8; }
+    .cal-day.hadir     { background:#dcfce7; color:#15803d; border-color:#86efac; }
+    .cal-day.terlambat { background:#fef9c3; color:#a16207; border-color:#fde047; }
+    .cal-day.izin      { background:#dbeafe; color:#1d4ed8; border-color:#93c5fd; }
+    .cal-day.cuti      { background:#ede9fe; color:#7c3aed; border-color:#c4b5fd; }
+    .cal-day.tidak_hadir { background:#fee2e2; color:#dc2626; border-color:#fca5a5; }
+    .cal-day.today     { border:2px solid var(--primary) !important; font-weight:800; }
+    .cal-day.future    { background:transparent; color:#cbd5e1; }
+
+    /* LEGEND */
+    .legend { display:flex; gap:.75rem; flex-wrap:wrap; margin-top:.75rem; }
+    .leg { display:flex; align-items:center; gap:.3rem; font-size:.72rem; color:var(--muted); }
+    .leg-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+
+    /* TABLE */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.855rem; }
+    thead th { padding:.65rem 1rem; text-align:left; font-size:.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; background:#f8fafc; border-bottom:1px solid var(--border); white-space:nowrap; }
+    tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:#f8fafc; }
+    tbody td { padding:.75rem 1rem; vertical-align:middle; }
+
+    .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:.72rem; font-weight:600; white-space:nowrap; }
+    .bg-green  { background:#dcfce7; color:#15803d; }
+    .bg-yellow { background:#fef9c3; color:#a16207; }
+    .bg-red    { background:#fee2e2; color:#dc2626; }
+    .bg-blue   { background:#dbeafe; color:#1d4ed8; }
+    .bg-gray   { background:#f1f5f9; color:#64748b; }
+    .bg-purple { background:#ede9fe; color:#7c3aed; }
+
+    /* TOOLBAR */
+    .toolbar { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .inp { padding:.58rem .85rem; border:1.5px solid var(--border); border-radius:9px; font-size:.875rem; outline:none; background:white; transition:border-color .2s; }
+    .inp:focus { border-color:var(--primary); }
+    select.inp { cursor:pointer; }
+    .btn-primary { display:flex; align-items:center; gap:.4rem; padding:.58rem 1.1rem; background:var(--primary); color:white; border:none; border-radius:9px; font-size:.875rem; font-weight:600; cursor:pointer; transition:opacity .2s; white-space:nowrap; }
+    .btn-primary:hover { opacity:.9; }
+
+    /* Karyawan cell */
+    .k-cell { display:flex; align-items:center; gap:.6rem; }
+    .k-av { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); color:white; display:grid; place-items:center; font-size:.8rem; font-weight:700; flex-shrink:0; }
+    .k-name { font-weight:600; font-size:.855rem; }
+    .k-nik  { font-size:.72rem; color:var(--muted); }
+
+    /* Empty state */
+    .empty { text-align:center; padding:2.5rem 1rem; color:var(--muted); }
+    .empty .ei { font-size:2.5rem; margin-bottom:.5rem; }
+
+    /* Modal */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:200; display:none; place-items:center; padding:1rem; }
+    .modal-overlay.open { display:grid; }
+    .modal { background:white; border-radius:16px; width:100%; max-width:460px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+    .mh { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); }
+    .mh h3 { font-size:.95rem; font-weight:700; }
+    .mc { display:none; cursor:pointer; border:none; background:none; font-size:1.2rem; color:var(--muted); }
+    .mb { padding:1.25rem 1.5rem; }
+    .mf { padding:.9rem 1.5rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:.75rem; }
+    .btn-sec { padding:.58rem 1rem; border:1.5px solid var(--border); border-radius:9px; background:white; font-size:.875rem; font-weight:600; cursor:pointer; }
+    .btn-sub { padding:.58rem 1.2rem; border:none; border-radius:9px; background:var(--primary); color:white; font-size:.875rem; font-weight:600; cursor:pointer; }
+    .fg { margin-bottom:.9rem; }
+    .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--muted); margin-bottom:.3rem; }
+
+    /* Mode kerja toggle */
+    .mode-toggle { display:flex; gap:.35rem; margin-bottom:.85rem; justify-content:center; }
+    .mode-btn { padding:.38rem .85rem; border-radius:20px; border:1.5px solid var(--border); background:white; font-size:.78rem; font-weight:600; cursor:pointer; color:var(--muted); transition:all .15s; }
+    .mode-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
+    .mode-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* Toast & Loading */
+    #toast { position:fixed; bottom:1.5rem; right:1.5rem; padding:.75rem 1.25rem; border-radius:10px; font-size:.875rem; font-weight:500; color:white; z-index:9999; display:none; box-shadow:0 8px 24px rgba(0,0,0,.12); max-width:320px; }
+    #toast.success { background:#16a34a; }
+    #toast.error   { background:#dc2626; }
+    #lo { position:fixed; inset:0; background:white; display:grid; place-items:center; z-index:9999; }
+    .spin { width:36px; height:36px; border:3px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    /* ===== HOLIDAY BANNER ===== */
+    .libur-banner { background:linear-gradient(135deg,#dcfce7,#bbf7d0); border:1px solid #86efac; border-radius:var(--radius); padding:1.25rem 1.5rem; display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
+    .libur-banner .libur-icon { font-size:2.5rem; flex-shrink:0; }
+    .libur-banner strong { font-size:1rem; font-weight:700; color:#15803d; display:block; }
+    .libur-banner p { font-size:.82rem; color:#166534; margin-top:.25rem; }
+    .btn-absen.btn-libur { background:#f0fdf4; color:#15803d; border:1.5px solid #86efac; cursor:default; }
+  </style>
+  <link rel="stylesheet" href="hris.css">
+</head>
+<body>
+
+<div id="lo"><div><div class="spin"></div><p style="color:#64748b;font-size:.875rem;text-align:center;">Memuat absensi...</p></div></div>
+<div id="toast"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-row">
+      <div class="logo-icon">🏢</div>
+      <div><div class="logo-text">PT Kawan Menengah Atas</div><div class="logo-sub">HRIS v1.0</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="karyawan.html"><span class="nav-icon">👥</span> Data Karyawan</a>
+    <a class="nav-item active" href="absensi.html"><span class="nav-icon">📍</span> Absensi</a>
+    <div class="nav-label" style="margin-top:.5rem;">Manajemen SDM</div>
+    <a class="nav-item" href="cuti.html"><span class="nav-icon">🏖️</span> Cuti & Izin</a>
+    <a class="nav-item" href="payroll.html"><span class="nav-icon">💰</span> Payroll</a>
+    <a class="nav-item" href="pelatihan.html"><span class="nav-icon">📚</span> Pelatihan</a>
+    <div class="nav-label" id="adminNavLbl" style="margin-top:.5rem;display:none;">Administrasi</div>
+    <a class="nav-item" href="lokasi.html" id="navLokasi" style="display:none;"><span class="nav-icon">🗺️</span> Lokasi Kantor</a>
+    <a class="nav-item" href="#" onclick="cs()" id="navLaporan" style="display:none;"><span class="nav-icon">📊</span> Laporan<span class="soon">Soon</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="s-avatar" id="sbAvatar">?</div>
+      <div style="flex:1;min-width:0;">
+        <div class="u-name" id="sbName">—</div>
+        <div class="u-role" id="sbRole">—</div>
+      </div>
+      <button class="btn-logout" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <div>
+      <h1>Absensi</h1>
+      <div class="bc">PT Kawan Menengah Atas · HRIS</div>
+    </div>
+    <div id="headerDate" style="font-size:.8rem;font-weight:600;color:var(--primary);background:#eff6ff;padding:.35rem .9rem;border-radius:20px;"></div>
+  </header>
+
+  <main class="main">
+
+    <!-- GPS STATUS BAR -->
+    <div class="gps-bar checking" id="gpsBar">
+      <div class="gps-dot"></div>
+      <span id="gpsText">Mendapatkan lokasi GPS...</span>
+      <span class="gps-detail" id="gpsDetail"></span>
+    </div>
+
+    <!-- ===== VIEW KARYAWAN ===== -->
+    <div id="viewKaryawan" style="display:none;">
+      <!-- Holiday Banner -->
+      <div class="libur-banner" id="hariLiburBanner" style="display:none;">
+        <span class="libur-icon">🎉</span>
+        <div>
+          <strong id="hariLiburNama">Hari Libur</strong>
+          <p>Hari ini merupakan hari libur. Selamat beristirahat!</p>
+        </div>
+      </div>
+      <div class="grid-2">
+
+        <!-- Absensi Hari Ini -->
+        <div class="card">
+          <div class="card-head">
+            <h3>📍 Absensi Hari Ini</h3>
+            <span class="badge" id="absenBadge">—</span>
+          </div>
+          <div class="card-body">
+            <div class="absen-main">
+              <div class="absen-circle belum" id="absenCircle">🕐</div>
+              <p class="absen-status" id="absenDesc">Memuat...</p>
+            </div>
+            <div class="mode-toggle" id="modeToggle">
+              <button class="mode-btn active" id="btnModeKantor" onclick="setMode('kantor')" title="Absen dari kantor (wajib dalam radius)">🏢 Kantor</button>
+              <button class="mode-btn" id="btnModeWFH" onclick="setMode('wfh')" title="Work from Home">🏠 WFH</button>
+              <button class="mode-btn" id="btnModeWFA" onclick="setMode('wfa')" title="Work from Anywhere">✈️ WFA</button>
+            </div>
+            <div class="time-row">
+              <div class="time-box">
+                <div class="time-val" id="dispMasuk">--:--</div>
+                <div class="time-lbl">Jam Masuk</div>
+              </div>
+              <div class="time-box">
+                <div class="time-val" id="dispKeluar">--:--</div>
+                <div class="time-lbl">Jam Keluar</div>
+              </div>
+            </div>
+            <button class="btn-absen btn-masuk" id="btnAbsen" onclick="doAbsen()">📍 Absen Masuk</button>
+            <p class="absen-note" id="absenNote">Pastikan Anda berada dalam radius kantor</p>
+          </div>
+        </div>
+
+        <!-- Rekap Bulan Ini -->
+        <div class="card">
+          <div class="card-head"><h3>📊 Rekap Bulan Ini</h3></div>
+          <div class="card-body" id="rekapBody">
+            <div class="grid-2" style="gap:.6rem;margin-bottom:0;">
+              <div class="time-box"><div class="time-val" id="rHadir" style="color:#16a34a;">—</div><div class="time-lbl">Hadir</div></div>
+              <div class="time-box"><div class="time-val" id="rTerlambat" style="color:#d97706;">—</div><div class="time-lbl">Terlambat</div></div>
+              <div class="time-box"><div class="time-val" id="rIzin" style="color:#2563eb;">—</div><div class="time-lbl">Izin/Cuti</div></div>
+              <div class="time-box"><div class="time-val" id="rAlpha" style="color:#dc2626;">—</div><div class="time-lbl">Tidak Hadir</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kalender Kehadiran -->
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-head">
+          <h3>📅 Kalender Kehadiran</h3>
+          <div class="cal-header" style="gap:.5rem;margin-bottom:0;">
+            <button class="cal-nav" onclick="prevMonth()">‹</button>
+            <span class="cal-month" id="calMonthLabel">—</span>
+            <button class="cal-nav" onclick="nextMonth()">›</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="legend">
+            <div class="leg"><div class="leg-dot" style="background:#dcfce7;border:1px solid #86efac;"></div> Hadir</div>
+            <div class="leg"><div class="leg-dot" style="background:#fef9c3;border:1px solid #fde047;"></div> Terlambat</div>
+            <div class="leg"><div class="leg-dot" style="background:#dbeafe;border:1px solid #93c5fd;"></div> Izin</div>
+            <div class="leg"><div class="leg-dot" style="background:#ede9fe;border:1px solid #c4b5fd;"></div> Cuti</div>
+            <div class="leg"><div class="leg-dot" style="background:#fee2e2;border:1px solid #fca5a5;"></div> Tidak Hadir</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Riwayat Table -->
+      <div class="card">
+        <div class="card-head"><h3>🗓️ Riwayat Absensi</h3></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Durasi Kerja</th><th>Status</th><th>Keterangan</th>
+              </tr>
+            </thead>
+            <tbody id="riwayatBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW HR ADMIN ===== -->
+    <div id="viewAdmin" style="display:none;">
+      <div class="grid-3" id="adminStats"></div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>📋 Rekap Kehadiran Karyawan</h3>
+          <button class="btn-primary" onclick="openManualAbsen()">➕ Input Manual</button>
+        </div>
+        <div class="card-body" style="padding:.75rem 1.25rem;">
+          <div class="toolbar">
+            <input type="date" class="inp" id="filterTgl" onchange="loadAdminAbsensi()">
+            <input type="text" class="inp" placeholder="Cari nama karyawan..." id="filterNama" oninput="filterAdminTable()" style="flex:1;min-width:160px;">
+            <select class="inp" id="filterStatusAdmin" onchange="filterAdminTable()">
+              <option value="">Semua Status</option>
+              <option value="hadir">Hadir</option>
+              <option value="terlambat">Terlambat</option>
+              <option value="tidak_hadir">Tidak Hadir</option>
+              <option value="izin">Izin</option>
+              <option value="cuti">Cuti</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>Karyawan</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Durasi</th><th>Status</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal Input Manual (HR Admin) -->
+<div class="modal-overlay" id="modalManual">
+  <div class="modal">
+    <div class="mh">
+      <h3>➕ Input Absensi Manual</h3>
+      <button class="mc" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mb">
+      <div class="fg">
+        <label>Karyawan *</label>
+        <select class="inp" style="width:100%;" id="manKaryawan"></select>
+      </div>
+      <div class="fg">
+        <label>Tanggal *</label>
+        <input type="date" class="inp" style="width:100%;" id="manTgl">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="fg">
+          <label>Jam Masuk</label>
+          <input type="time" class="inp" style="width:100%;" id="manMasuk">
+        </div>
+        <div class="fg">
+          <label>Jam Keluar</label>
+          <input type="time" class="inp" style="width:100%;" id="manKeluar">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="fg">
+          <label>Status *</label>
+          <select class="inp" style="width:100%;" id="manStatus">
+            <option value="hadir">Hadir</option>
+            <option value="terlambat">Terlambat</option>
+            <option value="tidak_hadir">Tidak Hadir</option>
+            <option value="izin">Izin</option>
+            <option value="cuti">Cuti</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Mode Kerja</label>
+          <select class="inp" style="width:100%;" id="manMode">
+            <option value="kantor">🏢 Kantor</option>
+            <option value="wfh">🏠 WFH</option>
+            <option value="wfa">✈️ WFA</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:0;">
+        <label>Keterangan</label>
+        <input type="text" class="inp" style="width:100%;" id="manKet" placeholder="Opsional">
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn-sec" onclick="closeModal()">Batal</button>
+      <button class="btn-sub" onclick="saveManual()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// STATE
+let currentUser = null, currentKaryw = null, isAdmin = false
+let absensiHariIni = null, lokasiList = []
+let currentLat = null, currentLng = null, dalamRadius = false
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth()
+let absensiMonth = [], allAdminAbsensi = [], semua_karyawan = []
+let gpsWatchId = null
+let modeKerja = 'kantor'  // kantor | wfh | wfa
+
+// ===== HARI LIBUR NASIONAL 2026 =====
+// Sumber: Kepres + Keputusan Bersama — update tiap tahun
+// Catatan: cuti bersama Idul Fitri TERMASUK libur (sesuai kebijakan perusahaan)
+const HARI_LIBUR_2026 = new Set([
+  '2026-01-01', // Tahun Baru Masehi
+  '2026-01-16', // Isra Mi'raj Nabi Muhammad SAW 1447H
+  '2026-02-17', // Tahun Baru Imlek 2577
+  '2026-03-19', // Hari Raya Nyepi (Tahun Baru Saka 1948)
+  '2026-03-20', // Cuti Bersama Idul Fitri
+  '2026-03-21', // Hari Raya Idul Fitri 1 Syawal 1447H
+  '2026-03-22', // Hari Raya Idul Fitri 2 Syawal 1447H
+  '2026-03-23', // Cuti Bersama Idul Fitri
+  '2026-03-24', // Cuti Bersama Idul Fitri
+  '2026-04-03', // Wafat Isa Al Masih
+  '2026-05-01', // Hari Buruh Internasional
+  '2026-05-14', // Kenaikan Isa Al Masih
+  '2026-05-27', // Hari Raya Idul Adha 1447H
+  '2026-05-31', // Hari Raya Waisak
+  '2026-06-01', // Hari Lahir Pancasila
+  '2026-06-16', // Tahun Baru Islam 1448H (Muharram)
+  '2026-08-17', // HUT RI ke-81
+  '2026-08-25', // Maulid Nabi Muhammad SAW 1448H
+  '2026-12-25', // Hari Natal
+])
+
+const NAMA_HARI_LIBUR = {
+  '2026-01-01':'Tahun Baru Masehi 2026',
+  '2026-01-16':'Isra Mi\'raj Nabi Muhammad SAW 1447H',
+  '2026-02-17':'Tahun Baru Imlek 2577',
+  '2026-03-19':'Hari Raya Nyepi',
+  '2026-03-20':'Cuti Bersama Idul Fitri',
+  '2026-03-21':'Hari Raya Idul Fitri 1447H',
+  '2026-03-22':'Hari Raya Idul Fitri 1447H',
+  '2026-03-23':'Cuti Bersama Idul Fitri',
+  '2026-03-24':'Cuti Bersama Idul Fitri',
+  '2026-04-03':'Wafat Isa Al Masih',
+  '2026-05-01':'Hari Buruh Internasional',
+  '2026-05-14':'Kenaikan Isa Al Masih',
+  '2026-05-27':'Hari Raya Idul Adha 1447H',
+  '2026-05-31':'Hari Raya Waisak',
+  '2026-06-01':'Hari Lahir Pancasila',
+  '2026-06-16':'Tahun Baru Islam 1448H',
+  '2026-08-17':'HUT RI ke-81',
+  '2026-08-25':'Maulid Nabi Muhammad SAW 1448H',
+  '2026-12-25':'Hari Natal',
+}
+
+function isHariLibur (tgl) { return HARI_LIBUR_2026.has(tgl) }
+function getNamaLibur (tgl) {
+  if (new Date(tgl+'T00:00:00').getDay() === 0) return 'Hari Minggu'
+  return NAMA_HARI_LIBUR[tgl] || 'Hari Libur Nasional'
+}
+function isHariKerja (tgl) {
+  const d = new Date(tgl+'T00:00:00')
+  return d.getDay() !== 0 && !isHariLibur(tgl)  // bukan Minggu, bukan libur
+}
+
+// Format timestamp → HH:MM (aman lintas locale)
+function fmtTime (ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')
+}
+
+// HELPERS
+function toast (msg, t='success') {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.className = t; el.style.display = 'block'
+  setTimeout(() => el.style.display = 'none', 4000)
+}
+function cs () { toast('🚧 Modul ini sedang dalam pengembangan','error'); return false }
+async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
+function fmt (ts) {
+  if (!ts) return '--:--'
+  const d = new Date(ts)
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')
+}
+function fmtTgl (d) { return d ? new Date(d+'T00:00:00').toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '—' }
+function getInit (n) { return n ? n.charAt(0).toUpperCase() : '?' }
+function durasi (menit) { if (!menit) return '—'; return `${Math.floor(menit/60)}j ${menit%60}m` }
+function haversine (lat1,lng1,lat2,lng2) {
+  const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
+}
+
+// STATUS BADGE HTML
+function statusBadge (s, mode) {
+  const m = { hadir:'bg-green', terlambat:'bg-yellow', tidak_hadir:'bg-red', izin:'bg-blue', cuti:'bg-purple', pulang_awal:'bg-yellow' }
+  const lbl = { hadir:'Hadir', terlambat:'Terlambat', tidak_hadir:'Tidak Hadir', izin:'Izin', cuti:'Cuti', pulang_awal:'Pulang Awal' }
+  let html = `<span class="badge ${m[s]||'bg-gray'}">${lbl[s]||s}</span>`
+  if (mode && mode !== 'kantor') {
+    html += ` <span class="badge bg-blue" style="font-size:.65rem;">${mode.toUpperCase()}</span>`
+  }
+  return html
+}
+
+// MODE KERJA
+function setMode (mode) {
+  modeKerja = mode
+  document.getElementById('btnModeKantor').classList.toggle('active', mode === 'kantor')
+  document.getElementById('btnModeWFH').classList.toggle('active', mode === 'wfh')
+  document.getElementById('btnModeWFA').classList.toggle('active', mode === 'wfa')
+  if (mode !== 'kantor') {
+    setGPSBar('inside', `✅ Mode ${mode.toUpperCase()} aktif — geofencing dinonaktifkan`, 'Bekerja dari luar kantor')
+  } else {
+    if (currentLat !== null) checkRadius()
+    else setGPSBar('checking', 'Mendapatkan lokasi GPS...', '')
+  }
+  updateAbsenButton()
+}
+
+// ====== GPS MONITORING ======
+function startGPS () {
+  if (!navigator.geolocation) {
+    setGPSBar('error','GPS tidak didukung browser ini','')
+    return
+  }
+  gpsWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      currentLat = pos.coords.latitude
+      currentLng = pos.coords.longitude
+      checkRadius()
+    },
+    err => {
+      const msg = err.code===1 ? 'Izinkan akses lokasi di browser' : 'GPS tidak dapat diakses'
+      setGPSBar('error', msg, '')
+      dalamRadius = false
+      updateAbsenButton()
+    },
+    { enableHighAccuracy:true, timeout:15000, maximumAge:30000 }
+  )
+}
+
+function checkRadius () {
+  if (!lokasiList || lokasiList.length === 0) {
+    // Belum ada lokasi kantor — izinkan absensi (mode testing)
+    setGPSBar('inside','Lokasi kantor belum diatur (mode testing)','')
+    dalamRadius = true
+    updateAbsenButton()
+    return
+  }
+
+  let minJarak = Infinity, namaLokasi = '', radiusLokasi = 0
+  for (const loc of lokasiList) {
+    const j = haversine(currentLat, currentLng, parseFloat(loc.latitude), parseFloat(loc.longitude))
+    if (j < minJarak) { minJarak = j; namaLokasi = loc.nama; radiusLokasi = loc.radius_meter }
+  }
+
+  minJarak = Math.round(minJarak)
+  dalamRadius = minJarak <= radiusLokasi
+
+  if (dalamRadius) {
+    setGPSBar('inside', `✅ Dalam radius ${namaLokasi}`, `${minJarak}m dari kantor`)
+  } else {
+    setGPSBar('outside', `❌ Di luar radius kantor`, `${minJarak}m (radius: ${radiusLokasi}m)`)
+  }
+  updateAbsenButton()
+}
+
+function setGPSBar (state, text, detail) {
+  const bar = document.getElementById('gpsBar')
+  bar.className = `gps-bar ${state}`
+  document.getElementById('gpsText').textContent   = text
+  document.getElementById('gpsDetail').textContent = detail
+}
+
+// ====== RENDER ABSENSI CARD ======
+function renderAbsenCard (ab) {
+  const circle = document.getElementById('absenCircle')
+  const badge  = document.getElementById('absenBadge')
+  const desc   = document.getElementById('absenDesc')
+
+  document.getElementById('dispMasuk').textContent  = fmt(ab?.waktu_masuk)
+  document.getElementById('dispKeluar').textContent = fmt(ab?.waktu_keluar)
+
+  if (!ab?.waktu_masuk) {
+    circle.className = 'absen-circle belum'; circle.textContent = '🕐'
+    badge.className  = 'badge bg-gray';      badge.textContent  = 'Belum Absen'
+    desc.textContent = 'Anda belum melakukan absensi hari ini'
+  } else if (!ab?.waktu_keluar) {
+    circle.className = 'absen-circle masuk'; circle.textContent = '✅'
+    badge.className  = 'badge bg-green';     badge.textContent  = 'Sudah Masuk'
+    desc.textContent = `Absen masuk pukul ${fmt(ab.waktu_masuk)}`
+  } else {
+    const d = ab.durasi_kerja_menit
+    circle.className = 'absen-circle keluar'; circle.textContent = '🏁'
+    badge.className  = 'badge bg-blue';       badge.textContent  = 'Selesai'
+    desc.textContent = `Durasi kerja: ${durasi(d)}`
+  }
+}
+
+function updateAbsenButton () {
+  const btn     = document.getElementById('btnAbsen')
+  const note    = document.getElementById('absenNote')
+  const toggle  = document.getElementById('modeToggle')
+  const ab      = absensiHariIni
+
+  // Cek hari libur / Minggu
+  const today = new Date().toISOString().split('T')[0]
+  if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
+    btn.className = 'btn-absen btn-libur'; btn.textContent = '🎉 Hari Libur'; btn.disabled = true
+    note.textContent = `Hari ini ${getNamaLibur(today)}. Selamat beristirahat!`
+    if (toggle) toggle.style.display = 'none'
+    return
+  }
+
+  // Mode efektif: setelah masuk, gunakan mode yang tersimpan di DB
+  const effectiveMode = ab?.waktu_masuk ? (ab.mode_kerja || 'kantor') : modeKerja
+  // Admin boleh absen dari mana saja kapan saja
+  const canAbsen = isAdmin || dalamRadius || effectiveMode !== 'kantor'
+
+  if (ab?.waktu_keluar) {
+    btn.className = 'btn-absen btn-done'; btn.textContent = '✅ Absensi selesai'; btn.disabled = true
+    note.textContent = 'Terima kasih, sampai jumpa besok!'
+    if (toggle) toggle.style.display = 'none'
+    return
+  }
+  if (!ab?.waktu_masuk) {
+    // Belum absen masuk — tampilkan mode toggle
+    if (toggle) toggle.style.display = ''
+    btn.className = 'btn-absen btn-masuk'
+    btn.textContent = modeKerja !== 'kantor' ? `📍 Absen Masuk (${modeKerja.toUpperCase()})` : '📍 Absen Masuk'
+    btn.disabled = !canAbsen
+    note.textContent = canAbsen
+      ? `Siap absen — ${modeKerja !== 'kantor' ? 'Mode ' + modeKerja.toUpperCase() + ' aktif' : 'Dalam radius kantor'} ✅`
+      : 'Anda harus berada dalam radius kantor (atau pilih mode WFH/WFA)'
+  } else {
+    // Sudah absen masuk — sembunyikan toggle, tampilkan mode aktif
+    if (toggle) toggle.style.display = 'none'
+    btn.className = 'btn-absen btn-keluar'
+    btn.textContent = effectiveMode !== 'kantor' ? `🚪 Absen Keluar (${effectiveMode.toUpperCase()})` : '🚪 Absen Keluar'
+    btn.disabled = !canAbsen
+    note.textContent = canAbsen ? 'Klik saat Anda selesai bekerja' : 'Anda harus berada dalam radius kantor'
+  }
+}
+
+// ====== PROSES ABSEN ======
+async function doAbsen () {
+  const effectiveMode = absensiHariIni?.waktu_masuk ? (absensiHariIni.mode_kerja || 'kantor') : modeKerja
+  const canAbsen = isAdmin || dalamRadius || effectiveMode !== 'kantor'
+  if (!canAbsen) { toast('❌ Anda di luar radius kantor. Pilih mode WFH/WFA jika bekerja dari luar kantor.','error'); return }
+
+  const btn = document.getElementById('btnAbsen')
+  btn.disabled = true; btn.textContent = 'Memproses...'
+
+  const today = new Date().toISOString().split('T')[0]
+  const now   = new Date().toISOString()
+
+  if (!absensiHariIni?.waktu_masuk) {
+    // --- ABSEN MASUK ---
+    const jamMasuk = new Date()
+    const status = (jamMasuk.getHours() > 9 || (jamMasuk.getHours()===9 && jamMasuk.getMinutes()>0)) ? 'terlambat' : 'hadir'
+    const payload = {
+      karyawan_id: currentUser.id, tanggal: today,
+      waktu_masuk: now, status, mode_kerja: modeKerja,
+      lat_masuk: modeKerja === 'kantor' ? currentLat : null,
+      lng_masuk: modeKerja === 'kantor' ? currentLng : null,
+      keterangan: modeKerja !== 'kantor' ? modeKerja.toUpperCase() : null
+    }
+    const { data, error } = await sb.from('absensi').insert(payload).select().single()
+    if (error) { toast('Gagal absen: '+error.message,'error') }
+    else { absensiHariIni = data; toast(`✅ Absen masuk berhasil — ${fmt(now)}${modeKerja !== 'kantor' ? ' (' + modeKerja.toUpperCase() + ')' : ''}`) }
+  } else {
+    // --- ABSEN KELUAR ---
+    const masuk  = new Date(absensiHariIni.waktu_masuk)
+    const dur    = Math.round((new Date()-masuk)/60000)
+    const updatePayload = {
+      waktu_keluar: now, durasi_kerja_menit: dur,
+      lat_keluar: effectiveMode === 'kantor' ? currentLat : null,
+      lng_keluar: effectiveMode === 'kantor' ? currentLng : null
+    }
+    const { data, error } = await sb.from('absensi').update(updatePayload).eq('id', absensiHariIni.id).select().single()
+    if (error) { toast('Gagal absen keluar: '+error.message,'error') }
+    else { absensiHariIni = data; toast(`✅ Absen keluar — Durasi: ${durasi(dur)}`) }
+  }
+
+  renderAbsenCard(absensiHariIni)
+  updateAbsenButton()
+  loadRiwayat()
+  loadRekap()
+}
+
+// ====== KALENDER ======
+async function renderKalender () {
+  const year = calYear, month = calMonth
+  document.getElementById('calMonthLabel').textContent =
+    new Date(year, month, 1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})
+
+  const { data } = await sb.from('absensi').select('tanggal,status')
+    .eq('karyawan_id', currentUser.id)
+    .gte('tanggal', `${year}-${String(month+1).padStart(2,'0')}-01`)
+    .lte('tanggal', `${year}-${String(month+1).padStart(2,'0')}-31`)
+  absensiMonth = data || []
+
+  const absenMap = {}
+  absensiMonth.forEach(a => { absenMap[a.tanggal] = a.status })
+
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month+1, 0).getDate()
+  const today = new Date().toISOString().split('T')[0]
+  const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
+
+  let html = days.map(d => `<div class="cal-day-label">${d}</div>`).join('')
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const tgl = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const dow = new Date(tgl+'T00:00:00').getDay()
+    const isToday = tgl === today
+    const isFuture = tgl > today
+    const status = absenMap[tgl]
+    let cls = 'cal-day'
+    if (isFuture)     cls += ' future'
+    else if (status)  cls += ` ${status}`
+    else if (dow===0||dow===6) cls += ' weekend'
+    if (isToday)      cls += ' today'
+    html += `<div class="${cls}" title="${tgl}">${d}</div>`
+  }
+  document.getElementById('calGrid').innerHTML = html
+}
+
+function prevMonth () {
+  calMonth--
+  if (calMonth < 0) { calMonth = 11; calYear-- }
+  renderKalender()
+  loadRiwayat()
+}
+function nextMonth () {
+  calMonth++
+  if (calMonth > 11) { calMonth = 0; calYear++ }
+  renderKalender()
+  loadRiwayat()
+}
+
+// ====== RIWAYAT TABLE ======
+async function loadRiwayat () {
+  const { data } = await sb.from('absensi').select('*')
+    .eq('karyawan_id', currentUser.id)
+    .gte('tanggal', `${calYear}-${String(calMonth+1).padStart(2,'0')}-01`)
+    .lte('tanggal', `${calYear}-${String(calMonth+1).padStart(2,'0')}-31`)
+    .order('tanggal', { ascending: false })
+
+  const body = document.getElementById('riwayatBody')
+  if (!data || data.length === 0) {
+    body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">📅</div>Belum ada data absensi bulan ini</div></td></tr>`
+    return
+  }
+  body.innerHTML = data.map(a => `
+    <tr>
+      <td>${fmtTgl(a.tanggal)}</td>
+      <td>${fmt(a.waktu_masuk)}</td>
+      <td>${fmt(a.waktu_keluar)}</td>
+      <td>${durasi(a.durasi_kerja_menit)}</td>
+      <td>${statusBadge(a.status, a.mode_kerja)}</td>
+      <td style="color:var(--muted);font-size:.8rem;">${a.keterangan||'—'}</td>
+    </tr>
+  `).join('')
+}
+
+// ====== REKAP BULAN INI ======
+async function loadRekap () {
+  const now = new Date()
+  const { data } = await sb.from('absensi').select('status')
+    .eq('karyawan_id', currentUser.id)
+    .gte('tanggal', `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`)
+    .lte('tanggal', now.toISOString().split('T')[0])
+  if (!data) return
+  document.getElementById('rHadir').textContent     = data.filter(a=>['hadir','terlambat','pulang_awal'].includes(a.status)).length
+  document.getElementById('rTerlambat').textContent = data.filter(a=>a.status==='terlambat').length
+  document.getElementById('rIzin').textContent      = data.filter(a=>['izin','cuti'].includes(a.status)).length
+  document.getElementById('rAlpha').textContent     = data.filter(a=>a.status==='tidak_hadir').length
+}
+
+// ====== ADMIN: LOAD ABSENSI ======
+async function loadAdminAbsensi () {
+  const tgl = document.getElementById('filterTgl').value
+  const { data } = await sb.from('absensi')
+    .select('*, karyawan(id,nama_lengkap,nik,jabatan(nama),divisi(nama))')
+    .eq('tanggal', tgl)
+    .order('waktu_masuk', { ascending: true })
+  allAdminAbsensi = data || []
+  renderAdminTable(allAdminAbsensi)
+  updateAdminStats(tgl)
+}
+
+async function updateAdminStats (tgl) {
+  const { data: ab } = await sb.from('absensi').select('status').eq('tanggal', tgl)
+  const { count: total } = await sb.from('karyawan').select('*',{count:'exact',head:true}).eq('status','aktif')
+  const hadir     = ab?.filter(a=>['hadir','terlambat','pulang_awal'].includes(a.status)).length || 0
+  const terlambat = ab?.filter(a=>a.status==='terlambat').length || 0
+  const izin      = ab?.filter(a=>['izin','cuti'].includes(a.status)).length || 0
+  const belum     = Math.max(0, (total||0) - (ab?.length||0))
+  document.getElementById('adminStats').innerHTML = `
+    <div class="stat-mini"><div class="stat-icon si-green">✅</div><div><div class="stat-val">${hadir}</div><div class="stat-lbl">Hadir</div></div></div>
+    <div class="stat-mini"><div class="stat-icon si-yellow">⏰</div><div><div class="stat-val">${terlambat}</div><div class="stat-lbl">Terlambat</div></div></div>
+    <div class="stat-mini"><div class="stat-icon si-blue">📋</div><div><div class="stat-val">${izin}</div><div class="stat-lbl">Izin/Cuti</div></div></div>
+    <div class="stat-mini"><div class="stat-icon si-red">❓</div><div><div class="stat-val">${belum}</div><div class="stat-lbl">Belum Absen</div></div></div>
+  `
+}
+
+function filterAdminTable () {
+  const nama   = document.getElementById('filterNama').value.toLowerCase()
+  const status = document.getElementById('filterStatusAdmin').value
+  const filtered = allAdminAbsensi.filter(a => {
+    const matchNama   = !nama   || a.karyawan?.nama_lengkap?.toLowerCase().includes(nama)
+    const matchStatus = !status || a.status === status
+    return matchNama && matchStatus
+  })
+  renderAdminTable(filtered)
+}
+
+function renderAdminTable (list) {
+  const body = document.getElementById('adminTableBody')
+  if (!list || list.length === 0) {
+    body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">📅</div>Tidak ada data absensi</div></td></tr>`
+    return
+  }
+  body.innerHTML = list.map(a => `
+    <tr>
+      <td>
+        <div class="k-cell">
+          <div class="k-av">${getInit(a.karyawan?.nama_lengkap)}</div>
+          <div><div class="k-name">${a.karyawan?.nama_lengkap||'—'}</div><div class="k-nik">${a.karyawan?.nik||'—'}</div></div>
+        </div>
+      </td>
+      <td>${fmt(a.waktu_masuk)}</td>
+      <td>${fmt(a.waktu_keluar)}</td>
+      <td>${durasi(a.durasi_kerja_menit)}</td>
+      <td>${statusBadge(a.status, a.mode_kerja)}</td>
+      <td><button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="editAbsen('${a.id}')">✏️ Edit</button></td>
+    </tr>
+  `).join('')
+}
+
+// ====== MODAL INPUT MANUAL ======
+async function openManualAbsen () {
+  const sel = document.getElementById('manKaryawan')
+  if (!semua_karyawan.length) {
+    const { data } = await sb.from('karyawan').select('id,nama_lengkap,nik').eq('status','aktif').order('nama_lengkap')
+    semua_karyawan = data || []
+  }
+  sel.innerHTML = semua_karyawan.map(k => `<option value="${k.id}">${k.nama_lengkap} (${k.nik||'—'})</option>`).join('')
+  document.getElementById('manTgl').value = new Date().toISOString().split('T')[0]
+  document.getElementById('manMasuk').value = ''
+  document.getElementById('manKeluar').value = ''
+  document.getElementById('manStatus').value = 'hadir'
+  document.getElementById('manMode').value = 'kantor'
+  document.getElementById('manKet').value = ''
+  document.querySelector('#modalManual .mh h3').textContent = '➕ Input Absensi Manual'
+  document.getElementById('manKaryawan').disabled = false
+  document.getElementById('manTgl').disabled = false
+  document.getElementById('modalManual').classList.add('open')
+}
+
+// ====== EDIT ABSENSI (HR) ======
+async function editAbsen (id) {
+  const ab = allAdminAbsensi.find(a => a.id === id)
+  if (!ab) return
+
+  if (!semua_karyawan.length) {
+    const { data } = await sb.from('karyawan').select('id,nama_lengkap,nik').eq('status','aktif').order('nama_lengkap')
+    semua_karyawan = data || []
+  }
+
+  const sel = document.getElementById('manKaryawan')
+  sel.innerHTML = semua_karyawan.map(k =>
+    `<option value="${k.id}"${k.id===ab.karyawan_id?' selected':''}>${k.nama_lengkap} (${k.nik||'—'})</option>`
+  ).join('')
+
+  // Pre-fill semua field
+  document.getElementById('manTgl').value    = ab.tanggal
+  document.getElementById('manMasuk').value  = fmtTime(ab.waktu_masuk)
+  document.getElementById('manKeluar').value = fmtTime(ab.waktu_keluar)
+  document.getElementById('manStatus').value = ab.status || 'hadir'
+  document.getElementById('manMode').value   = ab.mode_kerja || 'kantor'
+  document.getElementById('manKet').value    = ab.keterangan || ''
+
+  // Lock karyawan & tanggal saat edit (upsert butuh kombinasi yang sama)
+  document.getElementById('manKaryawan').disabled = true
+  document.getElementById('manTgl').disabled = true
+
+  document.querySelector('#modalManual .mh h3').textContent = '✏️ Edit Absensi'
+  document.getElementById('modalManual').classList.add('open')
+}
+
+async function saveManual () {
+  const karyawan_id = document.getElementById('manKaryawan').value
+  const tanggal     = document.getElementById('manTgl').value
+  const masuk       = document.getElementById('manMasuk').value
+  const keluar      = document.getElementById('manKeluar').value
+  const status      = document.getElementById('manStatus').value
+  const mode_kerja  = document.getElementById('manMode').value
+  const keterangan  = document.getElementById('manKet').value
+
+  if (!karyawan_id || !tanggal || !status) { toast('Isi semua field wajib','error'); return }
+
+  // Konversi ke ISO UTC agar Supabase (timestamptz) tidak salah interpretasi timezone
+  const waktu_masuk  = masuk  ? new Date(`${tanggal}T${masuk}:00`).toISOString() : null
+  const waktu_keluar = keluar ? new Date(`${tanggal}T${keluar}:00`).toISOString() : null
+  let dur = null
+  if (masuk && keluar) dur = Math.round((new Date(`${tanggal}T${keluar}:00`) - new Date(`${tanggal}T${masuk}:00`)) / 60000)
+
+  const payload = { karyawan_id, tanggal, waktu_masuk, waktu_keluar, durasi_kerja_menit: dur, status, mode_kerja: mode_kerja||'kantor', keterangan: keterangan||null }
+  const { error } = await sb.from('absensi').upsert(payload, { onConflict: 'karyawan_id,tanggal' })
+  if (error) { toast('Gagal simpan: '+error.message,'error'); return }
+  toast('✅ Absensi berhasil disimpan')
+  closeModal()
+  loadAdminAbsensi()
+}
+
+function closeModal () { document.getElementById('modalManual').classList.remove('open') }
+document.getElementById('modalManual').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal() })
+
+// ====== INIT ======
+async function init () {
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.href='index.html'; return }
+  currentUser = session.user
+
+  const { data: k } = await sb.from('karyawan').select('*,jabatan(nama),divisi(nama)').eq('id',currentUser.id).single()
+  currentKaryw = k; isAdmin = k?.role === 'hr_admin'
+
+  // Sidebar
+  document.getElementById('sbName').textContent   = k?.nama_lengkap || currentUser.email
+  document.getElementById('sbRole').textContent   = ({hr_admin:'HR Admin',manager:'Manager',karyawan:'Karyawan'})[k?.role]||'—'
+  document.getElementById('sbAvatar').textContent = getInit(k?.nama_lengkap)
+
+  if (isAdmin) {
+    document.getElementById('adminNavLbl').style.display = ''
+    document.getElementById('navLokasi').style.display   = ''
+    document.getElementById('navLaporan').style.display  = ''
+  }
+
+  // Header date
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+
+  // Load lokasi kantor untuk geofencing
+  const { data: lk } = await sb.from('lokasi_kantor').select('*').eq('aktif',true)
+  lokasiList = lk || []
+
+  // Mulai GPS
+  if (isAdmin) {
+    // Admin: sembunyikan GPS bar (tidak perlu radius)
+    document.getElementById('gpsBar').style.display = 'none'
+    document.getElementById('viewAdmin').style.display = ''
+    document.getElementById('filterTgl').value = new Date().toISOString().split('T')[0]
+    await loadAdminAbsensi()
+  } else {
+    startGPS()
+    document.getElementById('viewKaryawan').style.display = ''
+
+    // Cek hari libur / Minggu — tampilkan banner
+    const today = new Date().toISOString().split('T')[0]
+    if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
+      const banner = document.getElementById('hariLiburBanner')
+      document.getElementById('hariLiburNama').textContent = getNamaLibur(today)
+      banner.style.display = 'flex'
+    }
+
+    // Absensi hari ini
+    const { data: ab } = await sb.from('absensi').select('*').eq('karyawan_id',currentUser.id).eq('tanggal',today).single()
+    absensiHariIni = ab || null
+    // Restore mode dari record hari ini jika sudah absen
+    if (ab?.mode_kerja && ab.mode_kerja !== 'kantor') {
+      modeKerja = ab.mode_kerja
+      document.getElementById('btnModeKantor').classList.remove('active')
+      document.getElementById('btnMode' + ab.mode_kerja.charAt(0).toUpperCase() + ab.mode_kerja.slice(1))?.classList.add('active')
+    }
+    renderAbsenCard(absensiHariIni)
+    await renderKalender()
+    await loadRiwayat()
+    await loadRekap()
+  }
+
+  document.getElementById('lo').style.display = 'none'
+}
+
+init()
+
+// ===== MOBILE SIDEBAR TOGGLE =====
+function toggleSidebar() { document.body.classList.toggle('nav-open') }
+function closeSidebar()   { document.body.classList.remove('nav-open') }
+;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(el=>{ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
+</script>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item" href="dashboard.html"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></a>
+  <a class="bn-item" href="absensi.html"><span class="bn-icon">📍</span><span class="bn-label">Absensi</span></a>
+  <a class="bn-item" href="cuti.html"><span class="bn-icon">🏖️</span><span class="bn-label">Cuti</span></a>
+  <a class="bn-item" href="payroll.html"><span class="bn-icon">💰</span><span class="bn-label">Payroll</span></a>
+  <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon">☰</span><span class="bn-label">Menu</span></button>
+</nav>
+</body>
+</html>

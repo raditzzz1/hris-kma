@@ -1,0 +1,206 @@
+/* ================================================================
+   hris.css — Mobile Responsive + Shared Additions
+   PT Kawan Menengah Atas HRIS
+   Load this AFTER per-page <style> in each <head>
+   ================================================================ */
+
+/* ===== HAMBURGER BUTTON (hidden on desktop) ===== */
+
+.menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.3rem;
+  color: #0f172a;
+  border-radius: 8px;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+.menu-btn:hover { background: #f1f5f9; }
+
+/* ===== SIDEBAR OVERLAY ===== */
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .5);
+  z-index: 150;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* ===== BOTTOM NAV (hidden on desktop) ===== */
+
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  z-index: 100;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, .06);
+}
+
+.bn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-decoration: none;
+  color: #64748b;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  transition: color .15s;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bn-item.active { color: #1d4ed8; }
+.bn-item:focus  { outline: none; color: #1d4ed8; }
+
+.bn-icon  { font-size: 1.2rem; line-height: 1; display: block; }
+.bn-label { font-size: .62rem; font-weight: 600; display: block; }
+
+/* ===== SIDEBAR SMOOTH TRANSITION ===== */
+
+.sidebar {
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ===== SUBTLE CARD SHADOW (visual polish) ===== */
+
+.card {
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.02);
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+
+  /* Prevent horizontal overflow on all pages */
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  .main, .main-content,
+  .main-wrap, .main-wrapper,
+  .page-wrap, .page-wrapper {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Show hamburger button */
+  .menu-btn { display: flex !important; }
+
+  /* Sidebar: slide in from left */
+  .sidebar {
+    transform: translateX(-100%) !important;
+    z-index: 200 !important;
+  }
+  body.nav-open .sidebar {
+    transform: translateX(0) !important;
+  }
+  body.nav-open .sidebar-overlay {
+    display: block;
+  }
+
+  /* Main content: full width */
+  .main-wrap,
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+
+  /* Content area padding + space for bottom nav */
+  .main,
+  .main-content {
+    padding: 1rem 1rem 5rem !important;
+  }
+
+  /* Top bars: tighter horizontal padding */
+  .top-bar,
+  .top-header {
+    padding: 0 0.75rem !important;
+  }
+
+  /* Stats grid: 2 columns */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Content/layout grids: single column */
+  .content-grid,
+  .grid-2,
+  .grid-3,
+  .page-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Form input rows: single column */
+  .inp-row { grid-template-columns: 1fr !important; }
+
+  /* Tables: horizontal scroll */
+  .tbl-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Modals: bottom sheet */
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    margin: 0 !important;
+    max-height: 92vh;
+  }
+  .modal.modal-lg {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    margin: 0 !important;
+  }
+  .modal-body, .mb {
+    max-height: 62vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Toast: above bottom nav */
+  #toast {
+    left: 1rem !important;
+    right: 1rem !important;
+    bottom: 4.5rem !important;
+    max-width: none !important;
+  }
+
+  /* Show bottom nav */
+  .bottom-nav { display: flex !important; }
+
+  /* Welcome banner: simpler on mobile */
+  .welcome-banner {
+    padding: 1.25rem !important;
+  }
+  .welcome-banner .banner-icon { font-size: 2rem !important; }
+
+  /* Quick links: 3-col on mobile ok, but ensure cards visible */
+  .quick-links { gap: 0.5rem !important; }
+  .quick-link  { padding: 0.75rem 0.25rem !important; }
+}

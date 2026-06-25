@@ -1,0 +1,11 @@
+# Cadangan hasil pemulihan (jangan dilacak Git)
+_recovered/
+
+# Pengaturan lokal Claude Code
+.claude/
+
+# File sistem OS
+Thumbs.db
+desktop.ini
+.DS_Store
+*.tmp

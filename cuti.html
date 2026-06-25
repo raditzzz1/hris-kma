@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuti & Izin — HRIS PT KMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --primary:#1d4ed8; --primary-dk:#1e3a8a; --sidebar-w:240px; --bg:#f1f5f9; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --radius:12px; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* SIDEBAR */
+    .sidebar { position:fixed; left:0; top:0; bottom:0; width:var(--sidebar-w); background:var(--primary-dk); color:white; display:flex; flex-direction:column; z-index:100; }
+    .sidebar-brand { padding:1.25rem; border-bottom:1px solid rgba(255,255,255,.08); }
+    .logo-row { display:flex; align-items:center; gap:.6rem; }
+    .logo-icon { width:36px; height:36px; background:rgba(255,255,255,.12); border-radius:10px; display:grid; place-items:center; font-size:1.1rem; }
+    .logo-text { font-size:.82rem; font-weight:700; line-height:1.3; }
+    .logo-sub  { font-size:.68rem; opacity:.5; }
+    .sidebar-nav { flex:1; overflow-y:auto; padding:.75rem 0; }
+    .nav-label { font-size:.65rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; opacity:.4; padding:.75rem 1.25rem .4rem; }
+    .nav-item { display:flex; align-items:center; gap:.75rem; padding:.65rem 1.25rem; font-size:.875rem; font-weight:500; color:rgba(255,255,255,.7); text-decoration:none; cursor:pointer; transition:background .15s; position:relative; }
+    .nav-item:hover { background:rgba(255,255,255,.07); color:white; }
+    .nav-item.active { background:rgba(255,255,255,.12); color:white; }
+    .nav-item.active::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#60a5fa; border-radius:0 2px 2px 0; }
+    .nav-icon { font-size:1rem; width:20px; text-align:center; }
+    .soon { margin-left:auto; font-size:.62rem; background:rgba(255,255,255,.08); padding:1px 6px; border-radius:4px; opacity:.6; }
+    .sidebar-footer { padding:1rem 1.25rem; border-top:1px solid rgba(255,255,255,.08); }
+    .sidebar-user { display:flex; align-items:center; gap:.7rem; }
+    .s-av { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.15); display:grid; place-items:center; font-size:.9rem; font-weight:600; }
+    .u-name { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .u-role { font-size:.7rem; opacity:.5; }
+    .btn-lo { background:none; border:none; color:rgba(255,255,255,.4); cursor:pointer; font-size:1rem; transition:color .15s; }
+    .btn-lo:hover { color:#f87171; }
+
+    /* MAIN */
+    .main-wrap { margin-left:var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; }
+    .top-bar { height:64px; background:white; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 1.75rem; position:sticky; top:0; z-index:50; }
+    .top-bar h1 { font-size:1.1rem; font-weight:700; }
+    .bc { font-size:.75rem; color:var(--muted); }
+    .main { flex:1; padding:1.75rem; }
+
+    /* CARDS */
+    .card { background:var(--card); border-radius:var(--radius); border:1px solid var(--border); }
+    .card-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+    .card-head h3 { font-size:.9rem; font-weight:700; }
+    .card-body { padding:1.25rem; }
+
+    /* STATS */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem 1.25rem; }
+    .stat-label { font-size:.75rem; color:var(--muted); font-weight:600; margin-bottom:.4rem; }
+    .stat-val { font-size:1.6rem; font-weight:800; }
+    .stat-sub { font-size:.72rem; color:var(--muted); margin-top:.2rem; }
+    .c-blue   { color:#2563eb; } .c-green  { color:#16a34a; }
+    .c-yellow { color:#d97706; } .c-red    { color:#dc2626; }
+
+    /* SALDO CARDS */
+    .saldo-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:.75rem; margin-bottom:1.25rem; }
+    .saldo-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1rem; text-align:center; }
+    .saldo-jenis { font-size:.75rem; color:var(--muted); font-weight:600; margin-bottom:.35rem; }
+    .saldo-num { font-size:2rem; font-weight:800; color:var(--primary); line-height:1; }
+    .saldo-unit { font-size:.72rem; color:var(--muted); }
+    .saldo-bar { height:6px; background:#e2e8f0; border-radius:99px; margin-top:.6rem; overflow:hidden; }
+    .saldo-fill { height:100%; background:var(--primary); border-radius:99px; transition:width .4s; }
+
+    /* TABS */
+    .tabs { display:flex; gap:.25rem; margin-bottom:1.25rem; background:white; border:1px solid var(--border); border-radius:10px; padding:.35rem; width:fit-content; }
+    .tab-btn { padding:.45rem 1rem; border-radius:7px; border:none; cursor:pointer; font-size:.82rem; font-weight:600; background:none; color:var(--muted); transition:all .15s; }
+    .tab-btn.active { background:var(--primary); color:white; }
+
+    /* TABLE */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.875rem; }
+    th { padding:.65rem 1rem; text-align:left; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); background:#f8fafc; border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:.75rem 1rem; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafafa; }
+    .empty-row td { text-align:center; padding:2rem; color:var(--muted); font-size:.875rem; }
+
+    /* BADGE STATUS */
+    .badge { display:inline-flex; align-items:center; gap:.3rem; padding:2px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
+    .badge.pending    { background:#fef3c7; color:#d97706; }
+    .badge.disetujui  { background:#dcfce7; color:#16a34a; }
+    .badge.ditolak    { background:#fee2e2; color:#dc2626; }
+    .badge.dibatalkan { background:#f1f5f9; color:var(--muted); }
+
+    /* FILTER BAR */
+    .filter-bar { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem; }
+    .inp { padding:.55rem .85rem; border:1.5px solid var(--border); border-radius:9px; font-size:.875rem; color:var(--text); outline:none; transition:border-color .2s; background:white; }
+    .inp:focus { border-color:var(--primary); }
+    .inp-sm { padding:.45rem .75rem; font-size:.82rem; }
+
+    /* BUTTONS */
+    .btn-primary { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.1rem; background:var(--primary); color:white; border:none; border-radius:9px; font-size:.875rem; font-weight:600; cursor:pointer; transition:opacity .2s; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-secondary { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1rem; background:white; color:var(--text); border:1.5px solid var(--border); border-radius:9px; font-size:.82rem; font-weight:600; cursor:pointer; transition:all .15s; }
+    .btn-secondary:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-approve { background:#dcfce7; color:#16a34a; border:1px solid #86efac; }
+    .btn-approve:hover { background:#bbf7d0; }
+    .btn-reject  { background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; }
+    .btn-reject:hover  { background:#fecaca; }
+    .btn-sm { padding:.3rem .7rem; font-size:.75rem; border-radius:7px; border:1px solid var(--border); background:white; cursor:pointer; transition:all .15s; }
+    .btn-cancel { color:#dc2626; border-color:#fca5a5; }
+    .btn-cancel:hover { background:#fee2e2; }
+
+    /* MODAL */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; place-items:center; z-index:1000; padding:1rem; }
+    .modal-overlay.open { display:grid; }
+    .modal { background:white; border-radius:var(--radius); width:100%; max-width:500px; box-shadow:0 20px 60px rgba(0,0,0,.15); overflow:hidden; }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; padding:1.1rem 1.4rem; border-bottom:1px solid var(--border); }
+    .modal-head h3 { font-size:1rem; font-weight:700; }
+    .modal-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--muted); line-height:1; }
+    .modal-body { padding:1.4rem; }
+    .modal-foot { padding:.9rem 1.4rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:.6rem; }
+
+    /* FORM */
+    .fg { margin-bottom:.9rem; }
+    .fg:last-child { margin-bottom:0; }
+    .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--muted); margin-bottom:.35rem; }
+    .inp-full { width:100%; }
+    .inp-row { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+    textarea.inp { resize:vertical; min-height:70px; }
+    .info-box { background:#f0f9ff; border:1px solid #bae6fd; border-radius:9px; padding:.75rem 1rem; font-size:.82rem; color:#0369a1; margin-bottom:1rem; line-height:1.6; }
+    .warn-box  { background:#fffbeb; border:1px solid #fde68a; border-radius:9px; padding:.75rem 1rem; font-size:.82rem; color:#92400e; margin-bottom:1rem; line-height:1.6; }
+
+    /* Toast & Loading */
+    #toast { position:fixed; bottom:1.5rem; right:1.5rem; padding:.75rem 1.25rem; border-radius:10px; font-size:.875rem; font-weight:500; color:white; z-index:9999; display:none; box-shadow:0 8px 24px rgba(0,0,0,.12); }
+    #toast.success { background:#16a34a; }
+    #toast.error   { background:#dc2626; }
+    #lo { position:fixed; inset:0; background:white; display:grid; place-items:center; z-index:9999; }
+    .spin { width:36px; height:36px; border:3px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 1rem; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* DETAIL INFO */
+    .detail-row { display:flex; padding:.6rem 0; border-bottom:1px solid var(--border); }
+    .detail-row:last-child { border-bottom:none; }
+    .detail-lbl { font-size:.78rem; color:var(--muted); font-weight:600; width:140px; flex-shrink:0; }
+    .detail-val { font-size:.875rem; }
+  </style>
+  <link rel="stylesheet" href="hris.css">
+</head>
+<body>
+<div id="lo"><div><div class="spin"></div><p style="color:#64748b;font-size:.875rem;text-align:center;">Memuat...</p></div></div>
+<div id="toast"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-row">
+      <div class="logo-icon">🏢</div>
+      <div><div class="logo-text">PT Kawan Menengah Atas</div><div class="logo-sub">HRIS v1.0</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu Utama</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a class="nav-item" href="karyawan.html"><span class="nav-icon">👥</span> Data Karyawan</a>
+    <a class="nav-item" href="absensi.html"><span class="nav-icon">📍</span> Absensi</a>
+    <div class="nav-label" style="margin-top:.5rem;">Manajemen SDM</div>
+    <a class="nav-item active" href="cuti.html"><span class="nav-icon">🏖️</span> Cuti & Izin</a>
+    <a class="nav-item" href="payroll.html"><span class="nav-icon">💰</span> Payroll</a>
+    <a class="nav-item" href="pelatihan.html"><span class="nav-icon">📚</span> Pelatihan</a>
+    <div class="nav-label" style="margin-top:.5rem;">Administrasi</div>
+    <a class="nav-item" href="lokasi.html"><span class="nav-icon">🗺️</span> Lokasi Kantor</a>
+    <a class="nav-item" href="#" onclick="cs()"><span class="nav-icon">📊</span> Laporan<span class="soon">Soon</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="s-av" id="sbAv">?</div>
+      <div style="flex:1;min-width:0;"><div class="u-name" id="sbName">—</div><div class="u-role" id="sbRole">—</div></div>
+      <button class="btn-lo" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="top-bar">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <div><h1>🏖️ Cuti & Izin</h1><div class="bc" id="topBc">—</div></div>
+    <div id="topActions"></div>
+  </header>
+
+  <main class="main" id="mainContent">
+    <!-- Diisi oleh JS berdasarkan role -->
+  </main>
+</div>
+
+<!-- MODAL: Ajukan Cuti (Karyawan) -->
+<div class="modal-overlay" id="modalAjukan">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>📝 Ajukan Cuti / Izin</h3>
+      <button class="modal-close" onclick="closeModal('modalAjukan')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label>Jenis Cuti *</label>
+        <select class="inp inp-full" id="ajJenis"></select>
+      </div>
+      <div class="inp-row">
+        <div class="fg">
+          <label>Tanggal Mulai *</label>
+          <input class="inp inp-full" type="date" id="ajMulai">
+        </div>
+        <div class="fg">
+          <label>Tanggal Selesai *</label>
+          <input class="inp inp-full" type="date" id="ajSelesai">
+        </div>
+      </div>
+      <div class="fg" id="ajHariWrap">
+        <label>Jumlah Hari Kerja</label>
+        <div style="font-size:1.25rem;font-weight:800;color:var(--primary)" id="ajHariNum">—</div>
+        <div style="font-size:.75rem;color:var(--muted)">Tidak termasuk Sabtu & Minggu</div>
+      </div>
+      <div id="ajSaldoInfo"></div>
+      <div class="fg">
+        <label>Alasan / Keterangan</label>
+        <textarea class="inp inp-full" id="ajAlasan" placeholder="Isi alasan pengajuan cuti..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalAjukan')">Batal</button>
+      <button class="btn-primary" onclick="submitAjuan()">📤 Kirim Pengajuan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Detail Pengajuan (HR) -->
+<div class="modal-overlay" id="modalDetail">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="detailTitle">Detail Pengajuan</h3>
+      <button class="modal-close" onclick="closeModal('modalDetail')">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot" id="detailFoot"></div>
+  </div>
+</div>
+
+<!-- MODAL: Approve/Reject (HR) -->
+<div class="modal-overlay" id="modalAction">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="actionTitle">Keputusan Pengajuan</h3>
+      <button class="modal-close" onclick="closeModal('modalAction')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="actionInfo" class="info-box"></div>
+      <div class="fg">
+        <label>Catatan HR (opsional)</label>
+        <textarea class="inp inp-full" id="actionCatatan" placeholder="Tambahkan catatan jika perlu..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalAction')">Batal</button>
+      <button class="btn-primary" id="actionConfirmBtn" onclick="confirmAction()">Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Isi Saldo (HR) -->
+<div class="modal-overlay" id="modalSaldo">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>💰 Atur Saldo Cuti Karyawan</h3>
+      <button class="modal-close" onclick="closeModal('modalSaldo')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label>Karyawan *</label>
+        <select class="inp inp-full" id="saldoKaryawan"></select>
+      </div>
+      <div class="inp-row">
+        <div class="fg">
+          <label>Jenis Cuti *</label>
+          <select class="inp inp-full" id="saldoJenis"></select>
+        </div>
+        <div class="fg">
+          <label>Tahun *</label>
+          <input class="inp inp-full" type="number" id="saldoTahun" value="2026" min="2020" max="2030">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Saldo Awal (hari) *</label>
+        <input class="inp inp-full" type="number" id="saldoJumlah" value="12" min="0">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('modalSaldo')">Batal</button>
+      <button class="btn-primary" onclick="saveSaldo()">💾 Simpan Saldo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+let myProfile = null
+let jenisCutiList = []
+let allKaryawan = []
+let currentAction = { id: null, type: null }
+const TAHUN = new Date().getFullYear()
+
+function toast (msg, t='success') {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.className = t; el.style.display = 'block'
+  setTimeout(() => el.style.display = 'none', 4000)
+}
+function cs () { toast('🚧 Modul ini segera hadir','error'); return false }
+async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
+function closeModal (id) { document.getElementById(id).classList.remove('open') }
+function openModal  (id) { document.getElementById(id).classList.add('open') }
+
+function fmtDate (d) {
+  if (!d) return '—'
+  const dt = new Date(d)
+  return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})
+}
+
+// Hitung hari kerja (exclude Sabtu & Minggu)
+function hitungHariKerja (mulai, selesai) {
+  if (!mulai || !selesai) return 0
+  let count = 0, cur = new Date(mulai)
+  const end = new Date(selesai)
+  while (cur <= end) {
+    const day = cur.getDay()
+    if (day !== 0 && day !== 6) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return count
+}
+
+// ====================================================
+// RENDER BERDASARKAN ROLE
+// ====================================================
+async function renderPage () {
+  if (myProfile.role === 'hr_admin') {
+    renderHR()
+  } else {
+    renderKaryawan()
+  }
+}
+
+// ====================================================
+// VIEW KARYAWAN
+// ====================================================
+async function renderKaryawan () {
+  document.getElementById('topBc').textContent = 'Saldo & riwayat cuti saya'
+  document.getElementById('topActions').innerHTML =
+    `<button class="btn-primary" onclick="openAjuan()">➕ Ajukan Cuti</button>`
+
+  // Load data
+  const [{ data: saldos }, { data: pengajuan }] = await Promise.all([
+    sb.from('saldo_cuti')
+      .select('*, jenis_cuti(*)')
+      .eq('karyawan_id', myProfile.id)
+      .eq('tahun', TAHUN),
+    sb.from('pengajuan_cuti')
+      .select('*, jenis_cuti(nama)')
+      .eq('karyawan_id', myProfile.id)
+      .order('created_at', {ascending:false})
+  ])
+
+  // Saldo cards
+  const saldoHtml = (saldos && saldos.length)
+    ? saldos.map(s => {
+        const sisa = s.saldo_awal - (s.terpakai || 0)
+        const pct  = s.saldo_awal > 0 ? Math.max(0, Math.min(100, (sisa/s.saldo_awal)*100)) : 0
+        return `
+        <div class="saldo-card">
+          <div class="saldo-jenis">${s.jenis_cuti.nama}</div>
+          <div class="saldo-num">${sisa}</div>
+          <div class="saldo-unit">hari tersisa dari ${s.saldo_awal}</div>
+          <div class="saldo-bar"><div class="saldo-fill" style="width:${pct}%"></div></div>
+        </div>`
+      }).join('')
+    : '<div style="color:var(--muted);font-size:.875rem;padding:.5rem 0;">Saldo cuti belum diatur oleh HR. Hubungi bagian HR.</div>'
+
+  // Tabel riwayat pengajuan
+  const tblHtml = (pengajuan && pengajuan.length)
+    ? pengajuan.map(p => `
+      <tr>
+        <td>${p.jenis_cuti?.nama || '—'}</td>
+        <td>${fmtDate(p.tanggal_mulai)}</td>
+        <td>${fmtDate(p.tanggal_selesai)}</td>
+        <td style="text-align:center;">${p.jumlah_hari}</td>
+        <td><span class="badge ${p.status}">${badgeLabel(p.status)}</span></td>
+        <td style="color:var(--muted);font-size:.8rem;">${p.catatan_hr || '—'}</td>
+        <td>
+          ${p.status === 'pending' ? `<button class="btn-sm btn-cancel" onclick="batalkan('${p.id}')">Batalkan</button>` : '—'}
+        </td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="7">Belum ada riwayat pengajuan cuti</td></tr>'
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div class="card-head"><h3>💰 Saldo Cuti Saya — ${TAHUN}</h3></div>
+      <div class="card-body">
+        <div class="saldo-grid">${saldoHtml}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>📋 Riwayat Pengajuan</h3>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Jenis Cuti</th><th>Mulai</th><th>Selesai</th><th style="text-align:center;">Hari</th>
+              <th>Status</th><th>Catatan HR</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>${tblHtml}</tbody>
+        </table>
+      </div>
+    </div>`
+}
+
+// ====================================================
+// VIEW HR ADMIN
+// ====================================================
+async function renderHR (filter = {status:'', search:''}) {
+  document.getElementById('topBc').textContent = 'Kelola pengajuan cuti semua karyawan'
+  document.getElementById('topActions').innerHTML = `
+    <div style="display:flex;gap:.6rem;">
+      <button class="btn-secondary" onclick="openModalSaldo()">💰 Atur Saldo</button>
+    </div>`
+
+  // Load semua pengajuan
+  let q = sb.from('pengajuan_cuti')
+    .select('*, jenis_cuti(nama), karyawan:karyawan_id(nama_lengkap, nik, divisi_id)')
+    .order('created_at', {ascending:false})
+  if (filter.status) q = q.eq('status', filter.status)
+
+  const { data: pengajuan } = await q
+
+  // Stats
+  const pending    = pengajuan?.filter(p => p.status === 'pending').length    || 0
+  const disetujui  = pengajuan?.filter(p => p.status === 'disetujui').length  || 0
+  const ditolak    = pengajuan?.filter(p => p.status === 'ditolak').length    || 0
+  const dibatalkan = pengajuan?.filter(p => p.status === 'dibatalkan').length || 0
+
+  // Filter by search
+  let filtered = pengajuan || []
+  if (filter.search) {
+    const q2 = filter.search.toLowerCase()
+    filtered = filtered.filter(p => p.karyawan?.nama_lengkap?.toLowerCase().includes(q2))
+  }
+
+  const tblHtml = filtered.length
+    ? filtered.map(p => `
+      <tr>
+        <td>
+          <div style="font-weight:600">${p.karyawan?.nama_lengkap || '—'}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${p.karyawan?.nik || ''}</div>
+        </td>
+        <td>${p.jenis_cuti?.nama || '—'}</td>
+        <td>${fmtDate(p.tanggal_mulai)}</td>
+        <td>${fmtDate(p.tanggal_selesai)}</td>
+        <td style="text-align:center;">${p.jumlah_hari}</td>
+        <td><span class="badge ${p.status}">${badgeLabel(p.status)}</span></td>
+        <td>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+            <button class="btn-sm" onclick="lihatDetail('${p.id}')">👁 Detail</button>
+            ${p.status === 'pending' ? `
+              <button class="btn-sm btn-approve" onclick="bukaAction('${p.id}','approve')">✅ Setujui</button>
+              <button class="btn-sm btn-reject"  onclick="bukaAction('${p.id}','reject')">❌ Tolak</button>` : ''}
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr class="empty-row"><td colspan="7">Tidak ada pengajuan ditemukan</td></tr>'
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="stats-grid" style="margin-bottom:1.25rem;">
+      <div class="stat-card"><div class="stat-label">Menunggu Keputusan</div><div class="stat-val c-yellow">${pending}</div><div class="stat-sub">pengajuan pending</div></div>
+      <div class="stat-card"><div class="stat-label">Disetujui</div><div class="stat-val c-green">${disetujui}</div><div class="stat-sub">pengajuan</div></div>
+      <div class="stat-card"><div class="stat-label">Ditolak</div><div class="stat-val c-red">${ditolak}</div><div class="stat-sub">pengajuan</div></div>
+      <div class="stat-card"><div class="stat-label">Dibatalkan</div><div class="stat-val c-blue">${dibatalkan}</div><div class="stat-sub">oleh karyawan</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>📋 Semua Pengajuan Cuti</h3></div>
+      <div class="card-body" style="padding-bottom:.5rem;">
+        <div class="filter-bar">
+          <input class="inp inp-sm" type="text" placeholder="🔍 Cari nama karyawan..." id="srchNama"
+            oninput="renderHR({status:document.getElementById('srchStatus').value, search:this.value})" style="min-width:200px;">
+          <select class="inp inp-sm" id="srchStatus"
+            onchange="renderHR({status:this.value, search:document.getElementById('srchNama').value})">
+            <option value="">Semua Status</option>
+            <option value="pending">Pending</option>
+            <option value="disetujui">Disetujui</option>
+            <option value="ditolak">Ditolak</option>
+            <option value="dibatalkan">Dibatalkan</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Karyawan</th><th>Jenis</th><th>Mulai</th><th>Selesai</th><th style="text-align:center;">Hari</th><th>Status</th><th>Aksi</th></tr>
+          </thead>
+          <tbody>${tblHtml}</tbody>
+        </table>
+      </div>
+    </div>`
+}
+
+// ====================================================
+// MODAL: Ajukan Cuti
+// ====================================================
+async function openAjuan () {
+  // Populate jenis cuti
+  const sel = document.getElementById('ajJenis')
+  sel.innerHTML = jenisCutiList.map(j => `<option value="${j.id}">${j.nama}</option>`).join('')
+  document.getElementById('ajMulai').value   = ''
+  document.getElementById('ajSelesai').value = ''
+  document.getElementById('ajHariNum').textContent = '—'
+  document.getElementById('ajSaldoInfo').innerHTML = ''
+  document.getElementById('ajAlasan').value  = ''
+
+  // Set min date = today
+  const today = new Date().toISOString().split('T')[0]
+  document.getElementById('ajMulai').min   = today
+  document.getElementById('ajSelesai').min = today
+
+  // Event listeners untuk hitung hari
+  document.getElementById('ajMulai').onchange   = updateAjuanInfo
+  document.getElementById('ajSelesai').onchange = updateAjuanInfo
+  document.getElementById('ajJenis').onchange   = updateAjuanInfo
+
+  openModal('modalAjukan')
+}
+
+async function updateAjuanInfo () {
+  const mulai   = document.getElementById('ajMulai').value
+  const selesai = document.getElementById('ajSelesai').value
+  const jenisId = document.getElementById('ajJenis').value
+
+  if (mulai && selesai) {
+    if (selesai < mulai) {
+      document.getElementById('ajHariNum').textContent = '⚠️ Tanggal tidak valid'
+      return
+    }
+    const hari = hitungHariKerja(mulai, selesai)
+    document.getElementById('ajHariNum').textContent = hari + ' hari kerja'
+
+    // Cek saldo
+    if (jenisId) {
+      const { data: saldo } = await sb.from('saldo_cuti')
+        .select('saldo_awal, terpakai')
+        .eq('karyawan_id', myProfile.id)
+        .eq('jenis_cuti_id', jenisId)
+        .eq('tahun', TAHUN)
+        .single()
+
+      const infoEl = document.getElementById('ajSaldoInfo')
+      if (saldo) {
+        const sisa = saldo.saldo_awal - (saldo.terpakai || 0)
+        if (sisa < hari) {
+          infoEl.innerHTML = `<div class="warn-box">⚠️ Saldo cuti tidak cukup. Sisa: <strong>${sisa} hari</strong>, dibutuhkan: <strong>${hari} hari</strong>.</div>`
+        } else {
+          infoEl.innerHTML = `<div class="info-box">✅ Saldo cukup. Sisa setelah cuti ini: <strong>${sisa - hari} hari</strong>.</div>`
+        }
+      } else {
+        infoEl.innerHTML = `<div class="warn-box">⚠️ Saldo jenis cuti ini belum diatur. Pengajuan tetap bisa dikirim untuk diproses HR.</div>`
+      }
+    }
+  }
+}
+
+async function submitAjuan () {
+  const jenisId = document.getElementById('ajJenis').value
+  const mulai   = document.getElementById('ajMulai').value
+  const selesai = document.getElementById('ajSelesai').value
+  const alasan  = document.getElementById('ajAlasan').value.trim()
+
+  if (!jenisId || !mulai || !selesai) { toast('Lengkapi data pengajuan','error'); return }
+  if (selesai < mulai) { toast('Tanggal selesai tidak boleh sebelum mulai','error'); return }
+
+  const hari = hitungHariKerja(mulai, selesai)
+  if (hari === 0) { toast('Tidak ada hari kerja pada rentang tanggal tersebut','error'); return }
+
+  const { error } = await sb.from('pengajuan_cuti').insert({
+    karyawan_id: myProfile.id,
+    jenis_cuti_id: jenisId,
+    tanggal_mulai: mulai,
+    tanggal_selesai: selesai,
+    jumlah_hari: hari,
+    alasan: alasan || null,
+    status: 'pending'
+  })
+
+  if (error) { toast('Gagal kirim: '+error.message, 'error'); return }
+  toast('✅ Pengajuan cuti berhasil dikirim!')
+  closeModal('modalAjukan')
+  renderKaryawan()
+}
+
+// ====================================================
+// KARYAWAN: Batalkan pengajuan
+// ====================================================
+async function batalkan (id) {
+  if (!confirm('Batalkan pengajuan cuti ini?')) return
+  const { error } = await sb.from('pengajuan_cuti')
+    .update({ status: 'dibatalkan' })
+    .eq('id', id)
+    .eq('karyawan_id', myProfile.id)
+    .eq('status', 'pending')
+  if (error) { toast('Gagal membatalkan','error'); return }
+  toast('Pengajuan dibatalkan')
+  renderKaryawan()
+}
+
+// ====================================================
+// HR: Lihat Detail
+// ====================================================
+async function lihatDetail (id) {
+  const { data: p } = await sb.from('pengajuan_cuti')
+    .select('*, jenis_cuti(nama), karyawan:karyawan_id(nama_lengkap, nik), approver:approved_by(nama_lengkap)')
+    .eq('id', id)
+    .single()
+
+  if (!p) return
+  document.getElementById('detailTitle').textContent = `Detail Pengajuan — ${p.karyawan?.nama_lengkap}`
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><div class="detail-lbl">Nama Karyawan</div><div class="detail-val">${p.karyawan?.nama_lengkap}</div></div>
+    <div class="detail-row"><div class="detail-lbl">NIK</div><div class="detail-val">${p.karyawan?.nik || '—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Jenis Cuti</div><div class="detail-val">${p.jenis_cuti?.nama}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Tanggal Mulai</div><div class="detail-val">${fmtDate(p.tanggal_mulai)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Tanggal Selesai</div><div class="detail-val">${fmtDate(p.tanggal_selesai)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Jumlah Hari</div><div class="detail-val">${p.jumlah_hari} hari kerja</div></div>
+    <div class="detail-row"><div class="detail-lbl">Alasan</div><div class="detail-val">${p.alasan || '—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Status</div><div class="detail-val"><span class="badge ${p.status}">${badgeLabel(p.status)}</span></div></div>
+    <div class="detail-row"><div class="detail-lbl">Diproses oleh</div><div class="detail-val">${p.approver?.nama_lengkap || '—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Catatan HR</div><div class="detail-val">${p.catatan_hr || '—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Diajukan</div><div class="detail-val">${fmtDate(p.created_at)}</div></div>`
+
+  const footHtml = p.status === 'pending'
+    ? `<button class="btn-secondary" onclick="closeModal('modalDetail')">Tutup</button>
+       <button class="btn-secondary btn-approve" onclick="closeModal('modalDetail');bukaAction('${p.id}','approve')">✅ Setujui</button>
+       <button class="btn-secondary btn-reject" onclick="closeModal('modalDetail');bukaAction('${p.id}','reject')">❌ Tolak</button>`
+    : `<button class="btn-primary" onclick="closeModal('modalDetail')">Tutup</button>`
+  document.getElementById('detailFoot').innerHTML = footHtml
+  openModal('modalDetail')
+}
+
+// ====================================================
+// HR: Approve / Reject
+// ====================================================
+async function bukaAction (id, type) {
+  currentAction = { id, type }
+  const { data: p } = await sb.from('pengajuan_cuti')
+    .select('*, jenis_cuti(nama), karyawan:karyawan_id(nama_lengkap)')
+    .eq('id', id).single()
+
+  document.getElementById('actionTitle').textContent  = type === 'approve' ? '✅ Setujui Pengajuan' : '❌ Tolak Pengajuan'
+  document.getElementById('actionInfo').textContent   = `${p.karyawan?.nama_lengkap} — ${p.jenis_cuti?.nama} (${fmtDate(p.tanggal_mulai)} s/d ${fmtDate(p.tanggal_selesai)}, ${p.jumlah_hari} hari)`
+  document.getElementById('actionCatatan').value      = ''
+  const btn = document.getElementById('actionConfirmBtn')
+  btn.textContent = type === 'approve' ? '✅ Setujui' : '❌ Tolak'
+  btn.style.background = type === 'approve' ? '#16a34a' : '#dc2626'
+  openModal('modalAction')
+}
+
+async function confirmAction () {
+  const { id, type } = currentAction
+  const catatan = document.getElementById('actionCatatan').value.trim()
+  const newStatus = type === 'approve' ? 'disetujui' : 'ditolak'
+
+  const updateData = {
+    status: newStatus,
+    catatan_hr: catatan || null,
+    approved_by: myProfile.id,
+    approved_at: new Date().toISOString()
+  }
+
+  const { data: p, error } = await sb.from('pengajuan_cuti')
+    .update(updateData).eq('id', id).select('*').single()
+  if (error) { toast('Gagal update','error'); return }
+
+  // Jika disetujui, update terpakai di saldo_cuti
+  if (type === 'approve') {
+    const { error: rpcErr } = await sb.rpc('tambah_terpakai_cuti', {
+      p_karyawan_id: p.karyawan_id,
+      p_jenis_cuti_id: p.jenis_cuti_id,
+      p_tahun: new Date(p.tanggal_mulai).getFullYear(),
+      p_jumlah: p.jumlah_hari
+    })
+    if (rpcErr) {
+      // Fallback manual jika RPC belum ada / error
+      const { data: s } = await sb.from('saldo_cuti')
+        .select('*')
+        .eq('karyawan_id', p.karyawan_id)
+        .eq('jenis_cuti_id', p.jenis_cuti_id)
+        .eq('tahun', new Date(p.tanggal_mulai).getFullYear())
+        .single()
+      if (s) {
+        const { error: updErr } = await sb.from('saldo_cuti')
+          .update({ terpakai: (s.terpakai || 0) + p.jumlah_hari })
+          .eq('id', s.id)
+        if (updErr) console.warn('Gagal update saldo cuti:', updErr.message)
+      }
+    }
+  }
+
+  toast(type === 'approve' ? '✅ Pengajuan disetujui!' : '❌ Pengajuan ditolak')
+  closeModal('modalAction')
+  renderHR({ status: document.getElementById('srchStatus')?.value || '', search: document.getElementById('srchNama')?.value || '' })
+}
+
+// ====================================================
+// HR: Atur Saldo
+// ====================================================
+async function openModalSaldo () {
+  // Populate dropdowns
+  const selK = document.getElementById('saldoKaryawan')
+  selK.innerHTML = allKaryawan.map(k => `<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
+
+  const selJ = document.getElementById('saldoJenis')
+  selJ.innerHTML = jenisCutiList.map(j => `<option value="${j.id}">${j.nama}</option>`).join('')
+
+  document.getElementById('saldoTahun').value   = TAHUN
+  document.getElementById('saldoJumlah').value  = '12'
+  openModal('modalSaldo')
+}
+
+async function saveSaldo () {
+  const karyawanId = document.getElementById('saldoKaryawan').value
+  const jenisId    = document.getElementById('saldoJenis').value
+  const tahun      = parseInt(document.getElementById('saldoTahun').value)
+  const jumlah     = parseInt(document.getElementById('saldoJumlah').value)
+
+  if (!karyawanId || !jenisId || isNaN(tahun) || isNaN(jumlah)) {
+    toast('Lengkapi semua field','error'); return
+  }
+
+  const { error } = await sb.from('saldo_cuti').upsert({
+    karyawan_id: karyawanId,
+    jenis_cuti_id: jenisId,
+    tahun,
+    saldo_awal: jumlah,
+    terpakai: 0
+  }, { onConflict: 'karyawan_id,jenis_cuti_id,tahun', ignoreDuplicates: false })
+
+  if (error) { toast('Gagal simpan saldo: '+error.message,'error'); return }
+  toast('✅ Saldo cuti berhasil diatur')
+  closeModal('modalSaldo')
+}
+
+// ====================================================
+// HELPERS
+// ====================================================
+function badgeLabel (status) {
+  const map = { pending:'⏳ Pending', disetujui:'✅ Disetujui', ditolak:'❌ Ditolak', dibatalkan:'🚫 Dibatalkan' }
+  return map[status] || status
+}
+
+// ====================================================
+// INIT
+// ====================================================
+async function init () {
+  const { data: { session } } = await sb.auth.getSession()
+  if (!session) { window.location.href='index.html'; return }
+
+  const [{ data: k }, { data: jenis }, { data: karyawans }] = await Promise.all([
+    sb.from('karyawan').select('*').eq('id', session.user.id).single(),
+    sb.from('jenis_cuti').select('*').eq('aktif', true).order('nama'),
+    sb.from('karyawan').select('id,nama_lengkap').order('nama_lengkap')
+  ])
+
+  myProfile    = k
+  jenisCutiList = jenis || []
+  allKaryawan   = karyawans || []
+
+  document.getElementById('sbName').textContent = k.nama_lengkap
+  document.getElementById('sbRole').textContent = k.role === 'hr_admin' ? 'HR Admin' : 'Karyawan'
+  document.getElementById('sbAv').textContent   = k.nama_lengkap?.charAt(0).toUpperCase() || '?'
+
+  await renderPage()
+  document.getElementById('lo').style.display = 'none'
+}
+
+init()
+
+// ===== MOBILE SIDEBAR TOGGLE =====
+function toggleSidebar() { document.body.classList.toggle('nav-open') }
+function closeSidebar()   { document.body.classList.remove('nav-open') }
+;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(el=>{ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
+</script>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item" href="dashboard.html"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></a>
+  <a class="bn-item" href="absensi.html"><span class="bn-icon">📍</span><span class="bn-label">Absensi</span></a>
+  <a class="bn-item" href="cuti.html"><span class="bn-icon">🏖️</span><span class="bn-label">Cuti</span></a>
+  <a class="bn-item" href="payroll.html"><span class="bn-icon">💰</span><span class="bn-label">Payroll</span></a>
+  <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon">☰</span><span class="bn-label">Menu</span></button>
+</nav>
+</body>
+</html>
