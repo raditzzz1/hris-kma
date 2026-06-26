@@ -226,7 +226,7 @@
         <div class="u-name" id="sbName">—</div>
         <div class="u-role" id="sbRole">—</div>
       </div>
-      <button class="btn-logout" onclick="logout()">⏻</button>
+      <button class="btn-logout" onclick="logout()"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></button>
     </div>
   </div>
 </aside>
@@ -256,7 +256,7 @@
     <div id="viewKaryawan" style="display:none;">
       <!-- Holiday Banner -->
       <div class="libur-banner" id="hariLiburBanner" style="display:none;">
-        <span class="libur-icon">🎉</span>
+        <span class="libur-icon"><svg class="ic" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg></span>
         <div>
           <strong id="hariLiburNama">Hari Libur</strong>
           <p>Hari ini merupakan hari libur. Selamat beristirahat!</p>
@@ -267,18 +267,18 @@
         <!-- Absensi Hari Ini -->
         <div class="card">
           <div class="card-head">
-            <h3>📍 Absensi Hari Ini</h3>
+            <h3><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Absensi Hari Ini</h3>
             <span class="badge" id="absenBadge">—</span>
           </div>
           <div class="card-body">
             <div class="absen-main">
-              <div class="absen-circle belum" id="absenCircle">🕐</div>
+              <div class="absen-circle belum" id="absenCircle"><svg class="ic" viewBox="0 0 24 24" style="width:2.2rem;height:2.2rem"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
               <p class="absen-status" id="absenDesc">Memuat...</p>
             </div>
             <div class="mode-toggle" id="modeToggle">
-              <button class="mode-btn active" id="btnModeKantor" onclick="setMode('kantor')" title="Absen dari kantor (wajib dalam radius)">🏢 Kantor</button>
-              <button class="mode-btn" id="btnModeWFH" onclick="setMode('wfh')" title="Work from Home">🏠 WFH</button>
-              <button class="mode-btn" id="btnModeWFA" onclick="setMode('wfa')" title="Work from Anywhere">✈️ WFA</button>
+              <button class="mode-btn active" id="btnModeKantor" onclick="setMode('kantor')" title="Absen dari kantor (wajib dalam radius)"><svg class="ic" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg> Kantor</button>
+              <button class="mode-btn" id="btnModeWFH" onclick="setMode('wfh')" title="Work from Home"><svg class="ic" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg> WFH</button>
+              <button class="mode-btn" id="btnModeWFA" onclick="setMode('wfa')" title="Work from Anywhere"><svg class="ic" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg> WFA</button>
             </div>
             <div class="time-row">
               <div class="time-box">
@@ -290,14 +290,14 @@
                 <div class="time-lbl">Jam Keluar</div>
               </div>
             </div>
-            <button class="btn-absen btn-masuk" id="btnAbsen" onclick="doAbsen()">📍 Absen Masuk</button>
+            <button class="btn-absen btn-masuk" id="btnAbsen" onclick="doAbsen()">Absen Masuk</button>
             <p class="absen-note" id="absenNote">Pastikan Anda berada dalam radius kantor</p>
           </div>
         </div>
 
         <!-- Rekap Bulan Ini -->
         <div class="card">
-          <div class="card-head"><h3>📊 Rekap Bulan Ini</h3></div>
+          <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg> Rekap Bulan Ini</h3></div>
           <div class="card-body" id="rekapBody">
             <div class="grid-2" style="gap:.6rem;margin-bottom:0;">
               <div class="time-box"><div class="time-val" id="rHadir" style="color:#16a34a;">—</div><div class="time-lbl">Hadir</div></div>
@@ -312,11 +312,11 @@
       <!-- Kalender Kehadiran -->
       <div class="card" style="margin-bottom:1rem;">
         <div class="card-head">
-          <h3>📅 Kalender Kehadiran</h3>
+          <h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Kalender Kehadiran</h3>
           <div class="cal-header" style="gap:.5rem;margin-bottom:0;">
-            <button class="cal-nav" onclick="prevMonth()">‹</button>
+            <button class="cal-nav" onclick="prevMonth()"><svg class="ic" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
             <span class="cal-month" id="calMonthLabel">—</span>
-            <button class="cal-nav" onclick="nextMonth()">›</button>
+            <button class="cal-nav" onclick="nextMonth()"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
         </div>
         <div class="card-body">
@@ -333,7 +333,7 @@
 
       <!-- Riwayat Table -->
       <div class="card">
-        <div class="card-head"><h3>🗓️ Riwayat Absensi</h3></div>
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Riwayat Absensi</h3></div>
         <div class="tbl-wrap">
           <table>
             <thead>
@@ -353,8 +353,8 @@
 
       <div class="card">
         <div class="card-head">
-          <h3>📋 Rekap Kehadiran Karyawan</h3>
-          <button class="btn-primary" onclick="openManualAbsen()">➕ Input Manual</button>
+          <h3><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Rekap Kehadiran Karyawan</h3>
+          <button class="btn-primary" onclick="openManualAbsen()"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Input Manual</button>
         </div>
         <div class="card-body" style="padding:.75rem 1.25rem;">
           <div class="toolbar">
@@ -388,8 +388,8 @@
 <div class="modal-overlay" id="modalManual">
   <div class="modal">
     <div class="mh">
-      <h3>➕ Input Absensi Manual</h3>
-      <button class="mc" onclick="closeModal()">✕</button>
+      <h3>Input Absensi Manual</h3>
+      <button class="mc" onclick="closeModal()"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="mb">
       <div class="fg">
@@ -424,9 +424,9 @@
         <div class="fg">
           <label>Mode Kerja</label>
           <select class="inp" style="width:100%;" id="manMode">
-            <option value="kantor">🏢 Kantor</option>
-            <option value="wfh">🏠 WFH</option>
-            <option value="wfa">✈️ WFA</option>
+            <option value="kantor">Kantor</option>
+            <option value="wfh">WFH</option>
+            <option value="wfa">WFA</option>
           </select>
         </div>
       </div>
@@ -437,7 +437,7 @@
     </div>
     <div class="mf">
       <button class="btn-sec" onclick="closeModal()">Batal</button>
-      <button class="btn-sub" onclick="saveManual()">💾 Simpan</button>
+      <button class="btn-sub" onclick="saveManual()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan</button>
     </div>
   </div>
 </div>
@@ -529,7 +529,7 @@ function toast (msg, t='success') {
   el.textContent = msg; el.className = t; el.style.display = 'block'
   setTimeout(() => el.style.display = 'none', 4000)
 }
-function cs () { toast('🚧 Modul ini sedang dalam pengembangan','error'); return false }
+function cs () { toast('Modul ini sedang dalam pengembangan','error'); return false }
 async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
 function fmt (ts) {
   if (!ts) return '--:--'
@@ -563,7 +563,7 @@ function setMode (mode) {
   document.getElementById('btnModeWFH').classList.toggle('active', mode === 'wfh')
   document.getElementById('btnModeWFA').classList.toggle('active', mode === 'wfa')
   if (mode !== 'kantor') {
-    setGPSBar('inside', `✅ Mode ${mode.toUpperCase()} aktif — geofencing dinonaktifkan`, 'Bekerja dari luar kantor')
+    setGPSBar('inside', `Mode ${mode.toUpperCase()} aktif — geofencing dinonaktifkan`, 'Bekerja dari luar kantor')
   } else {
     if (currentLat !== null) checkRadius()
     else setGPSBar('checking', 'Mendapatkan lokasi GPS...', '')
@@ -612,9 +612,9 @@ function checkRadius () {
   dalamRadius = minJarak <= radiusLokasi
 
   if (dalamRadius) {
-    setGPSBar('inside', `✅ Dalam radius ${namaLokasi}`, `${minJarak}m dari kantor`)
+    setGPSBar('inside', `Dalam radius ${namaLokasi}`, `${minJarak}m dari kantor`)
   } else {
-    setGPSBar('outside', `❌ Di luar radius kantor`, `${minJarak}m (radius: ${radiusLokasi}m)`)
+    setGPSBar('outside', `Di luar radius kantor`, `${minJarak}m (radius: ${radiusLokasi}m)`)
   }
   updateAbsenButton()
 }
@@ -636,16 +636,16 @@ function renderAbsenCard (ab) {
   document.getElementById('dispKeluar').textContent = fmt(ab?.waktu_keluar)
 
   if (!ab?.waktu_masuk) {
-    circle.className = 'absen-circle belum'; circle.textContent = '🕐'
+    circle.className = 'absen-circle belum'; circle.innerHTML = '<svg class="ic" viewBox="0 0 24 24" style="width:2.2rem;height:2.2rem"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
     badge.className  = 'badge bg-gray';      badge.textContent  = 'Belum Absen'
     desc.textContent = 'Anda belum melakukan absensi hari ini'
   } else if (!ab?.waktu_keluar) {
-    circle.className = 'absen-circle masuk'; circle.textContent = '✅'
+    circle.className = 'absen-circle masuk'; circle.innerHTML = '<svg class="ic" viewBox="0 0 24 24" style="width:2.2rem;height:2.2rem"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>'
     badge.className  = 'badge bg-green';     badge.textContent  = 'Sudah Masuk'
     desc.textContent = `Absen masuk pukul ${fmt(ab.waktu_masuk)}`
   } else {
     const d = ab.durasi_kerja_menit
-    circle.className = 'absen-circle keluar'; circle.textContent = '🏁'
+    circle.className = 'absen-circle keluar'; circle.innerHTML = '<svg class="ic" viewBox="0 0 24 24" style="width:2.2rem;height:2.2rem"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>'
     badge.className  = 'badge bg-blue';       badge.textContent  = 'Selesai'
     desc.textContent = `Durasi kerja: ${durasi(d)}`
   }
@@ -660,7 +660,7 @@ function updateAbsenButton () {
   // Cek hari libur / Minggu
   const today = new Date().toISOString().split('T')[0]
   if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
-    btn.className = 'btn-absen btn-libur'; btn.textContent = '🎉 Hari Libur'; btn.disabled = true
+    btn.className = 'btn-absen btn-libur'; btn.textContent = 'Hari Libur'; btn.disabled = true
     note.textContent = `Hari ini ${getNamaLibur(today)}. Selamat beristirahat!`
     if (toggle) toggle.style.display = 'none'
     return
@@ -672,7 +672,7 @@ function updateAbsenButton () {
   const canAbsen = isAdmin || dalamRadius || effectiveMode !== 'kantor'
 
   if (ab?.waktu_keluar) {
-    btn.className = 'btn-absen btn-done'; btn.textContent = '✅ Absensi selesai'; btn.disabled = true
+    btn.className = 'btn-absen btn-done'; btn.textContent = 'Absensi selesai'; btn.disabled = true
     note.textContent = 'Terima kasih, sampai jumpa besok!'
     if (toggle) toggle.style.display = 'none'
     return
@@ -681,16 +681,16 @@ function updateAbsenButton () {
     // Belum absen masuk — tampilkan mode toggle
     if (toggle) toggle.style.display = ''
     btn.className = 'btn-absen btn-masuk'
-    btn.textContent = modeKerja !== 'kantor' ? `📍 Absen Masuk (${modeKerja.toUpperCase()})` : '📍 Absen Masuk'
+    btn.textContent = modeKerja !== 'kantor' ? `Absen Masuk (${modeKerja.toUpperCase()})` : 'Absen Masuk'
     btn.disabled = !canAbsen
     note.textContent = canAbsen
-      ? `Siap absen — ${modeKerja !== 'kantor' ? 'Mode ' + modeKerja.toUpperCase() + ' aktif' : 'Dalam radius kantor'} ✅`
+      ? `Siap absen — ${modeKerja !== 'kantor' ? 'Mode ' + modeKerja.toUpperCase() + ' aktif' : 'Dalam radius kantor'}`
       : 'Anda harus berada dalam radius kantor (atau pilih mode WFH/WFA)'
   } else {
     // Sudah absen masuk — sembunyikan toggle, tampilkan mode aktif
     if (toggle) toggle.style.display = 'none'
     btn.className = 'btn-absen btn-keluar'
-    btn.textContent = effectiveMode !== 'kantor' ? `🚪 Absen Keluar (${effectiveMode.toUpperCase()})` : '🚪 Absen Keluar'
+    btn.textContent = effectiveMode !== 'kantor' ? `Absen Keluar (${effectiveMode.toUpperCase()})` : 'Absen Keluar'
     btn.disabled = !canAbsen
     note.textContent = canAbsen ? 'Klik saat Anda selesai bekerja' : 'Anda harus berada dalam radius kantor'
   }
@@ -700,7 +700,7 @@ function updateAbsenButton () {
 async function doAbsen () {
   const effectiveMode = absensiHariIni?.waktu_masuk ? (absensiHariIni.mode_kerja || 'kantor') : modeKerja
   const canAbsen = isAdmin || dalamRadius || effectiveMode !== 'kantor'
-  if (!canAbsen) { toast('❌ Anda di luar radius kantor. Pilih mode WFH/WFA jika bekerja dari luar kantor.','error'); return }
+  if (!canAbsen) { toast('Anda di luar radius kantor. Pilih mode WFH/WFA jika bekerja dari luar kantor.','error'); return }
 
   const btn = document.getElementById('btnAbsen')
   btn.disabled = true; btn.textContent = 'Memproses...'
@@ -721,7 +721,7 @@ async function doAbsen () {
     }
     const { data, error } = await sb.from('absensi').insert(payload).select().single()
     if (error) { toast('Gagal absen: '+error.message,'error') }
-    else { absensiHariIni = data; toast(`✅ Absen masuk berhasil — ${fmt(now)}${modeKerja !== 'kantor' ? ' (' + modeKerja.toUpperCase() + ')' : ''}`) }
+    else { absensiHariIni = data; toast(`Absen masuk berhasil — ${fmt(now)}${modeKerja !== 'kantor' ? ' (' + modeKerja.toUpperCase() + ')' : ''}`) }
   } else {
     // --- ABSEN KELUAR ---
     const masuk  = new Date(absensiHariIni.waktu_masuk)
@@ -733,7 +733,7 @@ async function doAbsen () {
     }
     const { data, error } = await sb.from('absensi').update(updatePayload).eq('id', absensiHariIni.id).select().single()
     if (error) { toast('Gagal absen keluar: '+error.message,'error') }
-    else { absensiHariIni = data; toast(`✅ Absen keluar — Durasi: ${durasi(dur)}`) }
+    else { absensiHariIni = data; toast(`Absen keluar — Durasi: ${durasi(dur)}`) }
   }
 
   renderAbsenCard(absensiHariIni)
@@ -804,7 +804,7 @@ async function loadRiwayat () {
 
   const body = document.getElementById('riwayatBody')
   if (!data || data.length === 0) {
-    body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">📅</div>Belum ada data absensi bulan ini</div></td></tr>`
+    body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></div>Belum ada data absensi bulan ini</div></td></tr>`
     return
   }
   body.innerHTML = data.map(a => `
@@ -853,10 +853,10 @@ async function updateAdminStats (tgl) {
   const izin      = ab?.filter(a=>['izin','cuti'].includes(a.status)).length || 0
   const belum     = Math.max(0, (total||0) - (ab?.length||0))
   document.getElementById('adminStats').innerHTML = `
-    <div class="stat-mini"><div class="stat-icon si-green">✅</div><div><div class="stat-val">${hadir}</div><div class="stat-lbl">Hadir</div></div></div>
-    <div class="stat-mini"><div class="stat-icon si-yellow">⏰</div><div><div class="stat-val">${terlambat}</div><div class="stat-lbl">Terlambat</div></div></div>
-    <div class="stat-mini"><div class="stat-icon si-blue">📋</div><div><div class="stat-val">${izin}</div><div class="stat-lbl">Izin/Cuti</div></div></div>
-    <div class="stat-mini"><div class="stat-icon si-red">❓</div><div><div class="stat-val">${belum}</div><div class="stat-lbl">Belum Absen</div></div></div>
+    <div class="stat-mini"><div class="stat-icon si-green"><svg class="ic" viewBox="0 0 24 24" style="color:#15803d"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div><div><div class="stat-val">${hadir}</div><div class="stat-lbl">Hadir</div></div></div>
+    <div class="stat-mini"><div class="stat-icon si-yellow"><svg class="ic" viewBox="0 0 24 24" style="color:#a16207"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="stat-val">${terlambat}</div><div class="stat-lbl">Terlambat</div></div></div>
+    <div class="stat-mini"><div class="stat-icon si-blue"><svg class="ic" viewBox="0 0 24 24" style="color:#1d4ed8"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg></div><div><div class="stat-val">${izin}</div><div class="stat-lbl">Izin/Cuti</div></div></div>
+    <div class="stat-mini"><div class="stat-icon si-red"><svg class="ic" viewBox="0 0 24 24" style="color:#dc2626"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></div><div><div class="stat-val">${belum}</div><div class="stat-lbl">Belum Absen</div></div></div>
   `
 }
 
@@ -874,7 +874,7 @@ function filterAdminTable () {
 function renderAdminTable (list) {
   const body = document.getElementById('adminTableBody')
   if (!list || list.length === 0) {
-    body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">📅</div>Tidak ada data absensi</div></td></tr>`
+    body.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></div>Tidak ada data absensi</div></td></tr>`
     return
   }
   body.innerHTML = list.map(a => `
@@ -889,7 +889,7 @@ function renderAdminTable (list) {
       <td>${fmt(a.waktu_keluar)}</td>
       <td>${durasi(a.durasi_kerja_menit)}</td>
       <td>${statusBadge(a.status, a.mode_kerja)}</td>
-      <td><button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="editAbsen('${a.id}')">✏️ Edit</button></td>
+      <td><button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="editAbsen('${a.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button></td>
     </tr>
   `).join('')
 }
@@ -908,7 +908,7 @@ async function openManualAbsen () {
   document.getElementById('manStatus').value = 'hadir'
   document.getElementById('manMode').value = 'kantor'
   document.getElementById('manKet').value = ''
-  document.querySelector('#modalManual .mh h3').textContent = '➕ Input Absensi Manual'
+  document.querySelector('#modalManual .mh h3').textContent = 'Input Absensi Manual'
   document.getElementById('manKaryawan').disabled = false
   document.getElementById('manTgl').disabled = false
   document.getElementById('modalManual').classList.add('open')
@@ -941,7 +941,7 @@ async function editAbsen (id) {
   document.getElementById('manKaryawan').disabled = true
   document.getElementById('manTgl').disabled = true
 
-  document.querySelector('#modalManual .mh h3').textContent = '✏️ Edit Absensi'
+  document.querySelector('#modalManual .mh h3').textContent = 'Edit Absensi'
   document.getElementById('modalManual').classList.add('open')
 }
 
@@ -965,7 +965,7 @@ async function saveManual () {
   const payload = { karyawan_id, tanggal, waktu_masuk, waktu_keluar, durasi_kerja_menit: dur, status, mode_kerja: mode_kerja||'kantor', keterangan: keterangan||null }
   const { error } = await sb.from('absensi').upsert(payload, { onConflict: 'karyawan_id,tanggal' })
   if (error) { toast('Gagal simpan: '+error.message,'error'); return }
-  toast('✅ Absensi berhasil disimpan')
+  toast('Absensi berhasil disimpan')
   closeModal()
   loadAdminAbsensi()
 }

@@ -161,7 +161,7 @@
     <div class="sidebar-user">
       <div class="s-av" id="sbAv">?</div>
       <div style="flex:1;min-width:0;"><div class="u-name" id="sbName">—</div><div class="u-role" id="sbRole">—</div></div>
-      <button class="btn-lo" onclick="logout()">⏻</button>
+      <button class="btn-lo" onclick="logout()"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></button>
     </div>
   </div>
 </aside>
@@ -170,7 +170,7 @@
 <div class="main-wrap">
   <header class="top-bar">
     <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
-    <div><h1>📚 Pelatihan & Pengembangan</h1><div class="bc" id="topBc">—</div></div>
+    <div><h1><svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Pelatihan & Pengembangan</h1><div class="bc" id="topBc">—</div></div>
     <div id="topActions"></div>
   </header>
   <main class="main" id="mainContent"></main>
@@ -179,7 +179,7 @@
 <!-- MODAL: Tambah/Edit Program -->
 <div class="modal-overlay" id="modalProgram">
   <div class="modal">
-    <div class="modal-head"><h3 id="progModalTitle">➕ Program Pelatihan</h3><button class="modal-close" onclick="cm('modalProgram')">×</button></div>
+    <div class="modal-head"><h3 id="progModalTitle">Program Pelatihan</h3><button class="modal-close" onclick="cm('modalProgram')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="progId">
       <div class="fg"><label>Nama Program *</label><input class="inp inp-full" type="text" id="progNama"></div>
@@ -207,7 +207,7 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalProgram')">Batal</button>
-      <button class="btn-primary" onclick="saveProgram()">💾 Simpan</button>
+      <button class="btn-primary" onclick="saveProgram()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan</button>
     </div>
   </div>
 </div>
@@ -215,7 +215,7 @@
 <!-- MODAL: Daftar Peserta Program -->
 <div class="modal-overlay" id="modalPeserta">
   <div class="modal modal-lg">
-    <div class="modal-head"><h3 id="pesertaTitle">👥 Peserta Pelatihan</h3><button class="modal-close" onclick="cm('modalPeserta')">×</button></div>
+    <div class="modal-head"><h3 id="pesertaTitle">Peserta Pelatihan</h3><button class="modal-close" onclick="cm('modalPeserta')">×</button></div>
     <div class="modal-body" id="pesertaBody"></div>
     <div class="modal-foot"><button class="btn-primary" onclick="cm('modalPeserta')">Tutup</button></div>
   </div>
@@ -224,7 +224,7 @@
 <!-- MODAL: Daftarkan Karyawan -->
 <div class="modal-overlay" id="modalDaftar">
   <div class="modal">
-    <div class="modal-head"><h3>➕ Daftarkan Karyawan</h3><button class="modal-close" onclick="cm('modalDaftar')">×</button></div>
+    <div class="modal-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Daftarkan Karyawan</h3><button class="modal-close" onclick="cm('modalDaftar')">×</button></div>
     <div class="modal-body">
       <div class="info-box" id="daftarInfo"></div>
       <div class="fg"><label>Pilih Karyawan *</label>
@@ -236,7 +236,7 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalDaftar')">Batal</button>
-      <button class="btn-primary" onclick="saveDaftar()">✅ Daftarkan</button>
+      <button class="btn-primary" onclick="saveDaftar()"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Daftarkan</button>
     </div>
   </div>
 </div>
@@ -244,7 +244,7 @@
 <!-- MODAL: Update Status Peserta -->
 <div class="modal-overlay" id="modalUpdate">
   <div class="modal">
-    <div class="modal-head"><h3>📝 Update Status Peserta</h3><button class="modal-close" onclick="cm('modalUpdate')">×</button></div>
+    <div class="modal-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg> Update Status Peserta</h3><button class="modal-close" onclick="cm('modalUpdate')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="updatePesertaId">
       <div class="fg"><label>Status</label>
@@ -263,7 +263,7 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalUpdate')">Batal</button>
-      <button class="btn-primary" onclick="saveUpdate()">💾 Simpan</button>
+      <button class="btn-primary" onclick="saveUpdate()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan</button>
     </div>
   </div>
 </div>
@@ -271,7 +271,7 @@
 <!-- MODAL: Tambah Sertifikasi -->
 <div class="modal-overlay" id="modalSertif">
   <div class="modal">
-    <div class="modal-head"><h3 id="sertifTitle">🏆 Tambah Sertifikasi</h3><button class="modal-close" onclick="cm('modalSertif')">×</button></div>
+    <div class="modal-head"><h3 id="sertifTitle">Tambah Sertifikasi</h3><button class="modal-close" onclick="cm('modalSertif')">×</button></div>
     <div class="modal-body">
       <input type="hidden" id="sertifId">
       <div class="fg"><label>Karyawan *</label><select class="inp inp-full" id="sertifKary"></select></div>
@@ -288,7 +288,7 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalSertif')">Batal</button>
-      <button class="btn-primary" onclick="saveSertif()">💾 Simpan</button>
+      <button class="btn-primary" onclick="saveSertif()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan</button>
     </div>
   </div>
 </div>
@@ -307,7 +307,7 @@ function toast(msg, t='success') {
   el.textContent=msg; el.className=t; el.style.display='block'
   setTimeout(()=>el.style.display='none', 4000)
 }
-function cs() { toast('🚧 Segera hadir','error'); return false }
+function cs() { toast('Segera hadir','error'); return false }
 async function logout() { await sb.auth.signOut(); window.location.href='index.html' }
 function om(id) { document.getElementById(id).classList.add('open') }
 function cm(id) { document.getElementById(id).classList.remove('open') }
@@ -334,14 +334,14 @@ async function renderHR(tab=hrTab) {
   document.getElementById('topBc').textContent = 'Kelola program pelatihan & sertifikasi karyawan'
   document.getElementById('topActions').innerHTML = tab === 'program'
     ? `<div style="display:flex;gap:.6rem;">
-        <button class="btn-primary" onclick="bukaProgram()">➕ Program Baru</button>
+        <button class="btn-primary" onclick="bukaProgram()"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Program Baru</button>
        </div>`
-    : `<button class="btn-primary" onclick="bukaSertif()">🏆 Tambah Sertifikasi</button>`
+    : `<button class="btn-primary" onclick="bukaSertif()"><svg class="ic" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Tambah Sertifikasi</button>`
 
   const tabsHtml = `
     <div class="tabs">
-      <button class="tab-btn ${tab==='program'?'active':''}" onclick="renderHR('program')">📚 Program Pelatihan</button>
-      <button class="tab-btn ${tab==='sertifikasi'?'active':''}" onclick="renderHR('sertifikasi')">🏆 Sertifikasi</button>
+      <button class="tab-btn ${tab==='program'?'active':''}" onclick="renderHR('program')"><svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Program Pelatihan</button>
+      <button class="tab-btn ${tab==='sertifikasi'?'active':''}" onclick="renderHR('sertifikasi')"><svg class="ic" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Sertifikasi</button>
     </div>`
 
   if (tab === 'program') {
@@ -363,22 +363,22 @@ async function renderHR(tab=hrTab) {
             <div class="prog-nama">${p.nama}</div>
             <div class="prog-desc">${p.deskripsi||'Tidak ada deskripsi'}</div>
             <div class="prog-meta">
-              ${p.durasi_jam?`<span class="prog-meta-item">⏱ ${p.durasi_jam} jam</span>`:''}
-              ${p.instruktur?`<span class="prog-meta-item">👤 ${p.instruktur}</span>`:''}
-              ${p.maks_peserta?`<span class="prog-meta-item">👥 Maks ${p.maks_peserta}</span>`:'<span class="prog-meta-item">👥 Tidak terbatas</span>'}
-              ${p.divisi?.nama?`<span class="prog-meta-item">🏢 ${p.divisi.nama}</span>`:'<span class="prog-meta-item">🏢 Semua Divisi</span>'}
+              ${p.durasi_jam?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${p.durasi_jam} jam</span>`:''}
+              ${p.instruktur?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${p.instruktur}</span>`:''}
+              ${p.maks_peserta?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Maks ${p.maks_peserta}</span>`:'<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Tidak terbatas</span>'}
+              ${p.divisi?.nama?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg> ${p.divisi.nama}</span>`:'<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg> Semua Divisi</span>'}
             </div>
             <div class="prog-actions">
-              <button class="btn-sm" onclick="lihatPeserta('${p.id}','${p.nama}')">👥 Peserta</button>
-              <button class="btn-sm" onclick="daftarkanKaryawan('${p.id}','${p.nama}')">➕ Daftarkan</button>
-              <button class="btn-sm" onclick="bukaProgram('${p.id}')">✏️ Edit</button>
-              <button class="btn-sm del" onclick="hapusProgram('${p.id}','${p.nama}')">🗑️</button>
+              <button class="btn-sm" onclick="lihatPeserta('${p.id}','${p.nama}')"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Peserta</button>
+              <button class="btn-sm" onclick="daftarkanKaryawan('${p.id}','${p.nama}')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Daftarkan</button>
+              <button class="btn-sm" onclick="bukaProgram('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
+              <button class="btn-sm del" onclick="hapusProgram('${p.id}','${p.nama}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </div>
           </div>`).join('')}</div>`
       : '<div style="color:var(--muted);font-size:.875rem;padding:1rem;">Belum ada program pelatihan. Klik "Program Baru" untuk mulai.</div>'
 
     document.getElementById('mainContent').innerHTML = tabsHtml + statsHtml + `
-      <div class="card"><div class="card-head"><h3>📚 Semua Program Pelatihan</h3></div>
+      <div class="card"><div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Semua Program Pelatihan</h3></div>
       <div class="card-body">${cardsHtml}</div></div>`
 
   } else {
@@ -395,10 +395,10 @@ async function renderHR(tab=hrTab) {
           let expBadge = ''
           if (s.tanggal_expired) {
             const exp = new Date(s.tanggal_expired)
-            if (exp < today)                       expBadge = `<span class="sertif-expired exp-dead">⛔ Expired</span>`
-            else if (exp - today < soonMs)         expBadge = `<span class="sertif-expired exp-warn">⚠️ Segera expired ${fmtDate(s.tanggal_expired)}</span>`
-            else                                   expBadge = `<span class="sertif-expired exp-ok">✅ Aktif s/d ${fmtDate(s.tanggal_expired)}</span>`
-          } else expBadge = `<span class="sertif-expired exp-ok">✅ Tidak expired</span>`
+            if (exp < today)                       expBadge = `<span class="sertif-expired exp-dead"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg> Expired</span>`
+            else if (exp - today < soonMs)         expBadge = `<span class="sertif-expired exp-warn"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Segera expired ${fmtDate(s.tanggal_expired)}</span>`
+            else                                   expBadge = `<span class="sertif-expired exp-ok"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Aktif s/d ${fmtDate(s.tanggal_expired)}</span>`
+          } else expBadge = `<span class="sertif-expired exp-ok"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Tidak expired</span>`
           return `<tr>
             <td><div style="font-weight:600">${s.karyawan?.nama_lengkap||'—'}</div><div style="font-size:.75rem;color:var(--muted)">${s.karyawan?.nik||''}</div></td>
             <td>${s.nama_sertifikat}</td>
@@ -406,15 +406,15 @@ async function renderHR(tab=hrTab) {
             <td>${fmtDate(s.tanggal_terbit)}</td>
             <td>${expBadge}</td>
             <td>
-              ${s.url_dokumen?`<a href="${s.url_dokumen}" target="_blank" class="btn-sm">🔗 Buka</a>`:''}&nbsp;
-              <button class="btn-sm del" onclick="hapusSertif('${s.id}')">🗑️</button>
+              ${s.url_dokumen?`<a href="${s.url_dokumen}" target="_blank" class="btn-sm"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Buka</a>`:''}&nbsp;
+              <button class="btn-sm del" onclick="hapusSertif('${s.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </td>
           </tr>`}).join('')
       : '<tr class="empty-row"><td colspan="6">Belum ada data sertifikasi</td></tr>'
 
     document.getElementById('mainContent').innerHTML = tabsHtml + `
       <div class="card">
-        <div class="card-head"><h3>🏆 Data Sertifikasi Karyawan</h3></div>
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Data Sertifikasi Karyawan</h3></div>
         <div class="tbl-wrap"><table>
           <thead><tr><th>Karyawan</th><th>Sertifikat</th><th>Lembaga</th><th>Terbit</th><th>Status</th><th>Aksi</th></tr></thead>
           <tbody>${tblHtml}</tbody>
@@ -470,19 +470,19 @@ async function renderKaryawan() {
         let expBadge = '<span class="sertif-expired exp-ok">Tidak expired</span>'
         if (s.tanggal_expired) {
           const exp = new Date(s.tanggal_expired)
-          if (exp < today) expBadge = `<span class="sertif-expired exp-dead">⛔ Expired ${fmtDate(s.tanggal_expired)}</span>`
-          else if (exp - today < soonMs) expBadge = `<span class="sertif-expired exp-warn">⚠️ Expired ${fmtDate(s.tanggal_expired)}</span>`
-          else expBadge = `<span class="sertif-expired exp-ok">✅ Aktif s/d ${fmtDate(s.tanggal_expired)}</span>`
+          if (exp < today) expBadge = `<span class="sertif-expired exp-dead"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg> Expired ${fmtDate(s.tanggal_expired)}</span>`
+          else if (exp - today < soonMs) expBadge = `<span class="sertif-expired exp-warn"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Expired ${fmtDate(s.tanggal_expired)}</span>`
+          else expBadge = `<span class="sertif-expired exp-ok"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Aktif s/d ${fmtDate(s.tanggal_expired)}</span>`
         }
         return `
         <div class="sertif-card">
-          <div class="sertif-icon">🏆</div>
+          <div class="sertif-icon"><svg class="ic" viewBox="0 0 24 24" style="width:2rem;height:2rem"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
           <div style="flex:1">
             <div class="sertif-nama">${s.nama_sertifikat}</div>
             <div class="sertif-meta">${s.lembaga_penerbit||'—'} · Terbit ${fmtDate(s.tanggal_terbit)}</div>
             ${expBadge}
           </div>
-          ${s.url_dokumen?`<a href="${s.url_dokumen}" target="_blank" class="btn-sm">🔗 Lihat</a>`:''}
+          ${s.url_dokumen?`<a href="${s.url_dokumen}" target="_blank" class="btn-sm"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Lihat</a>`:''}
         </div>`
       }).join('')
     : '<div style="color:var(--muted);font-size:.875rem;padding:1rem 0;">Belum ada sertifikasi</div>'
@@ -495,14 +495,14 @@ async function renderKaryawan() {
       <div class="stat-card"><div class="stat-label">Sertifikasi</div><div class="stat-val c-purple">${sertifs?.length||0}</div></div>
     </div>
     <div class="card" style="margin-bottom:1.25rem;">
-      <div class="card-head"><h3>📋 Riwayat Pelatihan Saya</h3></div>
+      <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Riwayat Pelatihan Saya</h3></div>
       <div class="tbl-wrap"><table>
         <thead><tr><th>Program</th><th>Tgl Daftar</th><th>Tgl Selesai</th><th style="text-align:center">Nilai</th><th>Status</th><th>Catatan</th></tr></thead>
         <tbody>${tblPeserta}</tbody>
       </table></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>🏆 Sertifikasi Saya</h3></div>
+      <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Sertifikasi Saya</h3></div>
       <div class="card-body">${sertifHtml}</div>
     </div>`
 }
@@ -518,7 +518,7 @@ async function loadProgram() {
 
 async function bukaProgram(id=null) {
   document.getElementById('progId').value = id||''
-  document.getElementById('progModalTitle').textContent = id ? '✏️ Edit Program' : '➕ Program Baru'
+  document.getElementById('progModalTitle').textContent = id ? 'Edit Program' : 'Program Baru'
 
   const selDiv = document.getElementById('progDivisi')
   selDiv.innerHTML = '<option value="">Semua Divisi</option>' +
@@ -562,14 +562,14 @@ async function saveProgram() {
     ? await sb.from('program_pelatihan').update(payload).eq('id',id)
     : await sb.from('program_pelatihan').insert(payload)
   if (error) { toast('Gagal: '+error.message,'error'); return }
-  toast('✅ Program disimpan')
+  toast('Program disimpan')
   cm('modalProgram'); renderHR('program')
 }
 
 async function hapusProgram(id, nama) {
   if (!confirm(`Hapus program "${nama}"? Semua data peserta ikut terhapus.`)) return
   await sb.from('program_pelatihan').delete().eq('id',id)
-  toast('🗑️ Program dihapus'); renderHR('program')
+  toast('Program dihapus'); renderHR('program')
 }
 
 // ============================================================
@@ -580,7 +580,7 @@ async function lihatPeserta(programId, namaProg) {
     .select('*, karyawan:karyawan_id(nama_lengkap,nik)')
     .eq('program_id', programId).order('tanggal_daftar')
 
-  document.getElementById('pesertaTitle').textContent = `👥 Peserta — ${namaProg}`
+  document.getElementById('pesertaTitle').textContent = `Peserta — ${namaProg}`
   const tblHtml = peserta?.length
     ? peserta.map(p => `
       <tr>
@@ -589,7 +589,7 @@ async function lihatPeserta(programId, namaProg) {
         <td>${fmtDate(p.tanggal_selesai)}</td>
         <td style="text-align:center">${p.nilai!=null?p.nilai:'—'}</td>
         <td><span class="badge ${p.status}">${STATUS_LABEL[p.status]}</span></td>
-        <td><button class="btn-sm" onclick="bukaUpdate('${p.id}','${p.status}',${p.nilai||0},'${p.catatan||''}')">✏️ Update</button></td>
+        <td><button class="btn-sm" onclick="bukaUpdate('${p.id}','${p.status}',${p.nilai||0},'${p.catatan||''}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Update</button></td>
       </tr>`).join('')
     : '<tr class="empty-row"><td colspan="6">Belum ada peserta terdaftar</td></tr>'
 
@@ -623,7 +623,7 @@ async function saveDaftar() {
     toast(error.code==='23505' ? 'Karyawan sudah terdaftar di program ini' : 'Gagal: '+error.message, 'error')
     return
   }
-  toast('✅ Karyawan berhasil didaftarkan')
+  toast('Karyawan berhasil didaftarkan')
   cm('modalDaftar')
 }
 
@@ -646,7 +646,7 @@ async function saveUpdate() {
   const { error } = await sb.from('peserta_pelatihan')
     .update({ status, nilai, tanggal_selesai:tgl, catatan }).eq('id',id)
   if (error) { toast('Gagal: '+error.message,'error'); return }
-  toast('✅ Status diupdate')
+  toast('Status diupdate')
   cm('modalUpdate')
 }
 
@@ -655,7 +655,7 @@ async function saveUpdate() {
 // ============================================================
 async function bukaSertif(id=null) {
   document.getElementById('sertifId').value = id||''
-  document.getElementById('sertifTitle').textContent = id ? '✏️ Edit Sertifikasi' : '🏆 Tambah Sertifikasi'
+  document.getElementById('sertifTitle').textContent = id ? 'Edit Sertifikasi' : 'Tambah Sertifikasi'
   document.getElementById('sertifKary').innerHTML =
     allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
   if (!id) {
@@ -681,14 +681,14 @@ async function saveSertif() {
     url_dokumen:      document.getElementById('sertifUrl').value.trim()||null
   })
   if (error) { toast('Gagal: '+error.message,'error'); return }
-  toast('✅ Sertifikasi disimpan')
+  toast('Sertifikasi disimpan')
   cm('modalSertif'); renderHR('sertifikasi')
 }
 
 async function hapusSertif(id) {
   if (!confirm('Hapus sertifikasi ini?')) return
   await sb.from('sertifikasi').delete().eq('id',id)
-  toast('🗑️ Sertifikasi dihapus'); renderHR('sertifikasi')
+  toast('Sertifikasi dihapus'); renderHR('sertifikasi')
 }
 
 // ============================================================
