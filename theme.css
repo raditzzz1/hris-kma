@@ -81,3 +81,35 @@ body {
 .sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.45); }
 .nav-item { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
 .nav-section-label { padding-top: 0.6rem !important; padding-bottom: 0.3rem !important; }
+
+/* ================================================================
+   TABEL -> KARTU di layar kecil (<=768px)
+   Dipasangi kelas .cardify + data-label oleh responsive-tables.js
+   ================================================================ */
+@media (max-width: 768px) {
+  table.cardify thead { display: none; }
+  table.cardify, table.cardify tbody, table.cardify tfoot { display: block; width: 100%; }
+  table.cardify tfoot tr { background: var(--pale, #eef4fc); font-weight: 700; }
+  table.cardify tr {
+    display: block; background: var(--card, #fff);
+    border: 1px solid var(--border, #E3EAF4); border-radius: 14px;
+    margin-bottom: 0.7rem; padding: 0.35rem 0.95rem;
+    box-shadow: 0 1px 2px rgba(18,35,89,.05);
+  }
+  table.cardify td {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: 0.55rem 0 !important; border: 0 !important;
+    border-bottom: 1px solid var(--border, #eef2f7) !important;
+    white-space: normal !important; text-align: right; min-height: 0;
+  }
+  table.cardify tr td:last-child { border-bottom: 0 !important; }
+  table.cardify td::before {
+    content: attr(data-label); font-weight: 600; color: var(--muted, #5C7BA8);
+    text-align: left; margin-right: auto; flex-shrink: 0; font-size: 0.78rem;
+    letter-spacing: 0.2px;
+  }
+  table.cardify td[colspan]::before { display: none; }
+  table.cardify td[colspan] { justify-content: center; text-align: center; }
+  /* matikan scroll-horizontal saat sudah jadi kartu */
+  .tbl-wrap, .table-wrap { overflow-x: visible !important; }
+}
