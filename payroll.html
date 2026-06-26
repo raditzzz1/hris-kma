@@ -176,7 +176,7 @@
 <div class="main-wrap">
   <header class="top-bar">
     <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
-    <div><h1>💰 Payroll</h1><div class="bc" id="topBc">—</div></div>
+    <div><h1><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Payroll</h1><div class="bc" id="topBc">—</div></div>
     <div id="topActions"></div>
   </header>
   <main class="main" id="mainContent"></main>
@@ -185,7 +185,7 @@
 <!-- MODAL: Buat Periode Baru -->
 <div class="modal-overlay" id="modalPeriode">
   <div class="modal">
-    <div class="modal-head"><h3>📅 Buat Periode Payroll</h3><button class="modal-close" onclick="cm('modalPeriode')">×</button></div>
+    <div class="modal-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Buat Periode Payroll</h3><button class="modal-close" onclick="cm('modalPeriode')">×</button></div>
     <div class="modal-body">
       <div class="inp-row">
         <div class="fg"><label>Bulan *</label>
@@ -204,7 +204,7 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalPeriode')">Batal</button>
-      <button class="btn-primary" onclick="buatPeriode()">✅ Buat & Generate Slip</button>
+      <button class="btn-primary" onclick="buatPeriode()"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Buat & Generate Slip</button>
     </div>
   </div>
 </div>
@@ -216,7 +216,7 @@
     <div class="modal-body" id="printArea"><div id="slipContent"></div></div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalSlip')">Tutup</button>
-      <button class="btn-primary" onclick="window.print()">🖨️ Cetak Slip</button>
+      <button class="btn-primary" onclick="window.print()"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V2h12v7"/><path d="M6 14h12v8H6z"/></svg> Cetak Slip</button>
     </div>
   </div>
 </div>
@@ -224,11 +224,11 @@
 <!-- MODAL: Edit Komponen Karyawan -->
 <div class="modal-overlay" id="modalKomp">
   <div class="modal modal-lg">
-    <div class="modal-head"><h3 id="kompTitle">⚙️ Komponen Gaji Karyawan</h3><button class="modal-close" onclick="cm('modalKomp')">×</button></div>
+    <div class="modal-head"><h3 id="kompTitle">Komponen Gaji Karyawan</h3><button class="modal-close" onclick="cm('modalKomp')">×</button></div>
     <div class="modal-body" id="kompBody"></div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalKomp')">Tutup</button>
-      <button class="btn-primary" onclick="saveKomp()">💾 Simpan</button>
+      <button class="btn-primary" onclick="saveKomp()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan</button>
     </div>
   </div>
 </div>
@@ -272,7 +272,7 @@ function toast(msg, t='success') {
   el.textContent = msg; el.className = t; el.style.display = 'block'
   setTimeout(() => el.style.display='none', 4000)
 }
-function cs() { toast('🚧 Segera hadir','error'); return false }
+function cs() { toast('Segera hadir','error'); return false }
 async function logout() { await sb.auth.signOut(); window.location.href='index.html' }
 function om(id) { document.getElementById(id).classList.add('open') }
 function cm(id) { document.getElementById(id).classList.remove('open') }
@@ -377,8 +377,8 @@ async function renderHR() {
   document.getElementById('topBc').textContent = 'Generate & kelola payroll bulanan'
   document.getElementById('topActions').innerHTML = `
     <div style="display:flex;gap:.6rem;">
-      <button class="btn-secondary" onclick="om('modalKomp');loadKompModal()">⚙️ Komponen Gaji</button>
-      <button class="btn-primary"   onclick="om('modalPeriode')">➕ Periode Baru</button>
+      <button class="btn-secondary" onclick="om('modalKomp');loadKompModal()"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg> Komponen Gaji</button>
+      <button class="btn-primary"   onclick="om('modalPeriode')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Periode Baru</button>
     </div>`
 
   const { data: periodes } = await sb.from('payroll_periode')
@@ -391,15 +391,15 @@ async function renderHR() {
     ? periodes.map(p => `
       <div class="periode-item" onclick="bukaDetailPeriode('${p.id}')">
         <div>
-          <div class="periode-name">📅 ${BULAN_NAMA[p.bulan]} ${p.tahun}</div>
+          <div class="periode-name"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> ${BULAN_NAMA[p.bulan]} ${p.tahun}</div>
           <div class="periode-meta">${p.catatan || 'Tanpa catatan'}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.75rem;">
-          <span class="badge ${p.status}">${p.status==='final'?'✅ Final':'⏳ Draft'}</span>
+          <span class="badge ${p.status}">${p.status==='final'?'Final':'Draft'}</span>
           ${p.status==='draft'
-            ? `<button class="btn-sm" onclick="event.stopPropagation();finalisasi('${p.id}')">🔒 Finalisasi</button>`
+            ? `<button class="btn-sm" onclick="event.stopPropagation();finalisasi('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Finalisasi</button>`
             : ''}
-          <button class="btn-sm" onclick="event.stopPropagation();hapusPeriode('${p.id}','${BULAN_NAMA[p.bulan]} ${p.tahun}',${p.status==='final'})">🗑️</button>
+          <button class="btn-sm" onclick="event.stopPropagation();hapusPeriode('${p.id}','${BULAN_NAMA[p.bulan]} ${p.tahun}',${p.status==='final'})"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </div>
       </div>`).join('')
     : '<div style="color:var(--muted);font-size:.875rem;padding:1rem 0;">Belum ada periode payroll. Klik "Periode Baru" untuk mulai.</div>'
@@ -412,7 +412,7 @@ async function renderHR() {
       <div class="stat-card"><div class="stat-label">Karyawan Aktif</div><div class="stat-val c-purple">${allKaryawan.length}</div></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>📋 Daftar Periode Payroll</h3></div>
+      <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Daftar Periode Payroll</h3></div>
       <div class="card-body">${periodeHtml}</div>
     </div>`
 }
@@ -441,9 +441,9 @@ async function bukaDetailPeriode(periodeId) {
         <td style="text-align:right;font-weight:700;color:#16a34a">${IDR(sl.gaji_bersih)}</td>
         <td>
           <div style="display:flex;gap:.4rem;">
-            <button class="btn-sm" onclick="lihatSlip('${sl.id}')">👁 Lihat</button>
+            <button class="btn-sm" onclick="lihatSlip('${sl.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Lihat</button>
             ${periode.status==='draft'
-              ? `<button class="btn-sm" onclick="editSlipKomp('${sl.karyawan_id}','${periodeId}')">✏️ Edit</button>`
+              ? `<button class="btn-sm" onclick="editSlipKomp('${sl.karyawan_id}','${periodeId}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>`
               : ''}
           </div>
         </td>
@@ -453,8 +453,8 @@ async function bukaDetailPeriode(periodeId) {
   document.getElementById('mainContent').innerHTML = `
     <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
       <button class="btn-secondary" onclick="renderHR()">← Kembali</button>
-      <h2 style="font-size:1rem;font-weight:700;">📅 ${BULAN_NAMA[periode.bulan]} ${periode.tahun}</h2>
-      <span class="badge ${periode.status}">${periode.status==='final'?'✅ Final':'⏳ Draft'}</span>
+      <h2 style="font-size:1rem;font-weight:700;"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> ${BULAN_NAMA[periode.bulan]} ${periode.tahun}</h2>
+      <span class="badge ${periode.status}">${periode.status==='final'?'Final':'Draft'}</span>
     </div>
     <div class="stats-grid" style="margin-bottom:1.25rem;">
       <div class="stat-card"><div class="stat-label">Total Karyawan</div><div class="stat-val c-blue">${slips?.length||0}</div></div>
@@ -463,7 +463,7 @@ async function bukaDetailPeriode(periodeId) {
       <div class="stat-card"><div class="stat-label">Total Take-Home</div><div class="stat-val c-green" style="font-size:1rem;">${IDR(totalBersih)}</div></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>🧾 Daftar Slip Gaji</h3></div>
+      <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg> Daftar Slip Gaji</h3></div>
       <div class="tbl-wrap">
         <table>
           <thead><tr><th>Karyawan</th><th style="text-align:right">Gaji Pokok</th><th style="text-align:right">Tunjangan</th><th style="text-align:right">Potongan</th><th style="text-align:right">Gaji Bersih</th><th>Aksi</th></tr></thead>
@@ -513,7 +513,7 @@ async function buatPeriode() {
   const { error: slipErr } = await sb.from('slip_gaji').insert(slips)
   if (slipErr) { toast('Periode dibuat tapi slip gagal: '+slipErr.message,'error'); return }
 
-  toast(`✅ Periode ${BULAN_NAMA[bulan]} ${tahun} dibuat — ${slips.length} slip di-generate`)
+  toast(`Periode ${BULAN_NAMA[bulan]} ${tahun} dibuat — ${slips.length} slip di-generate`)
   cm('modalPeriode')
   renderHR()
 }
@@ -525,7 +525,7 @@ async function finalisasi(periodeId) {
   if (!confirm('Finalisasi periode ini? Slip tidak bisa diubah setelah final.')) return
   const { error } = await sb.from('payroll_periode').update({status:'final'}).eq('id',periodeId)
   if (error) { toast('Gagal: '+error.message,'error'); return }
-  toast('✅ Periode berhasil difinalisasi')
+  toast('Periode berhasil difinalisasi')
   renderHR()
 }
 
@@ -533,7 +533,7 @@ async function hapusPeriode(id, nama, isFinal) {
   if (isFinal) { toast('Periode final tidak bisa dihapus','error'); return }
   if (!confirm(`Hapus periode "${nama}"? Semua slip akan ikut terhapus.`)) return
   await sb.from('payroll_periode').delete().eq('id',id)
-  toast('🗑️ Periode dihapus')
+  toast('Periode dihapus')
   renderHR()
 }
 
@@ -622,7 +622,7 @@ async function editSlipKomp(karyawanId, periodeId) {
   const k = allKaryawan.find(k=>k.id===karyawanId)
   editKompKaryawanId = karyawanId
   await loadKompModal(karyawanId)
-  document.getElementById('kompTitle').textContent = `⚙️ Komponen Gaji — ${k?.nama_lengkap||''}`
+  document.getElementById('kompTitle').textContent = `Komponen Gaji — ${k?.nama_lengkap||''}`
   document.getElementById('modalKomp')._periodeId = periodeId
   om('modalKomp')
 }
@@ -686,12 +686,12 @@ async function saveKomp() {
   const periodeId = document.getElementById('modalKomp')._periodeId
   if (periodeId) {
     await regenerateSlip(kid, periodeId)
-    toast('✅ Komponen gaji disimpan & slip diperbarui')
+    toast('Komponen gaji disimpan & slip diperbarui')
     cm('modalKomp')
     document.getElementById('modalKomp')._periodeId = null
     bukaDetailPeriode(periodeId)
   } else {
-    toast('✅ Komponen gaji disimpan')
+    toast('Komponen gaji disimpan')
     cm('modalKomp')
   }
 }
@@ -709,7 +709,7 @@ async function regenerateSlip(karyawanId, periodeId) {
     .eq('periode_id', periodeId)
     .eq('karyawan_id', karyawanId)
 
-  if (error) toast('⚠️ Slip gagal diperbarui: '+error.message, 'error')
+  if (error) toast('Slip gagal diperbarui: '+error.message, 'error')
 }
 
 // ============================================================
@@ -735,13 +735,13 @@ async function renderKaryawan() {
         <td style="text-align:right">${IDR(sl.total_tunjangan)}</td>
         <td style="text-align:right;color:#dc2626">${IDR(sl.total_potongan)}</td>
         <td style="text-align:right;font-weight:700;color:#16a34a">${IDR(sl.gaji_bersih)}</td>
-        <td><button class="btn-sm" onclick="lihatSlip('${sl.id}')">👁 Lihat Slip</button></td>
+        <td><button class="btn-sm" onclick="lihatSlip('${sl.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Lihat Slip</button></td>
       </tr>`).join('')
     : '<tr class="empty-row"><td colspan="6">Belum ada slip gaji yang diterbitkan</td></tr>'
 
   document.getElementById('mainContent').innerHTML = `
     <div class="card">
-      <div class="card-head"><h3>🧾 Riwayat Slip Gaji Saya</h3></div>
+      <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg> Riwayat Slip Gaji Saya</h3></div>
       <div class="tbl-wrap">
         <table>
           <thead><tr><th>Periode</th><th style="text-align:right">Gaji Pokok</th><th style="text-align:right">Tunjangan</th><th style="text-align:right">Potongan</th><th style="text-align:right">Take-Home</th><th>Aksi</th></tr></thead>

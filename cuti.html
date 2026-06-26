@@ -180,7 +180,7 @@
 <div class="main-wrap">
   <header class="top-bar">
     <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
-    <div><h1>🏖️ Cuti & Izin</h1><div class="bc" id="topBc">—</div></div>
+    <div><h1><svg class="ic" viewBox="0 0 24 24"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg> Cuti & Izin</h1><div class="bc" id="topBc">—</div></div>
     <div id="topActions"></div>
   </header>
 
@@ -193,7 +193,7 @@
 <div class="modal-overlay" id="modalAjukan">
   <div class="modal">
     <div class="modal-head">
-      <h3>📝 Ajukan Cuti / Izin</h3>
+      <h3><svg class="ic" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg> Ajukan Cuti / Izin</h3>
       <button class="modal-close" onclick="closeModal('modalAjukan')">×</button>
     </div>
     <div class="modal-body">
@@ -224,7 +224,7 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="closeModal('modalAjukan')">Batal</button>
-      <button class="btn-primary" onclick="submitAjuan()">📤 Kirim Pengajuan</button>
+      <button class="btn-primary" onclick="submitAjuan()"><svg class="ic" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg> Kirim Pengajuan</button>
     </div>
   </div>
 </div>
@@ -266,7 +266,7 @@
 <div class="modal-overlay" id="modalSaldo">
   <div class="modal">
     <div class="modal-head">
-      <h3>💰 Atur Saldo Cuti Karyawan</h3>
+      <h3><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Atur Saldo Cuti Karyawan</h3>
       <button class="modal-close" onclick="closeModal('modalSaldo')">×</button>
     </div>
     <div class="modal-body">
@@ -291,7 +291,7 @@
     </div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="closeModal('modalSaldo')">Batal</button>
-      <button class="btn-primary" onclick="saveSaldo()">💾 Simpan Saldo</button>
+      <button class="btn-primary" onclick="saveSaldo()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan Saldo</button>
     </div>
   </div>
 </div>
@@ -314,7 +314,7 @@ function toast (msg, t='success') {
   el.textContent = msg; el.className = t; el.style.display = 'block'
   setTimeout(() => el.style.display = 'none', 4000)
 }
-function cs () { toast('🚧 Modul ini segera hadir','error'); return false }
+function cs () { toast('Modul ini segera hadir','error'); return false }
 async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
 function closeModal (id) { document.getElementById(id).classList.remove('open') }
 function openModal  (id) { document.getElementById(id).classList.add('open') }
@@ -355,7 +355,7 @@ async function renderPage () {
 async function renderKaryawan () {
   document.getElementById('topBc').textContent = 'Saldo & riwayat cuti saya'
   document.getElementById('topActions').innerHTML =
-    `<button class="btn-primary" onclick="openAjuan()">➕ Ajukan Cuti</button>`
+    `<button class="btn-primary" onclick="openAjuan()"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Ajukan Cuti</button>`
 
   // Load data
   const [{ data: saldos }, { data: pengajuan }] = await Promise.all([
@@ -402,7 +402,7 @@ async function renderKaryawan () {
 
   document.getElementById('mainContent').innerHTML = `
     <div class="card" style="margin-bottom:1.25rem;">
-      <div class="card-head"><h3>💰 Saldo Cuti Saya — ${TAHUN}</h3></div>
+      <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Saldo Cuti Saya — ${TAHUN}</h3></div>
       <div class="card-body">
         <div class="saldo-grid">${saldoHtml}</div>
       </div>
@@ -410,7 +410,7 @@ async function renderKaryawan () {
 
     <div class="card">
       <div class="card-head">
-        <h3>📋 Riwayat Pengajuan</h3>
+        <h3><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Riwayat Pengajuan</h3>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -433,7 +433,7 @@ async function renderHR (filter = {status:'', search:''}) {
   document.getElementById('topBc').textContent = 'Kelola pengajuan cuti semua karyawan'
   document.getElementById('topActions').innerHTML = `
     <div style="display:flex;gap:.6rem;">
-      <button class="btn-secondary" onclick="openModalSaldo()">💰 Atur Saldo</button>
+      <button class="btn-secondary" onclick="openModalSaldo()"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Atur Saldo</button>
     </div>`
 
   // Load semua pengajuan
@@ -471,10 +471,10 @@ async function renderHR (filter = {status:'', search:''}) {
         <td><span class="badge ${p.status}">${badgeLabel(p.status)}</span></td>
         <td>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-            <button class="btn-sm" onclick="lihatDetail('${p.id}')">👁 Detail</button>
+            <button class="btn-sm" onclick="lihatDetail('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Detail</button>
             ${p.status === 'pending' ? `
-              <button class="btn-sm btn-approve" onclick="bukaAction('${p.id}','approve')">✅ Setujui</button>
-              <button class="btn-sm btn-reject"  onclick="bukaAction('${p.id}','reject')">❌ Tolak</button>` : ''}
+              <button class="btn-sm btn-approve" onclick="bukaAction('${p.id}','approve')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Setujui</button>
+              <button class="btn-sm btn-reject"  onclick="bukaAction('${p.id}','reject')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg> Tolak</button>` : ''}
           </div>
         </td>
       </tr>`).join('')
@@ -489,10 +489,10 @@ async function renderHR (filter = {status:'', search:''}) {
     </div>
 
     <div class="card">
-      <div class="card-head"><h3>📋 Semua Pengajuan Cuti</h3></div>
+      <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Semua Pengajuan Cuti</h3></div>
       <div class="card-body" style="padding-bottom:.5rem;">
         <div class="filter-bar">
-          <input class="inp inp-sm" type="text" placeholder="🔍 Cari nama karyawan..." id="srchNama"
+          <input class="inp inp-sm" type="text" placeholder="Cari nama karyawan..." id="srchNama"
             oninput="renderHR({status:document.getElementById('srchStatus').value, search:this.value})" style="min-width:200px;">
           <select class="inp inp-sm" id="srchStatus"
             onchange="renderHR({status:this.value, search:document.getElementById('srchNama').value})">
@@ -548,7 +548,7 @@ async function updateAjuanInfo () {
 
   if (mulai && selesai) {
     if (selesai < mulai) {
-      document.getElementById('ajHariNum').textContent = '⚠️ Tanggal tidak valid'
+      document.getElementById('ajHariNum').textContent = 'Tanggal tidak valid'
       return
     }
     const hari = hitungHariKerja(mulai, selesai)
@@ -567,12 +567,12 @@ async function updateAjuanInfo () {
       if (saldo) {
         const sisa = saldo.saldo_awal - (saldo.terpakai || 0)
         if (sisa < hari) {
-          infoEl.innerHTML = `<div class="warn-box">⚠️ Saldo cuti tidak cukup. Sisa: <strong>${sisa} hari</strong>, dibutuhkan: <strong>${hari} hari</strong>.</div>`
+          infoEl.innerHTML = `<div class="warn-box"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Saldo cuti tidak cukup. Sisa: <strong>${sisa} hari</strong>, dibutuhkan: <strong>${hari} hari</strong>.</div>`
         } else {
-          infoEl.innerHTML = `<div class="info-box">✅ Saldo cukup. Sisa setelah cuti ini: <strong>${sisa - hari} hari</strong>.</div>`
+          infoEl.innerHTML = `<div class="info-box"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Saldo cukup. Sisa setelah cuti ini: <strong>${sisa - hari} hari</strong>.</div>`
         }
       } else {
-        infoEl.innerHTML = `<div class="warn-box">⚠️ Saldo jenis cuti ini belum diatur. Pengajuan tetap bisa dikirim untuk diproses HR.</div>`
+        infoEl.innerHTML = `<div class="warn-box"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Saldo jenis cuti ini belum diatur. Pengajuan tetap bisa dikirim untuk diproses HR.</div>`
       }
     }
   }
@@ -601,7 +601,7 @@ async function submitAjuan () {
   })
 
   if (error) { toast('Gagal kirim: '+error.message, 'error'); return }
-  toast('✅ Pengajuan cuti berhasil dikirim!')
+  toast('Pengajuan cuti berhasil dikirim!')
   closeModal('modalAjukan')
   renderKaryawan()
 }
@@ -647,8 +647,8 @@ async function lihatDetail (id) {
 
   const footHtml = p.status === 'pending'
     ? `<button class="btn-secondary" onclick="closeModal('modalDetail')">Tutup</button>
-       <button class="btn-secondary btn-approve" onclick="closeModal('modalDetail');bukaAction('${p.id}','approve')">✅ Setujui</button>
-       <button class="btn-secondary btn-reject" onclick="closeModal('modalDetail');bukaAction('${p.id}','reject')">❌ Tolak</button>`
+       <button class="btn-secondary btn-approve" onclick="closeModal('modalDetail');bukaAction('${p.id}','approve')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Setujui</button>
+       <button class="btn-secondary btn-reject" onclick="closeModal('modalDetail');bukaAction('${p.id}','reject')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg> Tolak</button>`
     : `<button class="btn-primary" onclick="closeModal('modalDetail')">Tutup</button>`
   document.getElementById('detailFoot').innerHTML = footHtml
   openModal('modalDetail')
@@ -663,11 +663,11 @@ async function bukaAction (id, type) {
     .select('*, jenis_cuti(nama), karyawan:karyawan_id(nama_lengkap)')
     .eq('id', id).single()
 
-  document.getElementById('actionTitle').textContent  = type === 'approve' ? '✅ Setujui Pengajuan' : '❌ Tolak Pengajuan'
+  document.getElementById('actionTitle').textContent  = type === 'approve' ? 'Setujui Pengajuan' : 'Tolak Pengajuan'
   document.getElementById('actionInfo').textContent   = `${p.karyawan?.nama_lengkap} — ${p.jenis_cuti?.nama} (${fmtDate(p.tanggal_mulai)} s/d ${fmtDate(p.tanggal_selesai)}, ${p.jumlah_hari} hari)`
   document.getElementById('actionCatatan').value      = ''
   const btn = document.getElementById('actionConfirmBtn')
-  btn.textContent = type === 'approve' ? '✅ Setujui' : '❌ Tolak'
+  btn.textContent = type === 'approve' ? 'Setujui' : 'Tolak'
   btn.style.background = type === 'approve' ? '#16a34a' : '#dc2626'
   openModal('modalAction')
 }
@@ -713,7 +713,7 @@ async function confirmAction () {
     }
   }
 
-  toast(type === 'approve' ? '✅ Pengajuan disetujui!' : '❌ Pengajuan ditolak')
+  toast(type === 'approve' ? 'Pengajuan disetujui!' : 'Pengajuan ditolak')
   closeModal('modalAction')
   renderHR({ status: document.getElementById('srchStatus')?.value || '', search: document.getElementById('srchNama')?.value || '' })
 }
@@ -753,7 +753,7 @@ async function saveSaldo () {
   }, { onConflict: 'karyawan_id,jenis_cuti_id,tahun', ignoreDuplicates: false })
 
   if (error) { toast('Gagal simpan saldo: '+error.message,'error'); return }
-  toast('✅ Saldo cuti berhasil diatur')
+  toast('Saldo cuti berhasil diatur')
   closeModal('modalSaldo')
 }
 
@@ -761,7 +761,7 @@ async function saveSaldo () {
 // HELPERS
 // ====================================================
 function badgeLabel (status) {
-  const map = { pending:'⏳ Pending', disetujui:'✅ Disetujui', ditolak:'❌ Ditolak', dibatalkan:'🚫 Dibatalkan' }
+  const map = { pending:'Pending', disetujui:'Disetujui', ditolak:'Ditolak', dibatalkan:'Dibatalkan' }
   return map[status] || status
 }
 
