@@ -1,0 +1,54 @@
+/* ================================================================
+   theme.css — Genio Design Language (Fase D redesign)
+   PT Kawan Menengah Atas HRIS
+   Load this LAST (after per-page <style> dan setelah hris.css)
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap');
+
+/* ---- Remap token warna lama -> palet Genio ---- */
+:root {
+  --primary:    #004499;   /* Deep Blue  */
+  --primary-dk: #122359;   /* Navy       */
+  --bg:         #F4F7FB;
+  --card:       #ffffff;
+  --card-bg:    #ffffff;
+  --text:       #122359;
+  --muted:      #5C7BA8;
+  --border:     #E3EAF4;
+  --radius:     16px;
+
+  /* Token Genio tambahan */
+  --navy:   #122359;
+  --deep:   #004499;
+  --bright: #0193CC;
+  --sky:    #1AB3E8;
+  --pale:   #D4EAFF;
+  --accent: #F1FF62;
+  --offwhite:#F6F5F5;
+  --hero: linear-gradient(to top right, #1AB3E8 0%, #0193CC 25%, #004499 60%, #0D1A45 100%);
+}
+
+/* ---- Tipografi ---- */
+body {
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Sidebar: gradient hero Genio ---- */
+.sidebar, .sb { background: var(--hero) !important; }
+
+/* ---- Ikon garis (Lucide-style) ---- */
+.ic {
+  width: 1.25em; height: 1.25em; display: inline-block; vertical-align: -0.28em;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.ic-lg { width: 2.4rem; height: 2.4rem; stroke-width: 1.75; }
+
+/* ---- Logo di chip putih (kontras di atas gradient) ---- */
+.brand-logo-chip {
+  background: #fff; border-radius: 11px; padding: 4px;
+  display: grid; place-items: center;
+}
+.brand-logo-chip img { width: 100%; height: 100%; object-fit: contain; display: block; }

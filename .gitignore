@@ -1,6 +1,9 @@
 # Cadangan hasil pemulihan (jangan dilacak Git)
 _recovered/
 
+# Pratinjau dev (bukan bagian aplikasi)
+_preview-dashboard.html
+
 # Pengaturan lokal Claude Code
 .claude/
 
