@@ -274,7 +274,7 @@
 
       <div class="toolbar">
         <div class="search-wrap">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
           <input class="search-input" type="text" id="searchInput" placeholder="Cari nama atau NIK...">
         </div>
         <select class="filter-select" id="filterDivisi">
@@ -294,7 +294,7 @@
           <option value="freelance">Freelance</option>
         </select>
         <button class="btn-primary" onclick="openModalUndang()">
-          ✉️ Undang Karyawan
+          <svg class="ic" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Undang Karyawan
         </button>
       </div>
 
@@ -337,14 +337,14 @@
       </div>
       <div class="profile-info-grid">
         <div class="info-card">
-          <h3>📋 Data Pribadi</h3>
+          <h3><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Data Pribadi</h3>
           <div id="profileDataPribadi"></div>
           <button class="btn-primary" style="width:100%;margin-top:1rem;justify-content:center;" onclick="openEditPribadi()">
-            ✏️ Edit Data Pribadi
+            <svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit Data Pribadi
           </button>
         </div>
         <div class="info-card">
-          <h3>💼 Data Pekerjaan</h3>
+          <h3><svg class="ic" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Data Pekerjaan</h3>
           <div id="profileDataKerja"></div>
         </div>
       </div>
@@ -359,7 +359,7 @@
   <div class="modal" style="max-width:520px;">
     <div class="modal-header">
       <h3>Detail Karyawan</h3>
-      <button class="modal-close" onclick="closeModal('modalDetail')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalDetail')"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="detail-hero">
@@ -372,7 +372,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modalDetail')">Tutup</button>
-      <button class="btn-submit" id="btnDetailEdit" onclick="openEditFromDetail()">✏️ Edit</button>
+      <button class="btn-submit" id="btnDetailEdit" onclick="openEditFromDetail()"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
     </div>
   </div>
 </div>
@@ -382,12 +382,12 @@
   <div class="modal">
     <div class="modal-header">
       <h3 id="modalEditTitle">Edit Data Karyawan</h3>
-      <button class="modal-close" onclick="closeModal('modalEdit')">✕</button>
+      <button class="modal-close" onclick="closeModal('modalEdit')"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="tab-bar" id="editTabBar">
-        <button class="tab-btn active" onclick="switchTab('tabPribadi')">👤 Data Pribadi</button>
-        <button class="tab-btn" onclick="switchTab('tabKerja')" id="tabKerjaBtn">💼 Data Pekerjaan</button>
+        <button class="tab-btn active" onclick="switchTab('tabPribadi')"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Data Pribadi</button>
+        <button class="tab-btn" onclick="switchTab('tabKerja')" id="tabKerjaBtn"><svg class="ic" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Data Pekerjaan</button>
       </div>
 
       <!-- Tab Pribadi -->
@@ -494,7 +494,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modalEdit')">Batal</button>
-      <button class="btn-submit" id="btnSaveEdit" onclick="saveEdit()">💾 Simpan</button>
+      <button class="btn-submit" id="btnSaveEdit" onclick="saveEdit()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan</button>
     </div>
   </div>
 </div>
@@ -503,8 +503,8 @@
 <div class="modal-overlay" id="modalUndang">
   <div class="modal" style="max-width:480px;">
     <div class="modal-header">
-      <h3>✉️ Undang Karyawan Baru</h3>
-      <button class="modal-close" onclick="closeModal('modalUndang')">✕</button>
+      <h3><svg class="ic" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Undang Karyawan Baru</h3>
+      <button class="modal-close" onclick="closeModal('modalUndang')"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="info-box">
@@ -520,13 +520,13 @@
         <input class="form-input" type="text" id="undangNama" placeholder="Nama karyawan">
       </div>
       <p style="font-size:0.78rem;color:var(--muted);line-height:1.6;">
-        ⚠️ Fitur kirim invite langsung dari aplikasi membutuhkan konfigurasi tambahan. Untuk saat ini, undang karyawan melalui:<br>
+        <svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Fitur kirim invite langsung dari aplikasi membutuhkan konfigurasi tambahan. Untuk saat ini, undang karyawan melalui:<br>
         <strong>Supabase Dashboard → Authentication → Users → Invite user</strong>
       </p>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modalUndang')">Tutup</button>
-      <button class="btn-submit" onclick="bukaSupabaseAuth()">🔗 Buka Supabase Auth</button>
+      <button class="btn-submit" onclick="bukaSupabaseAuth()"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Buka Supabase Auth</button>
     </div>
   </div>
 </div>
@@ -559,7 +559,7 @@ function toast (msg, type = 'success') {
   setTimeout(() => { el.style.display = 'none' }, 4000)
 }
 
-function comingSoon () { toast('🚧 Modul ini sedang dalam pengembangan', 'error'); return false; }
+function comingSoon () { toast('Modul ini sedang dalam pengembangan', 'error'); return false; }
 async function logout () { await sb.auth.signOut(); window.location.href = 'index.html'; }
 
 function getInitial (name) { return name ? name.charAt(0).toUpperCase() : '?' }
@@ -677,7 +677,7 @@ function renderTable (list) {
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6">
       <div class="empty-state">
-        <div class="empty-icon">👥</div>
+        <div class="empty-icon"><svg class="ic" viewBox="0 0 24 24" style="width:2.5rem;height:2.5rem"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <p>Tidak ada karyawan yang ditemukan</p>
       </div>
     </td></tr>`
@@ -704,8 +704,8 @@ function renderTable (list) {
       <td style="font-size:0.82rem;color:var(--muted);">${formatTgl(k.tanggal_bergabung)}</td>
       <td>
         <div class="actions-cell">
-          <button class="btn-action" onclick="openDetail('${k.id}')">👁️ Detail</button>
-          <button class="btn-action" onclick="openEdit('${k.id}')">✏️ Edit</button>
+          <button class="btn-action" onclick="openDetail('${k.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Detail</button>
+          <button class="btn-action" onclick="openEdit('${k.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
         </div>
       </td>
     </tr>
@@ -720,13 +720,13 @@ function renderStats (list) {
   const kontrak  = list.filter(k => k.tipe_kontrak === 'kontrak').length
 
   document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card"><div class="stat-icon blue">👥</div>
+    <div class="stat-card"><div class="stat-icon blue"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
       <div><div class="stat-value">${total}</div><div class="stat-label">Total Karyawan</div></div></div>
-    <div class="stat-card"><div class="stat-icon green">✅</div>
+    <div class="stat-card"><div class="stat-icon green"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
       <div><div class="stat-value">${aktif}</div><div class="stat-label">Karyawan Aktif</div></div></div>
-    <div class="stat-card"><div class="stat-icon yellow">📋</div>
+    <div class="stat-card"><div class="stat-icon yellow"><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg></div>
       <div><div class="stat-value">${kontrak}</div><div class="stat-label">Karyawan Kontrak</div></div></div>
-    <div class="stat-card"><div class="stat-icon purple">🔴</div>
+    <div class="stat-card"><div class="stat-icon purple"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg></div>
       <div><div class="stat-value">${tidakAktif}</div><div class="stat-label">Tidak Aktif</div></div></div>
   `
 }
@@ -851,12 +851,12 @@ async function saveEdit () {
 
   const { error } = await sb.from('karyawan').update(payload).eq('id', editingId)
 
-  btn.disabled = false; btn.textContent = '💾 Simpan'
+  btn.disabled = false; btn.textContent = 'Simpan'
 
   if (error) {
     toast('Gagal menyimpan: ' + error.message, 'error')
   } else {
-    toast('✅ Data berhasil disimpan!')
+    toast('Data berhasil disimpan!')
     closeModal('modalEdit')
     if (isAdmin) {
       await loadKaryawan()

@@ -149,7 +149,7 @@
 <div class="main-wrap">
   <header class="top-bar">
     <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
-    <div><h1>🗺️ Lokasi Kantor</h1><div class="bc">Pengaturan geofencing absensi</div></div>
+    <div><h1><svg class="ic" viewBox="0 0 24 24"><path d="M14.1 5.6a2 2 0 0 0 1.8 0l3.6-1.8A1 1 0 0 1 21 4.6v12.8a1 1 0 0 1-.5.9l-4.6 2.3a2 2 0 0 1-1.8 0l-4.2-2.1a2 2 0 0 0-1.8 0l-3.6 1.8A1 1 0 0 1 3 19.4V6.6a1 1 0 0 1 .5-.9l4.6-2.3a2 2 0 0 1 1.8 0Z"/><path d="M15 5.8v15M9 3.2v15"/></svg> Lokasi Kantor</h1><div class="bc">Pengaturan geofencing absensi</div></div>
   </header>
 
   <main class="main">
@@ -160,7 +160,7 @@
         <!-- Form Tambah/Edit -->
         <div class="card" style="margin-bottom:1rem;">
           <div class="card-head">
-            <h3 id="formTitle">➕ Tambah Lokasi Kantor</h3>
+            <h3 id="formTitle">Tambah Lokasi Kantor</h3>
             <button id="btnReset" onclick="resetForm()" style="display:none;font-size:.75rem;color:var(--muted);background:none;border:none;cursor:pointer;">Reset</button>
           </div>
           <div class="card-body">
@@ -197,20 +197,20 @@
               <span id="gpsStatusText">Mendapatkan lokasi GPS Anda...</span>
             </div>
             <button class="btn-secondary" id="btnUseGPS" onclick="useMyGPS()" disabled>
-              📍 Pakai Koordinat Lokasi Saya Sekarang
+              <svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Pakai Koordinat Lokasi Saya Sekarang
             </button>
             <div style="font-size:.72rem;color:var(--muted);margin-top:.4rem;line-height:1.5;">
               Atau klik langsung pada peta di sebelah kanan untuk menentukan titik koordinat kantor.
             </div>
 
             <div class="divider"></div>
-            <button class="btn-primary" onclick="saveLokasi()">💾 Simpan Lokasi</button>
+            <button class="btn-primary" onclick="saveLokasi()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan Lokasi</button>
           </div>
         </div>
 
         <!-- Daftar Lokasi -->
         <div class="card">
-          <div class="card-head"><h3>📋 Daftar Lokasi</h3></div>
+          <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg> Daftar Lokasi</h3></div>
           <div class="card-body" id="lokasiList">
             <div class="empty">Memuat...</div>
           </div>
@@ -220,10 +220,10 @@
       <!-- PANEL KANAN: Peta -->
       <div>
         <div class="card">
-          <div class="card-head"><h3>🗺️ Peta Lokasi Kantor</h3><span style="font-size:.75rem;color:var(--muted);">Klik peta untuk set koordinat</span></div>
+          <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M14.1 5.6a2 2 0 0 0 1.8 0l3.6-1.8A1 1 0 0 1 21 4.6v12.8a1 1 0 0 1-.5.9l-4.6 2.3a2 2 0 0 1-1.8 0l-4.2-2.1a2 2 0 0 0-1.8 0l-3.6 1.8A1 1 0 0 1 3 19.4V6.6a1 1 0 0 1 .5-.9l4.6-2.3a2 2 0 0 1 1.8 0Z"/><path d="M15 5.8v15M9 3.2v15"/></svg> Peta Lokasi Kantor</h3><span style="font-size:.75rem;color:var(--muted);">Klik peta untuk set koordinat</span></div>
           <div class="card-body" style="padding:.75rem;">
             <div class="map-info">
-              💡 <strong>Cara menggunakan peta:</strong><br>
+              <svg class="ic" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></svg> <strong>Cara menggunakan peta:</strong><br>
               Klik pada peta untuk menentukan koordinat kantor, atau gunakan tombol "Pakai Koordinat Lokasi Saya". Lingkaran biru menunjukkan radius absensi.
             </div>
             <div id="map"></div>
@@ -252,7 +252,7 @@ function toast (msg, t='success') {
   el.textContent = msg; el.className = t; el.style.display = 'block'
   setTimeout(() => el.style.display = 'none', 4000)
 }
-function cs () { toast('🚧 Modul ini segera hadir','error'); return false }
+function cs () { toast('Modul ini segera hadir','error'); return false }
 async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
 
 // ====== INISIALISASI PETA ======
@@ -277,7 +277,7 @@ function setMarker (lat, lng, radius) {
 
   const icon = L.divIcon({
     className: '',
-    html: '<div style="width:32px;height:32px;background:#1d4ed8;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);display:grid;place-items:center;font-size:1rem;">🏢</div>',
+    html: '<div style="width:32px;height:32px;background:#1d4ed8;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);display:grid;place-items:center;font-size:1rem;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4M10 10h4M10 14h4"/></svg></div>',
     iconSize: [32,32], iconAnchor: [16,16]
   })
   markerKantor = L.marker([lat, lng], { icon }).addTo(map)
@@ -333,7 +333,7 @@ function useMyGPS () {
   document.getElementById('fLat').value = myLat.toFixed(7)
   document.getElementById('fLng').value = myLng.toFixed(7)
   setMarker(myLat, myLng)
-  toast('✅ Koordinat diisi dari lokasi Anda saat ini')
+  toast('Koordinat diisi dari lokasi Anda saat ini')
 }
 
 // ====== LOAD DAFTAR LOKASI ======
@@ -370,14 +370,14 @@ function renderLokasiList () {
       <div class="lok-name">${lok.nama}</div>
       <div class="lok-addr">${lok.alamat || '—'}</div>
       <div class="lok-meta">
-        <span class="lok-badge">📍 ${parseFloat(lok.latitude).toFixed(5)}, ${parseFloat(lok.longitude).toFixed(5)}</span>
-        <span class="lok-badge">⭕ ${lok.radius_meter}m</span>
-        <span class="lok-badge ${lok.aktif ? 'lok-aktif' : ''}">${lok.aktif ? '✅ Aktif' : '⛔ Nonaktif'}</span>
+        <span class="lok-badge"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> ${parseFloat(lok.latitude).toFixed(5)}, ${parseFloat(lok.longitude).toFixed(5)}</span>
+        <span class="lok-badge"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg> ${lok.radius_meter}m</span>
+        <span class="lok-badge ${lok.aktif ? 'lok-aktif' : ''}">${lok.aktif ? 'Aktif' : 'Nonaktif'}</span>
       </div>
       <div class="lok-actions">
-        <button class="btn-sm" onclick="editLokasi('${lok.id}')">✏️ Edit</button>
-        <button class="btn-sm" onclick="toggleAktif('${lok.id}',${lok.aktif})">${lok.aktif ? '⛔ Nonaktifkan' : '✅ Aktifkan'}</button>
-        <button class="btn-sm del" onclick="deleteLokasi('${lok.id}')">🗑️ Hapus</button>
+        <button class="btn-sm" onclick="editLokasi('${lok.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
+        <button class="btn-sm" onclick="toggleAktif('${lok.id}',${lok.aktif})">${lok.aktif ? 'Nonaktifkan' : 'Aktifkan'}</button>
+        <button class="btn-sm del" onclick="deleteLokasi('${lok.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Hapus</button>
       </div>
     </div>
   `).join('')
@@ -411,7 +411,7 @@ async function saveLokasi () {
   }
 
   if (error) { toast('Gagal simpan: '+error.message,'error'); return }
-  toast(`✅ Lokasi "${nama}" berhasil ${id ? 'diupdate' : 'ditambahkan'}`)
+  toast(`Lokasi "${nama}" berhasil ${id ? 'diupdate' : 'ditambahkan'}`)
   resetForm()
   map.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.Circle) l.remove() })
   await loadLokasi()
@@ -428,7 +428,7 @@ function editLokasi (id) {
   document.getElementById('fLat').value    = lok.latitude
   document.getElementById('fLng').value    = lok.longitude
   document.getElementById('fRadius').value = lok.radius_meter
-  document.getElementById('formTitle').textContent = '✏️ Edit Lokasi Kantor'
+  document.getElementById('formTitle').textContent = 'Edit Lokasi Kantor'
   document.getElementById('btnReset').style.display = ''
   setMarker(parseFloat(lok.latitude), parseFloat(lok.longitude), lok.radius_meter)
   window.scrollTo({ top:0, behavior:'smooth' })
@@ -441,7 +441,7 @@ function resetForm () {
   document.getElementById('fLat').value    = ''
   document.getElementById('fLng').value    = ''
   document.getElementById('fRadius').value = '100'
-  document.getElementById('formTitle').textContent = '➕ Tambah Lokasi Kantor'
+  document.getElementById('formTitle').textContent = 'Tambah Lokasi Kantor'
   document.getElementById('btnReset').style.display = 'none'
   if (markerKantor) markerKantor.remove()
   if (circleRadius) circleRadius.remove()
@@ -451,7 +451,7 @@ function resetForm () {
 async function toggleAktif (id, aktif) {
   const { error } = await sb.from('lokasi_kantor').update({ aktif: !aktif }).eq('id', id)
   if (error) { toast('Gagal update','error'); return }
-  toast(`✅ Lokasi ${aktif ? 'dinonaktifkan' : 'diaktifkan'}`)
+  toast(`Lokasi ${aktif ? 'dinonaktifkan' : 'diaktifkan'}`)
   await loadLokasi()
 }
 
@@ -461,7 +461,7 @@ async function deleteLokasi (id) {
   if (!confirm(`Hapus lokasi "${lok?.nama}"? Tindakan ini tidak dapat dibatalkan.`)) return
   const { error } = await sb.from('lokasi_kantor').delete().eq('id', id)
   if (error) { toast('Gagal hapus','error'); return }
-  toast('🗑️ Lokasi dihapus')
+  toast('Lokasi dihapus')
   map.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.Circle) l.remove() })
   await loadLokasi()
 }
