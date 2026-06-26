@@ -52,3 +52,12 @@ body {
   display: grid; place-items: center;
 }
 .brand-logo-chip img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* ---- Ikon di sidebar/bottom-nav (ganti emoji) ---- */
+.nav-icon .ic { width: 1.15rem; height: 1.15rem; }
+.bn-icon .ic  { width: 1.3rem;  height: 1.3rem; }
+.nav-item.active .ic { color: var(--accent); }
+
+/* ---- Logo brand jadi chip putih ---- */
+.logo-icon { background: #fff !important; padding: 4px; overflow: hidden; }
+.logo-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
