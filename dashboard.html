@@ -54,7 +54,7 @@
       background: var(--hero); color: white;
       display: flex; flex-direction: column; z-index: 100; overflow: hidden;
     }
-    .sidebar-brand { padding: 1.4rem 1.25rem 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.12); flex-shrink: 0; }
+    .sidebar-brand { padding: 1.1rem 1.25rem 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.12); flex-shrink: 0; }
     .sidebar-brand .logo-row { display: flex; align-items: center; gap: 0.7rem; }
     .sidebar-brand .logo-icon {
       width: 42px; height: 42px; background: #fff;
@@ -64,13 +64,17 @@
     .sidebar-brand .logo-text { font-size: 0.84rem; font-weight: 600; line-height: 1.25; letter-spacing: 0.2px; }
     .sidebar-brand .logo-sub { font-size: 0.64rem; opacity: 0.6; font-weight: 400; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 1px; }
 
-    .sidebar-nav { flex: 1; overflow-y: auto; padding: 0.85rem 0.7rem; }
-    .nav-section-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.45; padding: 0.85rem 0.6rem 0.45rem; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 0.5rem 0.7rem; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.28) transparent; }
+    .sidebar-nav::-webkit-scrollbar { width: 6px; }
+    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.28); border-radius: 99px; }
+    .sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.45); }
+    .nav-section-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.45; padding: 0.6rem 0.6rem 0.3rem; }
     .nav-item {
-      display: flex; align-items: center; gap: 0.7rem; padding: 0.62rem 0.7rem;
+      display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.7rem;
       font-size: 0.85rem; font-weight: 500; color: rgba(255,255,255,0.72);
       text-decoration: none; border-radius: 10px; cursor: pointer;
-      transition: background 0.15s, color 0.15s; position: relative; margin-bottom: 2px;
+      transition: background 0.15s, color 0.15s; position: relative; margin-bottom: 1px;
     }
     .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
     .nav-item.active { background: rgba(255,255,255,0.16); color: white; font-weight: 600; }
