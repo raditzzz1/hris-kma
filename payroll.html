@@ -93,9 +93,12 @@
 
     /* SLIP GAJI LAYOUT */
     .slip-wrap { font-size:.875rem; }
-    .slip-header { text-align:center; padding-bottom:1rem; border-bottom:2px solid var(--text); margin-bottom:1rem; }
-    .slip-header h2 { font-size:1.1rem; font-weight:800; }
-    .slip-header p { font-size:.8rem; color:var(--muted); }
+    .slip-header { display:flex; align-items:center; gap:1rem; padding-bottom:.85rem; border-bottom:2px solid var(--primary-dk); margin-bottom:.25rem; }
+    .slip-logo { width:60px; height:60px; object-fit:contain; flex-shrink:0; }
+    .slip-kop { flex:1; }
+    .slip-header h2 { font-size:1.15rem; font-weight:800; color:var(--primary-dk); letter-spacing:.3px; }
+    .slip-header p { font-size:.78rem; color:var(--muted); margin-top:2px; }
+    .slip-doc-title { text-align:center; font-weight:700; font-size:.95rem; letter-spacing:1px; margin:.6rem 0 1rem; color:var(--text); }
     .slip-info { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:1rem; font-size:.82rem; }
     .slip-info-row { display:flex; gap:.5rem; }
     .slip-info-lbl { color:var(--muted); min-width:120px; }
@@ -572,9 +575,13 @@ async function lihatSlip(slipId) {
   document.getElementById('slipContent').innerHTML = `
     <div class="slip-wrap">
       <div class="slip-header">
-        <h2>PT KAWAN MENENGAH ATAS</h2>
-        <p>Slip Gaji — ${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}</p>
+        <img src="logo-KMA.png" alt="Logo PT Kawan Menengah Atas" class="slip-logo">
+        <div class="slip-kop">
+          <h2>PT KAWAN MENENGAH ATAS</h2>
+          <p>Human Resource Information System · Departemen SDM</p>
+        </div>
       </div>
+      <div class="slip-doc-title">SLIP GAJI — ${(BULAN_NAMA[sl.periode?.bulan]||'').toUpperCase()} ${sl.periode?.tahun||''}</div>
       <div class="slip-info">
         <div>
           <div class="slip-info-row"><span class="slip-info-lbl">Nama</span><span>${sl.karyawan?.nama_lengkap||'—'}</span></div>
