@@ -645,6 +645,21 @@ async function loadActivityList () {
 }
 
 // ---- Rekap kehadiran bulan ini ----
+async function loadSaldoCuti () {
+  const el = document.getElementById('saldoCuti')
+  if (!el) return
+  const tahun = new Date().getFullYear()
+  const { data } = await sb.from('saldo_cuti').select('*').eq('karyawan_id', currentUser.id).eq('tahun', tahun)
+  if (!data || !data.length) { el.textContent = '0'; return }
+  const sisa = data.reduce((acc, r) => {
+    const total = (r.saldo_awal != null ? r.saldo_awal : (r.total_hari != null ? r.total_hari : 0))
+    const terpakai = r.terpakai || 0
+    const v = (r.sisa != null) ? r.sisa : (total - terpakai)
+    return acc + (Number(v) || 0)
+  }, 0)
+  el.textContent = sisa
+}
+
 async function loadRekap () {
   const now = new Date()
   const awal = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
@@ -708,6 +723,7 @@ async function init () {
     await renderStatsHRAdmin()
   } else {
     renderStatsKaryawan(karyw)
+    loadSaldoCuti()
   }
 
   const today = now.toISOString().split('T')[0]

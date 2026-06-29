@@ -1137,7 +1137,7 @@ async function deleteLembur (id) {
 
 // --- HR: persetujuan izin absen luar ---
 async function loadIzinAdmin () {
-  const { data } = await sb.from('izin_absen_luar').select('*, karyawan(nama_lengkap,nik)').order('created_at', { ascending:false }).limit(100)
+  const { data } = await sb.from('izin_absen_luar').select('*, karyawan:karyawan_id(nama_lengkap,nik)').order('created_at', { ascending:false }).limit(100)
   const list = data || []
   const body = document.getElementById('izinAdminBody')
   if (!body) return
