@@ -275,11 +275,7 @@
               <div class="absen-circle belum" id="absenCircle"><svg class="ic" viewBox="0 0 24 24" style="width:2.2rem;height:2.2rem"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
               <p class="absen-status" id="absenDesc">Memuat...</p>
             </div>
-            <div class="mode-toggle" id="modeToggle">
-              <button class="mode-btn active" id="btnModeKantor" onclick="setMode('kantor')" title="Absen dari kantor (wajib dalam radius)"><svg class="ic" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg> Kantor</button>
-              <button class="mode-btn" id="btnModeWFH" onclick="setMode('wfh')" title="Work from Home"><svg class="ic" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg> WFH</button>
-              <button class="mode-btn" id="btnModeWFA" onclick="setMode('wfa')" title="Work from Anywhere"><svg class="ic" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg> WFA</button>
-            </div>
+            <div id="izinChip" style="display:none;font-size:.8rem;font-weight:600;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:8px;padding:.5rem .75rem;margin-bottom:.75rem;text-align:center;"></div>
             <div class="time-row">
               <div class="time-box">
                 <div class="time-val" id="dispMasuk">--:--</div>
@@ -292,6 +288,10 @@
             </div>
             <button class="btn-absen btn-masuk" id="btnAbsen" onclick="doAbsen()">Absen Masuk</button>
             <p class="absen-note" id="absenNote">Pastikan Anda berada dalam radius kantor</p>
+            <div style="display:flex;gap:.5rem;margin-top:.75rem;">
+              <button class="btn-sec" style="flex:1;justify-content:center;" onclick="openIzinModal()"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar</button>
+              <button class="btn-sec" style="flex:1;justify-content:center;" onclick="openLemburModal()"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Catat Lembur</button>
+            </div>
           </div>
         </div>
 
@@ -345,6 +345,18 @@
           </table>
         </div>
       </div>
+
+      <!-- Izin Absen Luar Lokasi Saya -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar Lokasi Saya</h3></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Tipe</th><th>Alasan</th><th>Status</th></tr></thead><tbody id="izinMyBody"></tbody></table></div>
+      </div>
+
+      <!-- Lembur Saya -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lembur Saya</h3></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Mulai</th><th>Selesai</th><th>Durasi</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody id="lemburMyBody"></tbody></table></div>
+      </div>
     </div>
 
     <!-- ===== VIEW HR ADMIN ===== -->
@@ -378,6 +390,18 @@
             <tbody id="adminTableBody"></tbody>
           </table>
         </div>
+      </div>
+
+      <!-- Izin Absen Luar — Persetujuan (HR) -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar — Persetujuan</h3></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Tipe</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="izinAdminBody"></tbody></table></div>
+      </div>
+
+      <!-- Lembur Karyawan (HR) -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lembur Karyawan</h3></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Mulai</th><th>Selesai</th><th>Durasi</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody id="lemburAdminBody"></tbody></table></div>
       </div>
     </div>
 
@@ -443,6 +467,59 @@
 </div>
 
 
+<!-- Modal Ajukan Izin Absen Luar Lokasi (Karyawan) -->
+<div class="modal-overlay" id="modalIzin">
+  <div class="modal">
+    <div class="mh">
+      <h3>Ajukan Izin Absen Luar Lokasi</h3>
+      <button class="mc" onclick="closeIzin()"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mb">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem;">Untuk WFH/WFA/dinas luar/kendala lokasi. Absen di luar radius hanya bisa setelah pengajuan ini <strong>disetujui HR</strong>.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="fg"><label>Tanggal Mulai *</label><input type="date" class="inp" style="width:100%;" id="izTglMulai"></div>
+        <div class="fg"><label>Tanggal Selesai *</label><input type="date" class="inp" style="width:100%;" id="izTglSelesai"></div>
+      </div>
+      <div class="fg"><label>Tipe *</label>
+        <select class="inp" style="width:100%;" id="izTipe">
+          <option value="wfh">WFH (Work from Home)</option>
+          <option value="wfa">WFA (Work from Anywhere)</option>
+          <option value="dinas">Dinas Luar</option>
+          <option value="lainnya">Lainnya</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-bottom:0;"><label>Alasan</label><input type="text" class="inp" style="width:100%;" id="izAlasan" placeholder="Mis. WFH hari Sabtu / dinas ke cabang ..."></div>
+    </div>
+    <div class="mf">
+      <button class="btn-sec" onclick="closeIzin()">Batal</button>
+      <button class="btn-sub" onclick="submitIzin()"><svg class="ic" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg> Kirim Pengajuan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Catat Lembur (Karyawan) -->
+<div class="modal-overlay" id="modalLembur">
+  <div class="modal">
+    <div class="mh">
+      <h3>Catat Lembur</h3>
+      <button class="mc" onclick="closeLembur()"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="mb">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem;">Catatan lembur ini <strong>tidak otomatis</strong> masuk ke payroll/slip gaji — perhitungan upah lembur diinput manual oleh HR.</p>
+      <div class="fg"><label>Tanggal *</label><input type="date" class="inp" style="width:100%;" id="lbTgl"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="fg"><label>Jam Mulai *</label><input type="time" class="inp" style="width:100%;" id="lbMulai"></div>
+        <div class="fg"><label>Jam Selesai *</label><input type="time" class="inp" style="width:100%;" id="lbSelesai"></div>
+      </div>
+      <div class="fg" style="margin-bottom:0;"><label>Alasan / Uraian Pekerjaan</label><input type="text" class="inp" style="width:100%;" id="lbAlasan" placeholder="Mis. menyelesaikan laporan bulanan ..."></div>
+    </div>
+    <div class="mf">
+      <button class="btn-sec" onclick="closeLembur()">Batal</button>
+      <button class="btn-sub" onclick="submitLembur()"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg> Simpan</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
@@ -457,7 +534,8 @@ let currentLat = null, currentLng = null, dalamRadius = false
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth()
 let absensiMonth = [], allAdminAbsensi = [], semua_karyawan = []
 let gpsWatchId = null
-let modeKerja = 'kantor'  // kantor | wfh | wfa
+let modeKerja = 'kantor'  // kantor | wfh | wfa (vestigial — mode kini dari radius/izin)
+let izinLuarAktif = null   // izin absen luar yang DISETUJUI mencakup hari ini (atau null)
 
 // ===== HARI LIBUR NASIONAL 2026 =====
 // Sumber: Kepres + Keputusan Bersama — update tiap tahun
@@ -556,21 +634,6 @@ function statusBadge (s, mode) {
   return html
 }
 
-// MODE KERJA
-function setMode (mode) {
-  modeKerja = mode
-  document.getElementById('btnModeKantor').classList.toggle('active', mode === 'kantor')
-  document.getElementById('btnModeWFH').classList.toggle('active', mode === 'wfh')
-  document.getElementById('btnModeWFA').classList.toggle('active', mode === 'wfa')
-  if (mode !== 'kantor') {
-    setGPSBar('inside', `Mode ${mode.toUpperCase()} aktif — geofencing dinonaktifkan`, 'Bekerja dari luar kantor')
-  } else {
-    if (currentLat !== null) checkRadius()
-    else setGPSBar('checking', 'Mendapatkan lokasi GPS...', '')
-  }
-  updateAbsenButton()
-}
-
 // ====== GPS MONITORING ======
 function startGPS () {
   if (!navigator.geolocation) {
@@ -651,56 +714,64 @@ function renderAbsenCard (ab) {
   }
 }
 
-function updateAbsenButton () {
-  const btn     = document.getElementById('btnAbsen')
-  const note    = document.getElementById('absenNote')
-  const toggle  = document.getElementById('modeToggle')
-  const ab      = absensiHariIni
+// Mode efektif absen: setelah masuk pakai mode tersimpan; sebelum masuk
+// ditentukan dari radius / izin luar yang disetujui.
+function effMode () {
+  const ab = absensiHariIni
+  if (ab?.waktu_masuk) return ab.mode_kerja || 'kantor'
+  return dalamRadius ? 'kantor' : (izinLuarAktif ? izinLuarAktif.tipe : 'kantor')
+}
 
-  // Cek hari libur / Minggu
+function updateAbsenButton () {
+  const btn  = document.getElementById('btnAbsen')
+  const note = document.getElementById('absenNote')
+  const chip = document.getElementById('izinChip')
+  const ab   = absensiHariIni
+
   const today = new Date().toISOString().split('T')[0]
   if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
     btn.className = 'btn-absen btn-libur'; btn.textContent = 'Hari Libur'; btn.disabled = true
     note.textContent = `Hari ini ${getNamaLibur(today)}. Selamat beristirahat!`
-    if (toggle) toggle.style.display = 'none'
+    if (chip) chip.style.display = 'none'
     return
   }
 
-  // Mode efektif: setelah masuk, gunakan mode yang tersimpan di DB
-  const effectiveMode = ab?.waktu_masuk ? (ab.mode_kerja || 'kantor') : modeKerja
-  // Admin boleh absen dari mana saja kapan saja
-  const canAbsen = isAdmin || dalamRadius || effectiveMode !== 'kantor'
+  const mode = effMode()
+  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif
+
+  if (chip) {
+    if (!dalamRadius && izinLuarAktif && !ab?.waktu_keluar) {
+      chip.style.display = ''
+      chip.textContent = `Izin ${TIPE_LABEL[izinLuarAktif.tipe]||izinLuarAktif.tipe} disetujui untuk hari ini — Anda dapat absen dari luar kantor`
+    } else { chip.style.display = 'none' }
+  }
 
   if (ab?.waktu_keluar) {
     btn.className = 'btn-absen btn-done'; btn.textContent = 'Absensi selesai'; btn.disabled = true
     note.textContent = 'Terima kasih, sampai jumpa besok!'
-    if (toggle) toggle.style.display = 'none'
     return
   }
   if (!ab?.waktu_masuk) {
-    // Belum absen masuk — tampilkan mode toggle
-    if (toggle) toggle.style.display = ''
     btn.className = 'btn-absen btn-masuk'
-    btn.textContent = modeKerja !== 'kantor' ? `Absen Masuk (${modeKerja.toUpperCase()})` : 'Absen Masuk'
+    btn.textContent = mode !== 'kantor' ? `Absen Masuk (${mode.toUpperCase()})` : 'Absen Masuk'
     btn.disabled = !canAbsen
     note.textContent = canAbsen
-      ? `Siap absen — ${modeKerja !== 'kantor' ? 'Mode ' + modeKerja.toUpperCase() + ' aktif' : 'Dalam radius kantor'}`
-      : 'Anda harus berada dalam radius kantor (atau pilih mode WFH/WFA)'
+      ? (dalamRadius ? 'Dalam radius kantor — siap absen' : `Mode ${mode.toUpperCase()} (izin disetujui) — siap absen`)
+      : 'Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" & tunggu persetujuan HR.'
   } else {
-    // Sudah absen masuk — sembunyikan toggle, tampilkan mode aktif
-    if (toggle) toggle.style.display = 'none'
     btn.className = 'btn-absen btn-keluar'
-    btn.textContent = effectiveMode !== 'kantor' ? `Absen Keluar (${effectiveMode.toUpperCase()})` : 'Absen Keluar'
+    btn.textContent = mode !== 'kantor' ? `Absen Keluar (${mode.toUpperCase()})` : 'Absen Keluar'
     btn.disabled = !canAbsen
-    note.textContent = canAbsen ? 'Klik saat Anda selesai bekerja' : 'Anda harus berada dalam radius kantor'
+    note.textContent = canAbsen ? 'Klik saat Anda selesai bekerja' : 'Anda di luar radius kantor.'
   }
 }
 
 // ====== PROSES ABSEN ======
 async function doAbsen () {
-  const effectiveMode = absensiHariIni?.waktu_masuk ? (absensiHariIni.mode_kerja || 'kantor') : modeKerja
-  const canAbsen = isAdmin || dalamRadius || effectiveMode !== 'kantor'
-  if (!canAbsen) { toast('Anda di luar radius kantor. Pilih mode WFH/WFA jika bekerja dari luar kantor.','error'); return }
+  const ab = absensiHariIni
+  const mode = effMode()
+  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif
+  if (!canAbsen) { toast('Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" dulu (perlu persetujuan HR).','error'); return }
 
   const btn = document.getElementById('btnAbsen')
   btn.disabled = true; btn.textContent = 'Memproses...'
@@ -708,30 +779,32 @@ async function doAbsen () {
   const today = new Date().toISOString().split('T')[0]
   const now   = new Date().toISOString()
 
-  if (!absensiHariIni?.waktu_masuk) {
+  if (!ab?.waktu_masuk) {
     // --- ABSEN MASUK ---
+    const luar = mode !== 'kantor'
     const jamMasuk = new Date()
     const status = (jamMasuk.getHours() > 9 || (jamMasuk.getHours()===9 && jamMasuk.getMinutes()>0)) ? 'terlambat' : 'hadir'
     const payload = {
       karyawan_id: currentUser.id, tanggal: today,
-      waktu_masuk: now, status, mode_kerja: modeKerja,
-      lat_masuk: modeKerja === 'kantor' ? currentLat : null,
-      lng_masuk: modeKerja === 'kantor' ? currentLng : null,
-      keterangan: modeKerja !== 'kantor' ? modeKerja.toUpperCase() : null
+      waktu_masuk: now, status, mode_kerja: mode,
+      lat_masuk: luar ? null : currentLat,
+      lng_masuk: luar ? null : currentLng,
+      keterangan: luar ? `${mode.toUpperCase()}${izinLuarAktif?.alasan ? ' — ' + izinLuarAktif.alasan : ''}` : null
     }
     const { data, error } = await sb.from('absensi').insert(payload).select().single()
     if (error) { toast('Gagal absen: '+error.message,'error') }
-    else { absensiHariIni = data; toast(`Absen masuk berhasil — ${fmt(now)}${modeKerja !== 'kantor' ? ' (' + modeKerja.toUpperCase() + ')' : ''}`) }
+    else { absensiHariIni = data; toast(`Absen masuk berhasil — ${fmt(now)}${luar ? ' (' + mode.toUpperCase() + ')' : ''}`) }
   } else {
     // --- ABSEN KELUAR ---
-    const masuk  = new Date(absensiHariIni.waktu_masuk)
+    const luar   = (ab.mode_kerja || 'kantor') !== 'kantor'
+    const masuk  = new Date(ab.waktu_masuk)
     const dur    = Math.round((new Date()-masuk)/60000)
     const updatePayload = {
       waktu_keluar: now, durasi_kerja_menit: dur,
-      lat_keluar: effectiveMode === 'kantor' ? currentLat : null,
-      lng_keluar: effectiveMode === 'kantor' ? currentLng : null
+      lat_keluar: luar ? null : currentLat,
+      lng_keluar: luar ? null : currentLng
     }
-    const { data, error } = await sb.from('absensi').update(updatePayload).eq('id', absensiHariIni.id).select().single()
+    const { data, error } = await sb.from('absensi').update(updatePayload).eq('id', ab.id).select().single()
     if (error) { toast('Gagal absen keluar: '+error.message,'error') }
     else { absensiHariIni = data; toast(`Absen keluar — Durasi: ${durasi(dur)}`) }
   }
@@ -973,6 +1046,142 @@ async function saveManual () {
 function closeModal () { document.getElementById('modalManual').classList.remove('open') }
 document.getElementById('modalManual').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal() })
 
+// ====== IZIN ABSEN LUAR & LEMBUR ======
+const TIPE_LABEL = { wfh:'WFH', wfa:'WFA', dinas:'Dinas Luar', lainnya:'Lainnya' }
+function izinBadge (s) {
+  const m = { pending:'bg-yellow', disetujui:'bg-green', ditolak:'bg-red', dibatalkan:'bg-gray' }
+  const l = { pending:'Menunggu', disetujui:'Disetujui', ditolak:'Ditolak', dibatalkan:'Dibatalkan' }
+  return `<span class="badge ${m[s]||'bg-gray'}">${l[s]||s}</span>`
+}
+function rentangTgl (a, b) { return a === b ? fmtTgl(a) : `${fmtTgl(a)} s/d ${fmtTgl(b)}` }
+
+// --- Karyawan: izin absen luar ---
+async function loadIzinLuar () {
+  const today = new Date().toISOString().split('T')[0]
+  const { data } = await sb.from('izin_absen_luar').select('*')
+    .eq('karyawan_id', currentUser.id).order('created_at', { ascending:false })
+  const list = data || []
+  izinLuarAktif = list.find(i => i.status==='disetujui' && i.tanggal_mulai<=today && i.tanggal_selesai>=today) || null
+  const body = document.getElementById('izinMyBody')
+  if (body) body.innerHTML = list.length ? list.map(i => `
+    <tr><td>${rentangTgl(i.tanggal_mulai, i.tanggal_selesai)}</td>
+    <td>${TIPE_LABEL[i.tipe]||i.tipe}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${i.alasan||'—'}</td>
+    <td>${izinBadge(i.status)}</td></tr>`).join('')
+    : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan</td></tr>`
+}
+
+// --- Karyawan: lembur saya ---
+async function loadLemburMy () {
+  const { data } = await sb.from('lembur').select('*').eq('karyawan_id', currentUser.id).order('tanggal', { ascending:false })
+  const list = data || []
+  const body = document.getElementById('lemburMyBody')
+  if (body) body.innerHTML = list.length ? list.map(l => `
+    <tr><td>${fmtTgl(l.tanggal)}</td><td>${(l.jam_mulai||'').slice(0,5)}</td><td>${(l.jam_selesai||'').slice(0,5)}</td>
+    <td>${l.durasi_jam!=null ? l.durasi_jam+' jam' : '—'}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${l.alasan||'—'}</td>
+    <td><button class="btn-sec" style="font-size:.72rem;padding:.25rem .55rem;" onclick="deleteLembur('${l.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada lembur</td></tr>`
+}
+
+// --- Modal izin ---
+function openIzinModal () {
+  const t = new Date().toISOString().split('T')[0]
+  document.getElementById('izTglMulai').value = t
+  document.getElementById('izTglSelesai').value = t
+  document.getElementById('izTipe').value = 'wfh'
+  document.getElementById('izAlasan').value = ''
+  document.getElementById('modalIzin').classList.add('open')
+}
+function closeIzin () { document.getElementById('modalIzin').classList.remove('open') }
+async function submitIzin () {
+  const tm = document.getElementById('izTglMulai').value
+  const ts = document.getElementById('izTglSelesai').value
+  const tipe = document.getElementById('izTipe').value
+  const alasan = document.getElementById('izAlasan').value
+  if (!tm || !ts) { toast('Isi tanggal mulai & selesai','error'); return }
+  if (ts < tm) { toast('Tanggal selesai tidak boleh sebelum tanggal mulai','error'); return }
+  const { error } = await sb.from('izin_absen_luar').insert({ karyawan_id: currentUser.id, tanggal_mulai: tm, tanggal_selesai: ts, tipe, alasan: alasan||null })
+  if (error) { toast('Gagal mengirim: '+error.message,'error'); return }
+  toast('Pengajuan terkirim — menunggu persetujuan HR'); closeIzin(); loadIzinLuar()
+}
+
+// --- Modal lembur ---
+function openLemburModal () {
+  document.getElementById('lbTgl').value = new Date().toISOString().split('T')[0]
+  document.getElementById('lbMulai').value = ''
+  document.getElementById('lbSelesai').value = ''
+  document.getElementById('lbAlasan').value = ''
+  document.getElementById('modalLembur').classList.add('open')
+}
+function closeLembur () { document.getElementById('modalLembur').classList.remove('open') }
+async function submitLembur () {
+  const tgl = document.getElementById('lbTgl').value
+  const m = document.getElementById('lbMulai').value
+  const s = document.getElementById('lbSelesai').value
+  const alasan = document.getElementById('lbAlasan').value
+  if (!tgl || !m || !s) { toast('Isi tanggal, jam mulai & selesai','error'); return }
+  let dur = (new Date(`${tgl}T${s}:00`) - new Date(`${tgl}T${m}:00`)) / 3600000
+  if (dur < 0) dur += 24   // lembur lintas tengah malam
+  dur = Math.round(dur * 100) / 100
+  const { error } = await sb.from('lembur').insert({ karyawan_id: currentUser.id, tanggal: tgl, jam_mulai: m, jam_selesai: s, durasi_jam: dur, alasan: alasan||null })
+  if (error) { toast('Gagal menyimpan: '+error.message,'error'); return }
+  toast('Lembur tercatat'); closeLembur(); loadLemburMy()
+}
+async function deleteLembur (id) {
+  if (!confirm('Hapus catatan lembur ini?')) return
+  const { error } = await sb.from('lembur').delete().eq('id', id)
+  if (error) { toast('Gagal hapus: '+error.message,'error'); return }
+  toast('Lembur dihapus'); isAdmin ? loadLemburAdmin() : loadLemburMy()
+}
+
+// --- HR: persetujuan izin absen luar ---
+async function loadIzinAdmin () {
+  const { data } = await sb.from('izin_absen_luar').select('*, karyawan(nama_lengkap,nik)').order('created_at', { ascending:false }).limit(100)
+  const list = data || []
+  const body = document.getElementById('izinAdminBody')
+  if (!body) return
+  body.innerHTML = list.length ? list.map(i => `
+    <tr><td><div class="k-cell"><div class="k-av">${getInit(i.karyawan?.nama_lengkap)}</div><div><div class="k-name">${i.karyawan?.nama_lengkap||'—'}</div><div class="k-nik">${i.karyawan?.nik||''}</div></div></div></td>
+    <td>${rentangTgl(i.tanggal_mulai, i.tanggal_selesai)}</td>
+    <td>${TIPE_LABEL[i.tipe]||i.tipe}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${i.alasan||'—'}</td>
+    <td>${izinBadge(i.status)}</td>
+    <td>${i.status==='pending' ? `<button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#16a34a;border-color:#bbf7d0;" onclick="approveIzin('${i.id}')">Setujui</button> <button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#dc2626;border-color:#fecaca;" onclick="rejectIzin('${i.id}')">Tolak</button>` : '—'}</td></tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan</td></tr>`
+}
+async function approveIzin (id) {
+  const { error } = await sb.from('izin_absen_luar').update({ status:'disetujui', approved_by: currentUser.id, approved_at: new Date().toISOString() }).eq('id', id)
+  if (error) { toast('Gagal: '+error.message,'error'); return }
+  toast('Izin disetujui'); loadIzinAdmin()
+}
+async function rejectIzin (id) {
+  const { error } = await sb.from('izin_absen_luar').update({ status:'ditolak', approved_by: currentUser.id, approved_at: new Date().toISOString() }).eq('id', id)
+  if (error) { toast('Gagal: '+error.message,'error'); return }
+  toast('Izin ditolak'); loadIzinAdmin()
+}
+
+// --- HR: log lembur ---
+async function loadLemburAdmin () {
+  const { data } = await sb.from('lembur').select('*, karyawan(nama_lengkap,nik)').order('tanggal', { ascending:false }).limit(200)
+  const list = data || []
+  const body = document.getElementById('lemburAdminBody')
+  if (!body) return
+  body.innerHTML = list.length ? list.map(l => `
+    <tr><td><div class="k-cell"><div class="k-av">${getInit(l.karyawan?.nama_lengkap)}</div><div><div class="k-name">${l.karyawan?.nama_lengkap||'—'}</div><div class="k-nik">${l.karyawan?.nik||''}</div></div></div></td>
+    <td>${fmtTgl(l.tanggal)}</td><td>${(l.jam_mulai||'').slice(0,5)}</td><td>${(l.jam_selesai||'').slice(0,5)}</td>
+    <td>${l.durasi_jam!=null ? l.durasi_jam+' jam' : '—'}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${l.alasan||'—'}</td>
+    <td><button class="btn-sec" style="font-size:.72rem;padding:.25rem .55rem;" onclick="deleteLembur('${l.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')
+    : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada data lembur</td></tr>`
+}
+
+// tutup modal saat klik area luar
+;['modalIzin','modalLembur'].forEach(function (id) {
+  const el = document.getElementById(id)
+  if (el) el.addEventListener('click', function (e) { if (e.target === e.currentTarget) el.classList.remove('open') })
+})
+
 // ====== INIT ======
 async function init () {
   const { data: { session } } = await sb.auth.getSession()
@@ -1007,6 +1216,8 @@ async function init () {
     document.getElementById('viewAdmin').style.display = ''
     document.getElementById('filterTgl').value = new Date().toISOString().split('T')[0]
     await loadAdminAbsensi()
+    await loadIzinAdmin()
+    await loadLemburAdmin()
   } else {
     startGPS()
     document.getElementById('viewKaryawan').style.display = ''
@@ -1022,13 +1233,11 @@ async function init () {
     // Absensi hari ini
     const { data: ab } = await sb.from('absensi').select('*').eq('karyawan_id',currentUser.id).eq('tanggal',today).single()
     absensiHariIni = ab || null
-    // Restore mode dari record hari ini jika sudah absen
-    if (ab?.mode_kerja && ab.mode_kerja !== 'kantor') {
-      modeKerja = ab.mode_kerja
-      document.getElementById('btnModeKantor').classList.remove('active')
-      document.getElementById('btnMode' + ab.mode_kerja.charAt(0).toUpperCase() + ab.mode_kerja.slice(1))?.classList.add('active')
-    }
+    // Muat izin absen luar (set izinLuarAktif utk hari ini) + daftar pengajuan & lembur
+    await loadIzinLuar()
+    await loadLemburMy()
     renderAbsenCard(absensiHariIni)
+    updateAbsenButton()
     await renderKalender()
     await loadRiwayat()
     await loadRekap()

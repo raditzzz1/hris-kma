@@ -439,6 +439,7 @@ const ic = (n, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24">${IC[n] |
 let currentUser   = null
 let currentKaryw  = null
 let absensiHariIni = null
+let izinLuarAktif = null   // izin absen luar DISETUJUI mencakup hari ini (atau null)
 
 // ---- Helpers ----
 function toast (msg, type = 'success') {
@@ -548,17 +549,22 @@ document.getElementById('btnAbsen').addEventListener('click', async () => {
     async (pos) => {
       const lat = pos.coords.latitude, lng = pos.coords.longitude
       const { data: lokasiList } = await sb.from('lokasi_kantor').select('*').eq('aktif', true)
-      if (!lokasiList || lokasiList.length === 0) { await prosesAbsen(lat, lng, true); return }
+      if (!lokasiList || lokasiList.length === 0) { await prosesAbsen(lat, lng, 'kantor'); return }
 
       let diDalamRadius = false
       for (const loc of lokasiList) {
         if (hitungJarak(lat, lng, loc.latitude, loc.longitude) <= loc.radius_meter) { diDalamRadius = true; break }
       }
       if (!diDalamRadius) {
-        toast('Anda berada di luar radius kantor. Pastikan Anda di lokasi kerja.', 'error')
-        btn.disabled = false; renderAbsensi(absensiHariIni); return
+        // Sebelum masuk: butuh izin disetujui. Setelah masuk: ikut mode record.
+        const modeAktif = absensiHariIni?.waktu_masuk ? (absensiHariIni.mode_kerja || 'kantor') : (izinLuarAktif ? izinLuarAktif.tipe : null)
+        if (!modeAktif || modeAktif === 'kantor') {
+          toast('Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" di halaman Absensi & tunggu persetujuan HR.', 'error')
+          btn.disabled = false; renderAbsensi(absensiHariIni); return
+        }
+        await prosesAbsen(lat, lng, modeAktif); return
       }
-      await prosesAbsen(lat, lng, false)
+      await prosesAbsen(lat, lng, 'kantor')
     },
     (err) => {
       let msg = 'Gagal mendapatkan lokasi GPS.'
@@ -570,22 +576,26 @@ document.getElementById('btnAbsen').addEventListener('click', async () => {
   )
 })
 
-async function prosesAbsen (lat, lng, skipRadius) {
+async function prosesAbsen (lat, lng, mode = 'kantor') {
   const today = new Date().toISOString().split('T')[0]
   const now   = new Date().toISOString()
+  const luar  = mode !== 'kantor'
 
   if (!absensiHariIni || !absensiHariIni.waktu_masuk) {
     const { data, error } = await sb.from('absensi').insert({
       karyawan_id: currentUser.id, tanggal: today, waktu_masuk: now,
-      lat_masuk: lat, lng_masuk: lng, status: hitungStatus()
+      lat_masuk: luar ? null : lat, lng_masuk: luar ? null : lng,
+      status: hitungStatus(), mode_kerja: mode,
+      keterangan: luar ? `${mode.toUpperCase()}${izinLuarAktif?.alasan ? ' — ' + izinLuarAktif.alasan : ''}` : null
     }).select().single()
     if (error) toast('Gagal menyimpan absensi: ' + error.message, 'error')
     else { absensiHariIni = data; toast('Absen masuk berhasil! ' + formatTime(now)) }
   } else {
+    const luarKeluar = (absensiHariIni.mode_kerja || 'kantor') !== 'kantor'
     const masuk = new Date(absensiHariIni.waktu_masuk), keluar = new Date(now)
     const durasi = Math.round((keluar - masuk) / 60000)
     const { data, error } = await sb.from('absensi').update({
-      waktu_keluar: now, lat_keluar: lat, lng_keluar: lng, durasi_kerja_menit: durasi
+      waktu_keluar: now, lat_keluar: luarKeluar ? null : lat, lng_keluar: luarKeluar ? null : lng, durasi_kerja_menit: durasi
     }).eq('id', absensiHariIni.id).select().single()
     if (error) toast('Gagal menyimpan: ' + error.message, 'error')
     else { absensiHariIni = data; toast(`Absen keluar berhasil! Durasi: ${Math.floor(durasi/60)}j ${durasi%60}m`) }
@@ -703,6 +713,15 @@ async function init () {
   const today = now.toISOString().split('T')[0]
   const { data: absenData } = await sb.from('absensi').select('*').eq('karyawan_id', currentUser.id).eq('tanggal', today).single()
   absensiHariIni = absenData || null
+
+  // Izin absen luar yang DISETUJUI mencakup hari ini (agar bisa absen dari luar radius)
+  if (!isAdmin) {
+    const { data: izinList } = await sb.from('izin_absen_luar').select('*')
+      .eq('karyawan_id', currentUser.id).eq('status', 'disetujui')
+      .lte('tanggal_mulai', today).gte('tanggal_selesai', today)
+    izinLuarAktif = (izinList && izinList[0]) || null
+  }
+
   renderAbsensi(absensiHariIni)
 
   if (!isAdmin) { document.getElementById('cardRekap').style.display = ''; loadRekap() }
