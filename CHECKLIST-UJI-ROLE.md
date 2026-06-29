@@ -6,6 +6,7 @@ Uji di **Chrome desktop** dan sekali lagi di **mode HP** (F12 → Ctrl+Shift+M).
 ---
 
 ## 0. Persiapan akun
+- [ ] **WAJIB:** jalankan `supabase-fase7.sql` di Supabase SQL Editor (tabel `izin_absen_luar` & `lembur`). Tanpa ini, fitur Izin Absen Luar & Lembur akan error.
 - [ ] Buat akun **HR Admin**: invite via Supabase → set password → di tabel `karyawan` set `role = 'hr_admin'` + lengkapi `nik, nama_lengkap, divisi_id, jabatan_id`.
 - [ ] Buat akun **Karyawan**: invite via Supabase → set password → `role = 'karyawan'` + data lengkap.
 - [ ] (Opsional) Akun **Manager**: `role = 'manager'` — lihat catatan di bagian D.
@@ -110,6 +111,22 @@ Uji di **Chrome desktop** dan sekali lagi di **mode HP** (F12 → Ctrl+Shift+M).
 - [ ] Logo KMA tampil di sidebar & halaman login.
 - [ ] Warna & font konsisten (biru Genio + Poppins) di semua halaman.
 - [ ] Tidak ada link rusak / tombol yang tidak merespons.
+
+---
+
+## G. Izin Absen Luar Lokasi & Lembur (fitur baru)
+### Karyawan
+- [ ] Di Absensi: klik **Izin Absen Luar** → isi tanggal + tipe (WFH/WFA/dinas) + alasan → kirim → muncul di "Izin Absen Luar Lokasi Saya" dengan status **Menunggu**.
+- [ ] Saat **di luar radius** dan **belum ada izin disetujui** → tombol Absen **terkunci**, ada pesan minta ajukan izin.
+- [ ] Klik **Catat Lembur** → isi tanggal + jam mulai/selesai + alasan → tersimpan di "Lembur Saya" dengan durasi terhitung; bisa **Hapus**.
+
+### HR Admin
+- [ ] Di Absensi (panel bawah): lihat **Izin Absen Luar — Persetujuan**; klik **Setujui**/**Tolak** → status berubah.
+- [ ] Lihat **Lembur Karyawan** (semua); bisa **Hapus**.
+
+### Setelah izin disetujui (karyawan)
+- [ ] Login karyawan, di luar radius, pada tanggal izin → muncul chip "Izin ... disetujui"; tombol Absen **aktif**; absen tercatat dengan label mode (WFH/WFA) di riwayat.
+- [ ] Pastikan lembur **tidak** muncul/menambah otomatis di slip gaji (payroll tetap manual).
 
 ---
 
