@@ -308,6 +308,8 @@
         <button class="tab active" data-tab="absensi"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Rekap Absensi</button>
         <button class="tab" data-tab="cuti"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg> Rekap Cuti</button>
         <button class="tab" data-tab="payroll"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Rekap Payroll</button>
+        <button class="tab" data-tab="lembur"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Rekap Lembur</button>
+        <button class="tab" data-tab="izin"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar</button>
       </div>
 
       <!-- Stats -->
@@ -499,6 +501,94 @@ async function loadCuti () {
 }
 
 // ============================================================
+// TAB: REKAP LEMBUR
+// ============================================================
+async function loadLembur () {
+  const p = periodeRange()
+  setLoading()
+
+  const { data, error } = await sb
+    .from('lembur')
+    .select('tanggal, jam_mulai, jam_selesai, durasi_jam, alasan, karyawan(nama_lengkap, nik)')
+    .gte('tanggal', p.awal).lte('tanggal', p.akhir)
+    .order('tanggal', { ascending: false })
+
+  if (error) { toast('Gagal memuat data lembur', 'error'); return }
+
+  const rows = (data || []).map(l => ({
+    Nama: l.karyawan?.nama_lengkap || '—',
+    NIK: l.karyawan?.nik || '—',
+    Tanggal: l.tanggal,
+    Mulai: (l.jam_mulai || '').slice(0, 5),
+    Selesai: (l.jam_selesai || '').slice(0, 5),
+    'Durasi (jam)': l.durasi_jam ?? 0,
+    Alasan: l.alasan || '—'
+  }))
+
+  lastCols = [
+    { key:'Nama' }, { key:'NIK' }, { key:'Tanggal' },
+    { key:'Mulai' }, { key:'Selesai' }, { key:'Durasi (jam)', num:true }, { key:'Alasan' }
+  ]
+  lastRows = rows
+
+  const totalJam = (data || []).reduce((s, l) => s + (+l.durasi_jam || 0), 0)
+  const orang = new Set((data || []).map(l => l.karyawan?.nik).filter(Boolean)).size
+  renderStats([
+    { value: (data || []).length, label: 'Total Catatan Lembur' },
+    { value: orang, label: 'Karyawan Lembur' },
+    { value: (Math.round(totalJam * 100) / 100) + ' jam', label: 'Total Jam Lembur', color:'#1d4ed8' }
+  ])
+
+  const footer = { Nama:'TOTAL', NIK:'', Tanggal:'', Mulai:'', Selesai:'', 'Durasi (jam)': Math.round(totalJam * 100) / 100, Alasan:'' }
+  renderTable(footer)
+}
+
+// ============================================================
+// TAB: REKAP IZIN ABSEN LUAR
+// ============================================================
+async function loadIzin () {
+  const p = periodeRange()
+  setLoading()
+
+  const { data, error } = await sb
+    .from('izin_absen_luar')
+    .select('tanggal_mulai, tanggal_selesai, tipe, alasan, status, karyawan(nama_lengkap, nik)')
+    .lte('tanggal_mulai', p.akhir).gte('tanggal_selesai', p.awal)
+    .order('tanggal_mulai', { ascending: false })
+
+  if (error) { toast('Gagal memuat data izin', 'error'); return }
+
+  const statusBadge = { pending:'badge-yellow', disetujui:'badge-green', ditolak:'badge-red', dibatalkan:'badge-gray' }
+  const tipeLabel = { wfh:'WFH', wfa:'WFA', dinas:'Dinas Luar', lainnya:'Lainnya' }
+
+  const rows = (data || []).map(i => ({
+    Nama: i.karyawan?.nama_lengkap || '—',
+    NIK: i.karyawan?.nik || '—',
+    Tipe: tipeLabel[i.tipe] || i.tipe,
+    Mulai: i.tanggal_mulai,
+    Selesai: i.tanggal_selesai,
+    Alasan: i.alasan || '—',
+    Status: i.status,
+    _statusClass: statusBadge[i.status] || 'badge-gray'
+  }))
+
+  lastCols = [
+    { key:'Nama' }, { key:'NIK' }, { key:'Tipe' },
+    { key:'Mulai' }, { key:'Selesai' }, { key:'Alasan' }, { key:'Status', badge:true }
+  ]
+  lastRows = rows
+
+  const cnt = (data || []).reduce((a, i) => { a[i.status] = (a[i.status]||0)+1; return a }, {})
+  renderStats([
+    { value: (data || []).length, label: 'Total Pengajuan' },
+    { value: cnt.disetujui || 0, label: 'Disetujui', color:'#16a34a' },
+    { value: cnt.pending || 0, label: 'Menunggu', color:'#f59e0b' },
+    { value: cnt.ditolak || 0, label: 'Ditolak', color:'#ef4444' }
+  ])
+  renderTable(null)
+}
+
+// ============================================================
 // TAB: REKAP PAYROLL
 // ============================================================
 async function loadPayroll () {
@@ -632,11 +722,13 @@ function renderTable (footer) {
 function switchTab (tab) {
   activeTab = tab
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab))
-  const titles = { absensi:'Rekap Absensi', cuti:'Rekap Cuti', payroll:'Rekap Payroll' }
+  const titles = { absensi:'Rekap Absensi', cuti:'Rekap Cuti', payroll:'Rekap Payroll', lembur:'Rekap Lembur', izin:'Rekap Izin Absen Luar' }
   document.getElementById('tableTitle').textContent = titles[tab]
   if (tab === 'absensi') loadAbsensi()
   else if (tab === 'cuti') loadCuti()
-  else loadPayroll()
+  else if (tab === 'payroll') loadPayroll()
+  else if (tab === 'lembur') loadLembur()
+  else loadIzin()
 }
 
 // ---- Export CSV ----
