@@ -402,8 +402,8 @@
             <div style="display:flex;align-items:center;gap:1rem;">
               <div class="avatar-edit" id="editFotoPreview">?</div>
               <div>
-                <input type="file" id="editFotoFile" accept="image/*" style="display:none;" onchange="selectFoto(this)">
-                <button type="button" style="padding:.5rem .9rem;border:1.5px solid var(--border);background:#fff;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text);" onclick="document.getElementById('editFotoFile').click()">Pilih Foto</button>
+                <input type="file" id="editFotoFile" accept="image/*" onchange="selectFoto(this)" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">
+                <label for="editFotoFile" style="display:inline-block;padding:.5rem .9rem;border:1.5px solid var(--border);background:#fff;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text);">Pilih Foto</label>
                 <button type="button" id="btnHapusFoto" style="display:none;padding:.5rem .9rem;border:1.5px solid #fecaca;background:#fff;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;color:#dc2626;margin-left:.4rem;" onclick="hapusFoto()">Hapus</button>
                 <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">JPG/PNG, maksimal 2MB</p>
               </div>
@@ -859,7 +859,9 @@ function selectFoto (input) {
   if (!f.type.startsWith('image/')) { toast('File harus berupa gambar', 'error'); input.value = ''; return }
   if (f.size > 2 * 1024 * 1024) { toast('Ukuran maksimal 2MB', 'error'); input.value = ''; return }
   pendingFotoFile = f; editFotoRemoved = false
-  document.getElementById('editFotoPreview').innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`
+  const reader = new FileReader()
+  reader.onload = ev => { document.getElementById('editFotoPreview').innerHTML = `<img src="${ev.target.result}" alt="">` }
+  reader.readAsDataURL(f)
   document.getElementById('btnHapusFoto').style.display = ''
 }
 function hapusFoto () {
