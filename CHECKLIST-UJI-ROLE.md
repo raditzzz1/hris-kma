@@ -80,6 +80,7 @@ Uji di **Chrome desktop** dan sekali lagi di **mode HP** (F12 → Ctrl+Shift+M).
 - [ ] Payroll: hanya **slip gaji final milik sendiri** (tidak ada tombol generate/finalisasi).
 - [ ] Pelatihan: hanya **pelatihan & sertifikat milik sendiri**.
 - [ ] Profil (Data Karyawan): bisa edit **data pribadi sendiri**; kolom **NIK terkunci**.
+- [ ] **Foto profil**: di Edit Data Pribadi → **Pilih Foto** (JPG/PNG ≤2MB) → Simpan → foto muncul di profil & sidebar. Tombol **Hapus** mengembalikan ke inisial. (Perlu `supabase-fase8.sql` sudah dijalankan.)
 
 ### Pembatasan akses (penting)
 - [ ] Ketik manual `lokasi.html` → **dialihkan ke dashboard**.

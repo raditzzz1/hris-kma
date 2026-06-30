@@ -134,6 +134,10 @@
     .profile-page { display: none; }
     .profile-hero { background: linear-gradient(135deg, var(--primary-dk), var(--primary)); border-radius: var(--radius); padding: 2rem; color: white; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
     .avatar-lg { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 3px solid rgba(255,255,255,0.3); display: grid; place-items: center; font-size: 2rem; font-weight: 700; flex-shrink: 0; }
+    /* Foto profil pada avatar */
+    .avatar-sm, .avatar-lg, .avatar-tbl, .detail-avatar, .avatar-edit { overflow: hidden; }
+    .avatar-sm img, .avatar-lg img, .avatar-tbl img, .detail-avatar img, .avatar-edit img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .avatar-edit { width: 72px; height: 72px; border-radius: 50%; background: #eef2f7; color: #64748b; display: grid; place-items: center; font-size: 1.6rem; font-weight: 700; flex-shrink: 0; }
     .profile-hero h2 { font-size: 1.4rem; font-weight: 700; }
     .profile-hero p { opacity: 0.75; font-size: 0.875rem; margin-top: 0.25rem; }
     .profile-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -393,6 +397,18 @@
       <!-- Tab Pribadi -->
       <div class="tab-panel active" id="tabPribadi">
         <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Foto Profil</label>
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <div class="avatar-edit" id="editFotoPreview">?</div>
+              <div>
+                <input type="file" id="editFotoFile" accept="image/*" style="display:none;" onchange="selectFoto(this)">
+                <button type="button" style="padding:.5rem .9rem;border:1.5px solid var(--border);background:#fff;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--text);" onclick="document.getElementById('editFotoFile').click()">Pilih Foto</button>
+                <button type="button" id="btnHapusFoto" style="display:none;padding:.5rem .9rem;border:1.5px solid #fecaca;background:#fff;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;color:#dc2626;margin-left:.4rem;" onclick="hapusFoto()">Hapus</button>
+                <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">JPG/PNG, maksimal 2MB</p>
+              </div>
+            </div>
+          </div>
           <div class="form-group">
             <label class="form-label">Nama Lengkap *</label>
             <input class="form-input" type="text" id="editNama" required>
@@ -688,7 +704,7 @@ function renderTable (list) {
     <tr>
       <td>
         <div class="karyawan-cell">
-          <div class="avatar-tbl">${getInitial(k.nama_lengkap)}</div>
+          <div class="avatar-tbl">${k.foto_url ? `<img src="${k.foto_url}" alt="">` : getInitial(k.nama_lengkap)}</div>
           <div>
             <div class="karyawan-name">${k.nama_lengkap}</div>
             <div class="karyawan-nik">${k.nik || '—'}</div>
@@ -742,7 +758,7 @@ function openDetail (id) {
   const k = allKaryawan.find(x => x.id === id)
   if (!k) return
 
-  document.getElementById('detailAvatar').textContent = getInitial(k.nama_lengkap)
+  setAvatar('detailAvatar', k.nama_lengkap, k.foto_url)
   document.getElementById('detailName').textContent   = k.nama_lengkap
   document.getElementById('detailSub').textContent    = `${k.jabatan?.nama || '—'} · ${k.divisi?.nama || '—'}`
   document.getElementById('detailBadges').innerHTML   = statusBadge(k.status) + ' ' + kontrakBadge(k.tipe_kontrak)
@@ -801,6 +817,13 @@ async function openEdit (id) {
   document.getElementById('editAlamat').value     = k.alamat         || ''
   document.getElementById('editNik').disabled     = !isAdmin  // karyawan biasa tidak bisa edit NIK
 
+  // Foto profil
+  editFotoUrl = k.foto_url || null
+  pendingFotoFile = null; editFotoRemoved = false
+  setAvatar('editFotoPreview', k.nama_lengkap, editFotoUrl)
+  document.getElementById('btnHapusFoto').style.display = editFotoUrl ? '' : 'none'
+  document.getElementById('editFotoFile').value = ''
+
   if (isAdmin) {
     // Isi divisi & jabatan
     document.getElementById('editDivisi').value   = k.divisi_id      || ''
@@ -821,6 +844,29 @@ async function openEdit (id) {
   document.querySelector('.tab-btn').classList.add('active')
 
   openModal('modalEdit')
+}
+
+// ---- Foto profil ----
+let pendingFotoFile = null, editFotoUrl = null, editFotoRemoved = false
+function setAvatar (id, name, fotoUrl) {
+  const el = typeof id === 'string' ? document.getElementById(id) : id
+  if (!el) return
+  el.innerHTML = fotoUrl ? `<img src="${fotoUrl}" alt="">` : getInitial(name)
+}
+function selectFoto (input) {
+  const f = input.files && input.files[0]
+  if (!f) return
+  if (!f.type.startsWith('image/')) { toast('File harus berupa gambar', 'error'); input.value = ''; return }
+  if (f.size > 2 * 1024 * 1024) { toast('Ukuran maksimal 2MB', 'error'); input.value = ''; return }
+  pendingFotoFile = f; editFotoRemoved = false
+  document.getElementById('editFotoPreview').innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`
+  document.getElementById('btnHapusFoto').style.display = ''
+}
+function hapusFoto () {
+  pendingFotoFile = null; editFotoUrl = null; editFotoRemoved = true
+  document.getElementById('editFotoPreview').innerHTML = getInitial(document.getElementById('editNama').value)
+  document.getElementById('btnHapusFoto').style.display = 'none'
+  document.getElementById('editFotoFile').value = ''
 }
 
 // ---- Simpan edit ----
@@ -848,6 +894,18 @@ async function saveEdit () {
     payload.gaji_pokok       = parseFloat(document.getElementById('editGaji').value) || 0
     payload.status_ptkp      = document.getElementById('editPtkp').value || 'TK/0'
   }
+
+  // Foto profil: upload bila ada file baru, atau set null bila dihapus
+  let fotoUrl = editFotoUrl
+  if (pendingFotoFile) {
+    const path = `${editingId}/avatar`
+    const { error: upErr } = await sb.storage.from('foto-profil').upload(path, pendingFotoFile, { upsert: true, contentType: pendingFotoFile.type })
+    if (upErr) { toast('Gagal upload foto: ' + upErr.message, 'error'); btn.disabled = false; btn.textContent = 'Simpan'; return }
+    fotoUrl = sb.storage.from('foto-profil').getPublicUrl(path).data.publicUrl + '?v=' + Date.now()
+  } else if (editFotoRemoved) {
+    fotoUrl = null
+  }
+  payload.foto_url = fotoUrl
 
   const { error } = await sb.from('karyawan').update(payload).eq('id', editingId)
 
@@ -886,7 +944,7 @@ async function loadProfileKaryawan () {
   if (error || !k) return
   currentKaryw = k
 
-  document.getElementById('profileAvatar').textContent = getInitial(k.nama_lengkap)
+  setAvatar('profileAvatar', k.nama_lengkap, k.foto_url)
   document.getElementById('profileName').textContent   = k.nama_lengkap
   document.getElementById('profileSub').textContent    = `${k.jabatan?.nama || '—'} · ${k.divisi?.nama || '—'}`
   document.getElementById('profileStatus').textContent  = k.status === 'aktif' ? 'Aktif' : k.status || '—'
@@ -928,7 +986,7 @@ async function init () {
   // Sidebar
   document.getElementById('sidebarName').textContent   = karyw?.nama_lengkap || currentUser.email
   document.getElementById('sidebarRole').textContent   = roleLabel(karyw?.role)
-  document.getElementById('sidebarAvatar').textContent = getInitial(karyw?.nama_lengkap)
+  setAvatar('sidebarAvatar', karyw?.nama_lengkap, karyw?.foto_url)
 
   if (isAdmin) {
     document.getElementById('adminNavLabel').style.display = ''

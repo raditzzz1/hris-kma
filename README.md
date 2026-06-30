@@ -40,6 +40,7 @@ Employee Self-Service (ESS) per akun.
    5. `supabase-fase6.sql`  (pelatihan)
    6. `supabase-bugfix.sql` (penyesuaian divisi/jabatan/cuti)
    7. `supabase-fase7.sql`  (izin absen luar + lembur)
+   8. `supabase-fase8.sql`  (foto profil — bucket Supabase Storage)
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js
