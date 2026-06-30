@@ -326,13 +326,21 @@ function fmtDate (d) {
 }
 
 // Hitung hari kerja (exclude Sabtu & Minggu)
+// Libur nasional 2026 (Minggu otomatis libur; Sabtu = hari kerja/WFH)
+const HARI_LIBUR_CUTI = new Set([
+  '2026-01-01','2026-01-16','2026-02-17','2026-03-19','2026-03-20','2026-03-21',
+  '2026-03-22','2026-03-23','2026-03-24','2026-04-03','2026-05-01','2026-05-14',
+  '2026-05-27','2026-05-31','2026-06-01','2026-06-16','2026-08-17','2026-08-25','2026-12-25'
+])
+function _tglStr (d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` }
 function hitungHariKerja (mulai, selesai) {
   if (!mulai || !selesai) return 0
   let count = 0, cur = new Date(mulai)
   const end = new Date(selesai)
   while (cur <= end) {
     const day = cur.getDay()
-    if (day !== 0 && day !== 6) count++
+    // Hari kerja = Senin–Sabtu (Sabtu WFH); libur hanya Minggu & libur nasional
+    if (day !== 0 && !HARI_LIBUR_CUTI.has(_tglStr(cur))) count++
     cur.setDate(cur.getDate() + 1)
   }
   return count
