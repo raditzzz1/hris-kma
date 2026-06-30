@@ -2,7 +2,7 @@
 _recovered/
 
 # Pratinjau dev (bukan bagian aplikasi)
-_preview-dashboard.html
+_preview-*.html
 
 # Pengaturan lokal Claude Code
 .claude/

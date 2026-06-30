@@ -108,9 +108,16 @@
     .slip-section-title { font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); border-bottom:1px solid var(--border); padding-bottom:.3rem; margin-bottom:.5rem; }
     .slip-row { display:flex; justify-content:space-between; padding:.3rem 0; font-size:.82rem; }
     .slip-row.total { font-weight:700; border-top:1px solid var(--border); padding-top:.5rem; margin-top:.25rem; }
-    .slip-takehome { background:var(--primary); color:white; border-radius:10px; padding:.85rem 1rem; display:flex; justify-content:space-between; align-items:center; margin-top:1rem; }
-    .slip-takehome-lbl { font-size:.82rem; opacity:.85; }
+    .slip-takehome { background:#fff; color:var(--navy); border:2px solid var(--navy); border-radius:10px; padding:.85rem 1rem; display:flex; justify-content:space-between; align-items:center; margin-top:1rem; }
+    .slip-takehome-lbl { font-size:.82rem; font-weight:600; }
     .slip-takehome-val { font-size:1.2rem; font-weight:800; }
+    .slip-sign { width:260px; margin:1.5rem 0 0 auto; text-align:center; }
+    .slip-sign p { font-size:.8rem; margin:0; color:var(--text); }
+    .slip-sign-area { position:relative; height:104px; margin:.15rem 0; }
+    .slip-stamp { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-8deg); height:104px; opacity:.9; mix-blend-mode:multiply; }
+    .slip-ttd { position:absolute; left:50%; top:50%; transform:translate(-50%,-58%); height:66px; mix-blend-mode:multiply; }
+    .slip-sign-name { font-weight:700; text-decoration:underline; margin-top:.25rem; }
+    .slip-sign-title { color:var(--muted); font-size:.74rem; }
     .slip-footer { text-align:center; font-size:.72rem; color:var(--muted); margin-top:1rem; padding-top:.75rem; border-top:1px solid var(--border); }
 
     /* PERIODE LIST */
@@ -664,7 +671,18 @@ async function lihatSlip(slipId) {
         <span class="slip-takehome-lbl">GAJI BERSIH (Take-Home Pay)</span>
         <span class="slip-takehome-val">${IDR(sl.gaji_bersih)}</span>
       </div>
-      <div class="slip-footer">Slip ini diterbitkan secara otomatis oleh sistem HRIS PT Kawan Menengah Atas</div>
+
+      <div class="slip-sign">
+        <p>Mengetahui,</p>
+        <div class="slip-sign-area">
+          <img src="stempel-kma.png" class="slip-stamp" alt="" onerror="this.style.display='none'">
+          <img src="ttd-direktur.png" class="slip-ttd" alt="" onerror="this.style.display='none'">
+        </div>
+        <p class="slip-sign-name">Moammer Bahreza Baharuddin</p>
+        <p class="slip-sign-title">Board of Director</p>
+      </div>
+
+      <div class="slip-footer">Slip ini diterbitkan oleh sistem HRIS PT Kawan Menengah Atas</div>
     </div>`
 
   om('modalSlip')
