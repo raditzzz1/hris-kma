@@ -770,7 +770,7 @@ async function init () {
   currentUser = session.user
 
   const { data: karyw } = await sb
-    .from('karyawan').select('nama_lengkap, role').eq('id', currentUser.id).single()
+    .from('karyawan').select('nama_lengkap, role, foto_url').eq('id', currentUser.id).single()
 
   document.getElementById('headerDate').textContent =
     new Date().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
@@ -779,7 +779,7 @@ async function init () {
     currentKaryw = karyw
     document.getElementById('sidebarName').textContent   = karyw.nama_lengkap
     document.getElementById('sidebarRole').textContent   = roleLabel(karyw.role)
-    document.getElementById('sidebarAvatar').textContent = getInitial(karyw.nama_lengkap)
+    document.getElementById('sidebarAvatar').innerHTML = karyw.foto_url ? `<img src="${karyw.foto_url}" alt="">` : getInitial(karyw.nama_lengkap)
   }
 
   document.getElementById('loadingOverlay').style.display = 'none'

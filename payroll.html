@@ -797,7 +797,7 @@ async function init() {
   document.getElementById('sbName').textContent = k.nama_lengkap
   document.getElementById('sbRole').textContent = k.role==='hr_admin'?'HR Admin':'Karyawan'
   if (k.role === 'hr_admin') ['adminNavLbl','navLokasi','navLaporan'].forEach(function(id){var el=document.getElementById(id); if(el) el.style.display=''})
-  document.getElementById('sbAv').textContent   = k.nama_lengkap?.charAt(0).toUpperCase()||'?'
+  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase()||'?')
 
   // Set bulan default di modal periode ke bulan sekarang
   document.getElementById('pBulan').value = new Date().getMonth()+1

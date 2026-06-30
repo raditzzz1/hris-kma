@@ -476,7 +476,7 @@ async function init () {
 
   document.getElementById('sbName').textContent  = k.nama_lengkap
   document.getElementById('sbRole').textContent  = 'HR Admin'
-  document.getElementById('sbAv').textContent    = k.nama_lengkap?.charAt(0).toUpperCase() || '?'
+  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase() || '?')
 
   // Init map (default Jakarta)
   initMap(-6.2, 106.816)

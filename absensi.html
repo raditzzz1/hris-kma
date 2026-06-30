@@ -1194,7 +1194,7 @@ async function init () {
   // Sidebar
   document.getElementById('sbName').textContent   = k?.nama_lengkap || currentUser.email
   document.getElementById('sbRole').textContent   = ({hr_admin:'HR Admin',manager:'Manager',karyawan:'Karyawan'})[k?.role]||'—'
-  document.getElementById('sbAvatar').textContent = getInit(k?.nama_lengkap)
+  document.getElementById('sbAvatar').innerHTML = k?.foto_url ? `<img src="${k.foto_url}" alt="">` : getInit(k?.nama_lengkap)
 
   if (isAdmin) {
     document.getElementById('adminNavLbl').style.display = ''
