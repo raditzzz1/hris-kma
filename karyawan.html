@@ -856,7 +856,13 @@ function setAvatar (id, name, fotoUrl) {
 function selectFoto (input) {
   const f = input.files && input.files[0]
   if (!f) return
-  if (!f.type.startsWith('image/')) { toast('File harus berupa gambar', 'error'); input.value = ''; return }
+  const nama = (f.name || '').toLowerCase()
+  const isHeic = /image\/(heic|heif)/.test(f.type) || /\.(heic|heif)$/.test(nama)
+  if (isHeic) {
+    toast('Format HEIC (foto iPhone) belum didukung. Pakai JPG/PNG — atau atur Kamera iPhone ke "Most Compatible".', 'error')
+    input.value = ''; return
+  }
+  if (!f.type.startsWith('image/')) { toast('File harus berupa gambar (JPG/PNG)', 'error'); input.value = ''; return }
   if (f.size > 2 * 1024 * 1024) { toast('Ukuran maksimal 2MB', 'error'); input.value = ''; return }
   pendingFotoFile = f; editFotoRemoved = false
   const reader = new FileReader()
