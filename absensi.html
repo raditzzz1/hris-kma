@@ -783,7 +783,11 @@ async function doAbsen () {
     // --- ABSEN MASUK ---
     const luar = mode !== 'kantor'
     const jamMasuk = new Date()
-    const status = (jamMasuk.getHours() > 9 || (jamMasuk.getHours()===9 && jamMasuk.getMinutes()>0)) ? 'terlambat' : 'hadir'
+    let status = 'hadir'
+    if (!currentKaryw?.jam_kerja_fleksibel) {
+      const [sh, sm] = (currentKaryw?.jam_masuk_standar || '09:00').slice(0,5).split(':').map(Number)
+      if (jamMasuk.getHours()*60 + jamMasuk.getMinutes() > sh*60 + sm) status = 'terlambat'
+    }
     const payload = {
       karyawan_id: currentUser.id, tanggal: today,
       waktu_masuk: now, status, mode_kerja: mode,

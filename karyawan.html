@@ -505,6 +505,28 @@
               <option value="K/3">K/3 — Menikah, 3 tanggungan</option>
             </select>
           </div>
+          <div class="form-group">
+            <label class="form-label">Jam Masuk Standar</label>
+            <input class="form-input" type="time" id="editJamMasuk" value="09:00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jam Kerja Fleksibel</label>
+            <select class="form-select" id="editFleksibel">
+              <option value="false">Tidak — hitung terlambat dari jam standar</option>
+              <option value="true">Ya — jam berubah/rolling, tidak dihitung terlambat</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipe Gaji</label>
+            <select class="form-select" id="editTipeGaji" onchange="document.getElementById('grpTarif').style.display = this.value==='per_jam' ? '' : 'none'">
+              <option value="bulanan">Bulanan (default)</option>
+              <option value="per_jam">Per-jam (freelance)</option>
+            </select>
+          </div>
+          <div class="form-group" id="grpTarif" style="display:none;">
+            <label class="form-label">Tarif per Jam (Rp)</label>
+            <input class="form-input" type="number" id="editTarifJam" placeholder="0">
+          </div>
         </div>
       </div>
     </div>
@@ -835,6 +857,11 @@ async function openEdit (id) {
     document.getElementById('editRole').value     = k.role           || 'karyawan'
     document.getElementById('editGaji').value     = k.gaji_pokok     || 0
     document.getElementById('editPtkp').value     = k.status_ptkp    || 'TK/0'
+    document.getElementById('editJamMasuk').value  = (k.jam_masuk_standar || '09:00').slice(0,5)
+    document.getElementById('editFleksibel').value = k.jam_kerja_fleksibel ? 'true' : 'false'
+    document.getElementById('editTipeGaji').value  = k.tipe_gaji || 'bulanan'
+    document.getElementById('editTarifJam').value  = k.tarif_per_jam || 0
+    document.getElementById('grpTarif').style.display = (k.tipe_gaji === 'per_jam') ? '' : 'none'
   }
 
   // Reset ke tab pertama
@@ -901,6 +928,10 @@ async function saveEdit () {
     payload.role             = document.getElementById('editRole').value            || 'karyawan'
     payload.gaji_pokok       = parseFloat(document.getElementById('editGaji').value) || 0
     payload.status_ptkp      = document.getElementById('editPtkp').value || 'TK/0'
+    payload.jam_masuk_standar   = document.getElementById('editJamMasuk').value || '09:00'
+    payload.jam_kerja_fleksibel = document.getElementById('editFleksibel').value === 'true'
+    payload.tipe_gaji           = document.getElementById('editTipeGaji').value || 'bulanan'
+    payload.tarif_per_jam       = parseFloat(document.getElementById('editTarifJam').value) || 0
   }
 
   // Foto profil: upload bila ada file baru, atau set null bila dihapus

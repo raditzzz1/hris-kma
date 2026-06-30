@@ -41,6 +41,7 @@ Employee Self-Service (ESS) per akun.
    6. `supabase-bugfix.sql` (penyesuaian divisi/jabatan/cuti)
    7. `supabase-fase7.sql`  (izin absen luar + lembur)
    8. `supabase-fase8.sql`  (foto profil — bucket Supabase Storage)
+   9. `supabase-fase9.sql`  (jam kerja per-karyawan & gaji per-jam/freelance)
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js
@@ -103,5 +104,10 @@ Lihat **[CHECKLIST-UJI-ROLE.md](CHECKLIST-UJI-ROLE.md)** — uji per role
 - Senin–Jumat: 09:00–17:00 (kantor, dalam radius)
 - Sabtu: 09:00–16:00 (WFH — lewat **Izin Absen Luar** yang disetujui HR)
 - Absen di luar radius hanya bisa bila ada **izin absen luar yang disetujui**.
+- **Jam kerja per-karyawan** (opsional, di Data Karyawan → Data Pekerjaan): atur
+  *Jam masuk standar* (ambang terlambat), *Jam kerja fleksibel* (rolling — tidak
+  dihitung terlambat), *Tipe gaji* (Bulanan / Per-jam) + *Tarif per jam*. Untuk
+  tipe **Per-jam** (freelance), gaji = total jam kerja sebulan × tarif, dibayar
+  bersih tanpa potongan BPJS/PPh.
 - **Lembur** dicatat karyawan untuk pendataan; upah lembur diinput **manual** oleh
   HR (tidak otomatis masuk slip gaji).

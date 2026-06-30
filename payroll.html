@@ -315,7 +315,24 @@ function hitungPPh21Bulanan(gajiPokok, totalTunjangan, bpjsKesK, bpjsJhtK, bpjsJ
 // ============================================================
 // HITUNG SLIP SATU KARYAWAN
 // ============================================================
-function hitungSlip(karyawan, komponenKaryawan) {
+function hitungSlip(karyawan, komponenKaryawan, jamKerja) {
+  // === GAJI PER-JAM (freelance) — dibayar bersih, tanpa potongan BPJS/PPh ===
+  if (karyawan.tipe_gaji === 'per_jam') {
+    const tarif = parseFloat(karyawan.tarif_per_jam) || 0
+    const jam   = Math.round((jamKerja || 0) * 100) / 100
+    const total = Math.round(jam * tarif)
+    return {
+      gaji_pokok: 0, total_tunjangan: total,
+      detail_tunjangan: [{ nama: `Upah ${jam} jam × ${IDR(tarif)}/jam`, nilai: total, kena_pajak: false }],
+      detail_potongan: [],
+      bpjs_kes_karyawan: 0, bpjs_jht_karyawan: 0, bpjs_jp_karyawan: 0,
+      bpjs_kes_perusahaan: 0, bpjs_jht_perusahaan: 0, bpjs_jp_perusahaan: 0,
+      pph21: 0, total_potongan_lain: 0,
+      total_pendapatan: total, total_potongan: 0, gaji_bersih: total,
+      status_ptkp: karyawan.status_ptkp || 'TK/0', penghasilan_netto_setahun: 0, ptkp: 0, pkp: 0
+    }
+  }
+
   const gajiPokok = parseFloat(karyawan.gaji_pokok) || 0
   const statusPtkp = karyawan.status_ptkp || 'TK/0'
 
@@ -502,9 +519,9 @@ async function buatPeriode() {
   }).select().single()
   if (error) { toast('Gagal buat periode: '+error.message,'error'); return }
 
-  // Generate slip untuk semua karyawan aktif
+  // Generate slip: karyawan aktif yang punya gaji bulanan ATAU tipe gaji per-jam
   const { data: karyawans } = await sb.from('karyawan')
-    .select('*').eq('status','aktif').neq('gaji_pokok',0)
+    .select('*').eq('status','aktif').or('gaji_pokok.neq.0,tipe_gaji.eq.per_jam')
   if (!karyawans?.length) {
     toast('Periode dibuat. Tidak ada karyawan aktif dengan gaji.','error')
     cm('modalPeriode'); renderHR(); return
@@ -514,9 +531,21 @@ async function buatPeriode() {
   const { data: semuaKomp } = await sb.from('karyawan_komponen')
     .select('*').in('karyawan_id', karyawans.map(k=>k.id))
 
+  // Jam kerja (dari absensi) untuk karyawan bergaji per-jam
+  const jamMap = {}
+  const perJamIds = karyawans.filter(k=>k.tipe_gaji==='per_jam').map(k=>k.id)
+  if (perJamIds.length) {
+    const awal  = `${tahun}-${String(bulan).padStart(2,'0')}-01`
+    const akhir = `${tahun}-${String(bulan).padStart(2,'0')}-31`
+    const { data: abs } = await sb.from('absensi').select('karyawan_id,durasi_kerja_menit')
+      .in('karyawan_id', perJamIds).gte('tanggal', awal).lte('tanggal', akhir)
+    ;(abs||[]).forEach(a => { jamMap[a.karyawan_id] = (jamMap[a.karyawan_id]||0) + (a.durasi_kerja_menit||0) })
+    Object.keys(jamMap).forEach(id => { jamMap[id] = Math.round((jamMap[id]/60)*100)/100 })
+  }
+
   const slips = karyawans.map(k => {
     const kompK = (semuaKomp||[]).filter(kk=>kk.karyawan_id===k.id)
-    const slip = hitungSlip(k, kompK)
+    const slip = hitungSlip(k, kompK, jamMap[k.id]||0)
     return { periode_id: periode.id, karyawan_id: k.id, ...slip }
   })
 
@@ -723,12 +752,26 @@ async function saveKomp() {
 }
 
 // Regenerate slip untuk satu karyawan di satu periode
+async function jamKerjaPeriode (karyawanId, bulan, tahun) {
+  const awal  = `${tahun}-${String(bulan).padStart(2,'0')}-01`
+  const akhir = `${tahun}-${String(bulan).padStart(2,'0')}-31`
+  const { data } = await sb.from('absensi').select('durasi_kerja_menit')
+    .eq('karyawan_id', karyawanId).gte('tanggal', awal).lte('tanggal', akhir)
+  const menit = (data||[]).reduce((s,a)=> s + (a.durasi_kerja_menit||0), 0)
+  return Math.round((menit/60)*100)/100
+}
+
 async function regenerateSlip(karyawanId, periodeId) {
   const { data: k } = await sb.from('karyawan').select('*').eq('id', karyawanId).single()
   if (!k) return
 
   const { data: kompK } = await sb.from('karyawan_komponen').select('*').eq('karyawan_id', karyawanId)
-  const slip = hitungSlip(k, kompK || [])
+  let jam = 0
+  if (k.tipe_gaji === 'per_jam') {
+    const { data: per } = await sb.from('payroll_periode').select('bulan,tahun').eq('id', periodeId).single()
+    if (per) jam = await jamKerjaPeriode(karyawanId, per.bulan, per.tahun)
+  }
+  const slip = hitungSlip(k, kompK || [], jam)
 
   const { error } = await sb.from('slip_gaji')
     .update(slip)

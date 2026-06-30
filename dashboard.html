@@ -604,8 +604,10 @@ async function prosesAbsen (lat, lng, mode = 'kantor') {
 }
 
 function hitungStatus () {
+  if (currentKaryw?.jam_kerja_fleksibel) return 'hadir'
+  const [sh, sm] = (currentKaryw?.jam_masuk_standar || '09:00').slice(0,5).split(':').map(Number)
   const now = new Date()
-  return (now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 0)) ? 'terlambat' : 'hadir'
+  return (now.getHours()*60 + now.getMinutes()) > (sh*60 + sm) ? 'terlambat' : 'hadir'
 }
 function hitungJarak (lat1, lng1, lat2, lng2) {
   const R = 6371000
