@@ -129,6 +129,19 @@ Uji di **Chrome desktop** dan sekali lagi di **mode HP** (F12 → Ctrl+Shift+M).
 - [ ] Login karyawan, di luar radius, pada tanggal izin → muncul chip "Izin ... disetujui"; tombol Absen **aktif**; absen tercatat dengan label mode (WFH/WFA) di riwayat.
 - [ ] Pastikan lembur **tidak** muncul/menambah otomatis di slip gaji (payroll tetap manual).
 
+## H. Blokir Login Karyawan Resign (fitur baru)
+- [ ] HR ubah status karyawan aktif jadi **"tidak aktif"** di Data Karyawan.
+- [ ] Coba **login** dengan akun itu → **ditolak**, muncul pesan "Akun Anda sudah tidak aktif...".
+- [ ] Kalau karyawan itu **sedang login** (sesi aktif) saat statusnya diubah → begitu ia refresh/pindah halaman, otomatis **ter-logout** ke halaman login dengan pesan yang sama.
+- [ ] Ubah status kembali ke **"aktif"** → karyawan bisa login normal lagi.
+
+## I. Kelola Hari Libur (fitur baru)
+- [ ] HR Admin → Absensi → panel **"Kelola Hari Libur"** di bagian bawah.
+- [ ] **Tambah** tanggal + nama libur baru → muncul di daftar dengan nama hari yang benar.
+- [ ] **Hapus** satu hari libur → hilang dari daftar.
+- [ ] Tanggal yang baru ditambah **langsung berlaku**: absen di tanggal itu tidak dianggap terlambat/hari kerja normal (cek banner "Hari Libur"), dan **tidak mengurangi jatah cuti** bila dipilih rentang cuti yang mencakup tanggal itu.
+- [ ] 19 hari libur 2026 yang lama **masih ada semua** setelah migrasi (tidak hilang).
+
 ---
 
 Jika ada item GAGAL, catat: halaman, langkah, dan pesan error (kalau ada),
