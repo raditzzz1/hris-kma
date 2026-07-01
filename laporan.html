@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Laporan — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth-guard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -770,7 +771,9 @@ async function init () {
   currentUser = session.user
 
   const { data: karyw } = await sb
-    .from('karyawan').select('nama_lengkap, role, foto_url').eq('id', currentUser.id).single()
+    .from('karyawan').select('nama_lengkap, role, foto_url, status').eq('id', currentUser.id).single()
+
+  if (!(await guardKaryawanAktif(sb, karyw?.status))) return
 
   document.getElementById('headerDate').textContent =
     new Date().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })

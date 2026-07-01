@@ -238,6 +238,12 @@ function showAlert (type, msg, section = 'login') {
   setTimeout(() => { el.style.display = 'none' }, 6000)
 }
 
+// Tampilkan pesan bila baru saja dialihkan ke sini karena akun tidak aktif
+try {
+  const _msg = sessionStorage.getItem('hris_login_msg')
+  if (_msg) { sessionStorage.removeItem('hris_login_msg'); showAlert('error', _msg) }
+} catch (e) {}
+
 ;(async () => {
   if (_isInvite) {
     const { error } = await sb.auth.setSession({ access_token: _accessToken, refresh_token: _refreshToken })
@@ -304,6 +310,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     showAlert('error', msg)
     btn.disabled  = false; btn.textContent = 'Masuk'
   } else {
+    const { data: kdata } = await sb.from('karyawan').select('status').eq('id', data.user.id).single()
+    if (kdata && kdata.status !== 'aktif') {
+      await sb.auth.signOut()
+      showAlert('error', 'Akun Anda sudah tidak aktif. Hubungi HR jika ini keliru.')
+      btn.disabled = false; btn.textContent = 'Masuk'
+      return
+    }
     window.location.href = 'dashboard.html'
   }
 })

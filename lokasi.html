@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lokasi Kantor — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth-guard.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <style>
@@ -473,6 +474,7 @@ async function init () {
 
   const { data: k } = await sb.from('karyawan').select('*').eq('id', session.user.id).single()
   if (k?.role !== 'hr_admin') { window.location.href='dashboard.html'; return }
+  if (!(await guardKaryawanAktif(sb, k?.status))) return
 
   document.getElementById('sbName').textContent  = k.nama_lengkap
   document.getElementById('sbRole').textContent  = 'HR Admin'
