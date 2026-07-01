@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#004499">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <title>Login — HRIS PT Kawan Menengah Atas</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -329,5 +333,6 @@ document.getElementById('forgotLink').addEventListener('click', async () => {
   else showAlert('success', 'Link reset password sudah dikirim ke email Anda.')
 })
 </script>
+<script src="pwa-register.js"></script>
 </body>
 </html>

@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#004499">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <title>Dashboard — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
@@ -768,5 +772,6 @@ function closeSidebar()  { document.body.classList.remove('nav-open') }
   <a class="bn-item" href="payroll.html"><span class="bn-icon"><svg class="ic" viewBox="0 0 24 24" style="width:1.3rem;height:1.3rem;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="bn-label">Payroll</span></a>
   <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon"><svg class="ic" viewBox="0 0 24 24" style="width:1.3rem;height:1.3rem;"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></span><span class="bn-label">Menu</span></button>
 </nav>
+<script src="pwa-register.js"></script>
 </body>
 </html>

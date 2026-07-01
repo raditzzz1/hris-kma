@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline — HRIS PT Kawan Menengah Atas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Poppins', system-ui, sans-serif; background: #F4F7FB;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;
+    }
+    .box { text-align: center; max-width: 360px; }
+    img { width: 72px; height: 72px; object-fit: contain; margin-bottom: 1rem; }
+    h1 { font-size: 1.15rem; color: #122359; margin: 0 0 .5rem; }
+    p { font-size: .88rem; color: #5C7BA8; margin: 0 0 1.5rem; line-height: 1.6; }
+    button {
+      font-family: inherit; padding: .7rem 1.4rem; border: none; border-radius: 10px;
+      background: #004499; color: #fff; font-weight: 600; font-size: .88rem; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <img src="logo-KMA.png" alt="Logo KMA">
+    <h1>Tidak Ada Koneksi Internet</h1>
+    <p>Halaman ini butuh koneksi internet untuk memuat data terbaru. Periksa jaringan Anda lalu coba lagi.</p>
+    <button onclick="location.reload()">Coba Lagi</button>
+  </div>
+</body>
+</html>
