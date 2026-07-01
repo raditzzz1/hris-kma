@@ -43,6 +43,7 @@ Employee Self-Service (ESS) per akun.
    8. `supabase-fase8.sql`  (foto profil — bucket Supabase Storage)
    9. `supabase-fase9.sql`  (jam kerja per-karyawan & gaji per-jam/freelance)
    10. `supabase-fase10.sql` (NIK otomatis format KMA-XXX, tidak pernah dipakai ulang)
+   11. `supabase-fase11.sql` (hari libur nasional dipindah ke database + migrasi data 2026)
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js
@@ -112,3 +113,7 @@ Lihat **[CHECKLIST-UJI-ROLE.md](CHECKLIST-UJI-ROLE.md)** — uji per role
   bersih tanpa potongan BPJS/PPh.
 - **Lembur** dicatat karyawan untuk pendataan; upah lembur diinput **manual** oleh
   HR (tidak otomatis masuk slip gaji).
+- **Hari libur nasional**: dikelola HR di halaman Absensi → panel "Kelola Hari
+  Libur" (tambah/hapus tanggal libur tahun berapa pun, tanpa edit kode).
+- **Karyawan resign**: begitu HR ubah status jadi "tidak aktif", akun otomatis
+  tidak bisa login lagi (dan sesi yang sedang berjalan langsung ter-logout).

@@ -326,13 +326,10 @@ function fmtDate (d) {
   return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})
 }
 
-// Hitung hari kerja (exclude Sabtu & Minggu)
-// Libur nasional 2026 (Minggu otomatis libur; Sabtu = hari kerja/WFH)
-const HARI_LIBUR_CUTI = new Set([
-  '2026-01-01','2026-01-16','2026-02-17','2026-03-19','2026-03-20','2026-03-21',
-  '2026-03-22','2026-03-23','2026-03-24','2026-04-03','2026-05-01','2026-05-14',
-  '2026-05-27','2026-05-31','2026-06-01','2026-06-16','2026-08-17','2026-08-25','2026-12-25'
-])
+// Hitung hari kerja (exclude Minggu & libur nasional; Sabtu = hari kerja/WFH)
+// Daftar libur dimuat dari tabel `hari_libur` (dikelola HR di halaman Absensi),
+// diisi di init() sebelum form Ajukan Cuti bisa dipakai.
+let HARI_LIBUR_CUTI = new Set()
 function _tglStr (d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` }
 function hitungHariKerja (mulai, selesai) {
   if (!mulai || !selesai) return 0
@@ -781,16 +778,18 @@ async function init () {
   const { data: { session } } = await sb.auth.getSession()
   if (!session) { window.location.href='index.html'; return }
 
-  const [{ data: k }, { data: jenis }, { data: karyawans }] = await Promise.all([
+  const [{ data: k }, { data: jenis }, { data: karyawans }, { data: libur }] = await Promise.all([
     sb.from('karyawan').select('*').eq('id', session.user.id).single(),
     sb.from('jenis_cuti').select('*').eq('aktif', true).order('nama'),
-    sb.from('karyawan').select('id,nama_lengkap').order('nama_lengkap')
+    sb.from('karyawan').select('id,nama_lengkap').order('nama_lengkap'),
+    sb.from('hari_libur').select('tanggal')
   ])
 
   myProfile    = k
   if (!(await guardKaryawanAktif(sb, k?.status))) return
   jenisCutiList = jenis || []
   allKaryawan   = karyawans || []
+  HARI_LIBUR_CUTI = new Set((libur || []).map(h => h.tanggal))
 
   document.getElementById('sbName').textContent = k.nama_lengkap
   document.getElementById('sbRole').textContent = k.role === 'hr_admin' ? 'HR Admin' : 'Karyawan'

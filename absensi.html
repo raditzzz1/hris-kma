@@ -404,6 +404,25 @@
         <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lembur Karyawan</h3></div>
         <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Mulai</th><th>Selesai</th><th>Durasi</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody id="lemburAdminBody"></tbody></table></div>
       </div>
+
+      <!-- Kelola Hari Libur (HR) -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Kelola Hari Libur</h3></div>
+        <div class="card-body" style="padding:.9rem 1.25rem;">
+          <div style="display:grid;grid-template-columns:150px 1fr auto;gap:.6rem;align-items:end;">
+            <div class="fg" style="margin-bottom:0;">
+              <label>Tanggal</label>
+              <input type="date" class="inp" style="width:100%;" id="hlTanggal">
+            </div>
+            <div class="fg" style="margin-bottom:0;">
+              <label>Nama Hari Libur</label>
+              <input type="text" class="inp" style="width:100%;" id="hlNama" placeholder="Contoh: Hari Raya Idul Fitri">
+            </div>
+            <button class="btn-primary" onclick="tambahHariLibur()"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Tambah</button>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Nama</th><th>Aksi</th></tr></thead><tbody id="hariLiburBody"></tbody></table></div>
+      </div>
     </div>
 
   </main>
@@ -538,54 +557,22 @@ let gpsWatchId = null
 let modeKerja = 'kantor'  // kantor | wfh | wfa (vestigial — mode kini dari radius/izin)
 let izinLuarAktif = null   // izin absen luar yang DISETUJUI mencakup hari ini (atau null)
 
-// ===== HARI LIBUR NASIONAL 2026 =====
-// Sumber: Kepres + Keputusan Bersama — update tiap tahun
-// Catatan: cuti bersama Idul Fitri TERMASUK libur (sesuai kebijakan perusahaan)
-const HARI_LIBUR_2026 = new Set([
-  '2026-01-01', // Tahun Baru Masehi
-  '2026-01-16', // Isra Mi'raj Nabi Muhammad SAW 1447H
-  '2026-02-17', // Tahun Baru Imlek 2577
-  '2026-03-19', // Hari Raya Nyepi (Tahun Baru Saka 1948)
-  '2026-03-20', // Cuti Bersama Idul Fitri
-  '2026-03-21', // Hari Raya Idul Fitri 1 Syawal 1447H
-  '2026-03-22', // Hari Raya Idul Fitri 2 Syawal 1447H
-  '2026-03-23', // Cuti Bersama Idul Fitri
-  '2026-03-24', // Cuti Bersama Idul Fitri
-  '2026-04-03', // Wafat Isa Al Masih
-  '2026-05-01', // Hari Buruh Internasional
-  '2026-05-14', // Kenaikan Isa Al Masih
-  '2026-05-27', // Hari Raya Idul Adha 1447H
-  '2026-05-31', // Hari Raya Waisak
-  '2026-06-01', // Hari Lahir Pancasila
-  '2026-06-16', // Tahun Baru Islam 1448H (Muharram)
-  '2026-08-17', // HUT RI ke-81
-  '2026-08-25', // Maulid Nabi Muhammad SAW 1448H
-  '2026-12-25', // Hari Natal
-])
+// ===== HARI LIBUR NASIONAL =====
+// Sumber: tabel `hari_libur` di Supabase (dikelola HR di panel "Kelola Hari
+// Libur" bawah). Dimuat sekali saat init() -> loadHariLibur().
+let HARI_LIBUR = new Set()
+let NAMA_HARI_LIBUR = {}
+let hariLiburList = []
 
-const NAMA_HARI_LIBUR = {
-  '2026-01-01':'Tahun Baru Masehi 2026',
-  '2026-01-16':'Isra Mi\'raj Nabi Muhammad SAW 1447H',
-  '2026-02-17':'Tahun Baru Imlek 2577',
-  '2026-03-19':'Hari Raya Nyepi',
-  '2026-03-20':'Cuti Bersama Idul Fitri',
-  '2026-03-21':'Hari Raya Idul Fitri 1447H',
-  '2026-03-22':'Hari Raya Idul Fitri 1447H',
-  '2026-03-23':'Cuti Bersama Idul Fitri',
-  '2026-03-24':'Cuti Bersama Idul Fitri',
-  '2026-04-03':'Wafat Isa Al Masih',
-  '2026-05-01':'Hari Buruh Internasional',
-  '2026-05-14':'Kenaikan Isa Al Masih',
-  '2026-05-27':'Hari Raya Idul Adha 1447H',
-  '2026-05-31':'Hari Raya Waisak',
-  '2026-06-01':'Hari Lahir Pancasila',
-  '2026-06-16':'Tahun Baru Islam 1448H',
-  '2026-08-17':'HUT RI ke-81',
-  '2026-08-25':'Maulid Nabi Muhammad SAW 1448H',
-  '2026-12-25':'Hari Natal',
+async function loadHariLibur () {
+  const { data } = await sb.from('hari_libur').select('*').order('tanggal')
+  hariLiburList = data || []
+  HARI_LIBUR = new Set(hariLiburList.map(h => h.tanggal))
+  NAMA_HARI_LIBUR = {}
+  hariLiburList.forEach(h => { NAMA_HARI_LIBUR[h.tanggal] = h.nama })
 }
 
-function isHariLibur (tgl) { return HARI_LIBUR_2026.has(tgl) }
+function isHariLibur (tgl) { return HARI_LIBUR.has(tgl) }
 function getNamaLibur (tgl) {
   if (new Date(tgl+'T00:00:00').getDay() === 0) return 'Hari Minggu'
   return NAMA_HARI_LIBUR[tgl] || 'Hari Libur Nasional'
@@ -1181,6 +1168,41 @@ async function loadLemburAdmin () {
     : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada data lembur</td></tr>`
 }
 
+// ====== HR: KELOLA HARI LIBUR ======
+const NAMA_HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']
+function renderHariLiburAdmin () {
+  const body = document.getElementById('hariLiburBody')
+  if (!body) return
+  body.innerHTML = hariLiburList.length ? hariLiburList.map(h => `
+    <tr><td>${fmtTgl(h.tanggal)}</td>
+    <td>${NAMA_HARI[new Date(h.tanggal+'T00:00:00').getDay()]}</td>
+    <td>${h.nama}</td>
+    <td><button class="btn-sec" style="font-size:.72rem;padding:.25rem .55rem;" onclick="deleteHariLibur('${h.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')
+    : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada hari libur ditambahkan</td></tr>`
+}
+
+async function tambahHariLibur () {
+  const tanggal = document.getElementById('hlTanggal').value
+  const nama = document.getElementById('hlNama').value.trim()
+  if (!tanggal || !nama) { toast('Isi tanggal & nama hari libur','error'); return }
+  const { error } = await sb.from('hari_libur').insert({ tanggal, nama })
+  if (error) { toast(error.message.includes('duplicate') ? 'Tanggal itu sudah terdaftar sebagai hari libur' : 'Gagal menyimpan: '+error.message, 'error'); return }
+  toast('Hari libur ditambahkan')
+  document.getElementById('hlTanggal').value = ''
+  document.getElementById('hlNama').value = ''
+  await loadHariLibur()
+  renderHariLiburAdmin()
+}
+
+async function deleteHariLibur (id) {
+  if (!confirm('Hapus hari libur ini?')) return
+  const { error } = await sb.from('hari_libur').delete().eq('id', id)
+  if (error) { toast('Gagal hapus: '+error.message,'error'); return }
+  toast('Hari libur dihapus')
+  await loadHariLibur()
+  renderHariLiburAdmin()
+}
+
 // tutup modal saat klik area luar
 ;['modalIzin','modalLembur'].forEach(function (id) {
   const el = document.getElementById(id)
@@ -1215,6 +1237,9 @@ async function init () {
   const { data: lk } = await sb.from('lokasi_kantor').select('*').eq('aktif',true)
   lokasiList = lk || []
 
+  // Muat daftar hari libur (dipakai banner libur & tombol absen)
+  await loadHariLibur()
+
   // Mulai GPS
   if (isAdmin) {
     // Admin: sembunyikan GPS bar (tidak perlu radius)
@@ -1224,6 +1249,7 @@ async function init () {
     await loadAdminAbsensi()
     await loadIzinAdmin()
     await loadLemburAdmin()
+    renderHariLiburAdmin()
   } else {
     startGPS()
     document.getElementById('viewKaryawan').style.display = ''
