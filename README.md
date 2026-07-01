@@ -44,6 +44,7 @@ Employee Self-Service (ESS) per akun.
    9. `supabase-fase9.sql`  (jam kerja per-karyawan & gaji per-jam/freelance)
    10. `supabase-fase10.sql` (NIK otomatis format KMA-XXX, tidak pernah dipakai ulang)
    11. `supabase-fase11.sql` (hari libur nasional dipindah ke database + migrasi data 2026)
+   12. `supabase-fase12.sql` (aktifkan Realtime untuk notifikasi cuti/izin)
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js
@@ -117,3 +118,28 @@ Lihat **[CHECKLIST-UJI-ROLE.md](CHECKLIST-UJI-ROLE.md)** — uji per role
   Libur" (tambah/hapus tanggal libur tahun berapa pun, tanpa edit kode).
 - **Karyawan resign**: begitu HR ubah status jadi "tidak aktif", akun otomatis
   tidak bisa login lagi (dan sesi yang sedang berjalan langsung ter-logout).
+
+---
+
+## 9. Install sebagai App (PWA)
+HRIS ini bisa di-"Install" seperti aplikasi native, langsung dari browser:
+- **HP (Android/Chrome):** buka situs → menu (⋮) → **"Add to Home screen" / "Install app"**.
+- **iPhone (Safari):** buka situs → tombol Share → **"Add to Home Screen"**.
+- **Desktop (Chrome/Edge):** ikon install (⊕) muncul di address bar → klik → Install.
+
+Setelah ter-install, app punya ikon sendiri di layar utama/desktop dan terbuka
+tanpa address bar browser, seperti aplikasi biasa.
+
+## 10. Notifikasi browser (cuti/izin disetujui-ditolak)
+Karyawan bisa mengaktifkan notifikasi lewat tombol lonceng **"Aktifkan
+Notifikasi"** di header Dashboard. Setelah diizinkan, notifikasi browser akan
+muncul otomatis saat pengajuan **cuti** atau **izin absen luar** mereka
+disetujui/ditolak HR — di halaman mana pun mereka sedang buka.
+
+> **Catatan penting:** ini notifikasi sisi-browser (Supabase Realtime +
+> Notification API), **bukan** push notification server. Hanya berfungsi
+> **selama tab/app masih terbuka** (boleh di-minimize/background). Tidak akan
+> muncul kalau browser/app benar-benar ditutup atau HP dalam kondisi mati
+> layar lama. Untuk notifikasi yang benar-benar "sampai walau app tertutup",
+> dibutuhkan push notification server (Supabase Edge Function + Web Push) —
+> ini di luar cakupan implementasi saat ini.

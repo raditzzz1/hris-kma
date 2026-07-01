@@ -10,6 +10,7 @@
   <title>Data Karyawan — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="notify.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1034,6 +1035,7 @@ async function init () {
   const { data: karyw } = await sb.from('karyawan').select('*, jabatan(nama), divisi(nama)').eq('id', currentUser.id).single()
   currentKaryw = karyw
   if (!(await guardKaryawanAktif(sb, karyw?.status))) return
+  if (typeof notifPermissionGranted === 'function' && notifPermissionGranted()) startNotifListener(sb, currentUser.id)
   isAdmin = karyw?.role === 'hr_admin'
 
   // Sidebar

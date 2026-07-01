@@ -142,6 +142,18 @@ Uji di **Chrome desktop** dan sekali lagi di **mode HP** (F12 → Ctrl+Shift+M).
 - [ ] Tanggal yang baru ditambah **langsung berlaku**: absen di tanggal itu tidak dianggap terlambat/hari kerja normal (cek banner "Hari Libur"), dan **tidak mengurangi jatah cuti** bila dipilih rentang cuti yang mencakup tanggal itu.
 - [ ] 19 hari libur 2026 yang lama **masih ada semua** setelah migrasi (tidak hilang).
 
+## J. PWA (Install sebagai App) — fitur baru
+- [ ] Buka situs di **HP**: menu browser → "Add to Home screen"/"Install app" muncul & berhasil; ikon KMA muncul di layar utama.
+- [ ] Buka app dari ikon tsb → terbuka **tanpa address bar** (mode standalone).
+- [ ] Buka situs di **desktop Chrome/Edge**: ikon install (⊕) muncul di address bar; install berhasil.
+- [ ] Matikan koneksi internet lalu buka app yang ter-install → muncul halaman **"Tidak Ada Koneksi Internet"** (bukan error browser polos).
+
+## K. Notifikasi Browser (cuti/izin) — fitur baru
+- [ ] Login sebagai karyawan → Dashboard → klik **"Aktifkan Notifikasi"** → izinkan saat browser minta izin → tombol hilang, muncul toast konfirmasi.
+- [ ] (WAJIB: `supabase-fase12.sql` sudah dijalankan) Ajukan cuti/izin absen luar, lalu dari akun **HR Admin** di tab/perangkat lain, **Setujui**/**Tolak** pengajuan itu.
+- [ ] Di tab karyawan yang masih terbuka (boleh di-minimize) → notifikasi browser **muncul otomatis** sesuai hasil (Disetujui/Ditolak).
+- [ ] Tutup tab karyawan sepenuhnya, ulangi persetujuan HR → pastikan **tidak** ada notifikasi (sesuai ekspektasi — ini bukan push notification).
+
 ---
 
 Jika ada item GAGAL, catat: halaman, langkah, dan pesan error (kalau ada),
