@@ -42,6 +42,7 @@ Employee Self-Service (ESS) per akun.
    7. `supabase-fase7.sql`  (izin absen luar + lembur)
    8. `supabase-fase8.sql`  (foto profil — bucket Supabase Storage)
    9. `supabase-fase9.sql`  (jam kerja per-karyawan & gaji per-jam/freelance)
+   10. `supabase-fase10.sql` (NIK otomatis format KMA-XXX, tidak pernah dipakai ulang)
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js
