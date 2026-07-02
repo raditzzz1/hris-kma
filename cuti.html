@@ -320,7 +320,6 @@ function toast (msg, t='success') {
   el.textContent = msg; el.className = t; el.style.display = 'block'
   setTimeout(() => el.style.display = 'none', 4000)
 }
-function cs () { toast('Modul ini segera hadir','error'); return false }
 async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
 function closeModal (id) { document.getElementById(id).classList.remove('open') }
 function openModal  (id) { document.getElementById(id).classList.add('open') }

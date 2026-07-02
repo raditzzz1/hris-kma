@@ -313,7 +313,6 @@ function toast(msg, t='success') {
   el.textContent=msg; el.className=t; el.style.display='block'
   setTimeout(()=>el.style.display='none', 4000)
 }
-function cs() { toast('Segera hadir','error'); return false }
 async function logout() { await sb.auth.signOut(); window.location.href='index.html' }
 function om(id) { document.getElementById(id).classList.add('open') }
 function cm(id) { document.getElementById(id).classList.remove('open') }
