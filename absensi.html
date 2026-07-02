@@ -1025,6 +1025,7 @@ async function saveManual () {
   const keterangan  = document.getElementById('manKet').value
 
   if (!karyawan_id || !tanggal || !status) { toast('Isi semua field wajib','error'); return }
+  if (masuk && keluar && keluar <= masuk) { toast('Jam keluar harus setelah jam masuk','error'); return }
 
   // Konversi ke ISO UTC agar Supabase (timestamptz) tidak salah interpretasi timezone
   const waktu_masuk  = masuk  ? new Date(`${tanggal}T${masuk}:00`).toISOString() : null

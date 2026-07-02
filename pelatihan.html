@@ -676,6 +676,12 @@ async function saveSertif() {
   const kid  = document.getElementById('sertifKary').value
   if (!nama||!kid) { toast('Nama sertifikat & karyawan wajib diisi','error'); return }
 
+  const terbit  = document.getElementById('sertifTerbit').value
+  const expired = document.getElementById('sertifExpired').value
+  if (terbit && expired && expired <= terbit) {
+    toast('Tanggal expired harus setelah tanggal terbit','error'); return
+  }
+
   const { error } = await sb.from('sertifikasi').insert({
     karyawan_id:      kid,
     nama_sertifikat:  nama,

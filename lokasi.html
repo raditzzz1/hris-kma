@@ -403,6 +403,9 @@ async function saveLokasi () {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     toast('Koordinat tidak valid','error'); return
   }
+  if (radius <= 0) {
+    toast('Radius harus lebih dari 0 meter','error'); return
+  }
 
   const payload = { nama, alamat: alamat||null, latitude:lat, longitude:lng, radius_meter:radius }
 

@@ -496,7 +496,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Gaji Pokok (Rp)</label>
-            <input class="form-input" type="number" id="editGaji" placeholder="0">
+            <input class="form-input" type="number" id="editGaji" placeholder="0" min="0">
           </div>
           <div class="form-group">
             <label class="form-label">Status PTKP (PPh 21)</label>
@@ -531,7 +531,7 @@
           </div>
           <div class="form-group" id="grpTarif" style="display:none;">
             <label class="form-label">Tarif per Jam (Rp)</label>
-            <input class="form-input" type="number" id="editTarifJam" placeholder="0">
+            <input class="form-input" type="number" id="editTarifJam" placeholder="0" min="0">
           </div>
         </div>
       </div>
@@ -919,6 +919,12 @@ function hapusFoto () {
 
 // ---- Simpan edit ----
 async function saveEdit () {
+  if (isAdmin) {
+    const gajiVal  = parseFloat(document.getElementById('editGaji').value)
+    const tarifVal = parseFloat(document.getElementById('editTarifJam').value)
+    if (gajiVal < 0 || tarifVal < 0) { toast('Gaji pokok & tarif per jam tidak boleh negatif','error'); return }
+  }
+
   const btn = document.getElementById('btnSaveEdit')
   btn.disabled = true; btn.textContent = 'Menyimpan...'
 
