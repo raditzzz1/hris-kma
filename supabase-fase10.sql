@@ -19,17 +19,27 @@ SELECT setval('nik_seq', COALESCE((
 ), 0));
 
 -- 3. Update trigger: NIK sementara "NEW-xxxxxx" diganti generator KMA-XXX
+-- PENTING: SET search_path = public, pg_temp WAJIB di sini.
+-- Trigger ini dijalankan oleh Supabase Auth sebagai role `supabase_auth_admin`
+-- yang search_path-nya hanya `auth` (bukan `public`). Tanpa baris SET ini,
+-- referensi `nik_seq` & `karyawan` dicari di skema `auth` -> tidak ketemu ->
+-- trigger error -> muncul "Database error creating new user" saat menambah user.
+-- (Semua objek juga di-qualify `public.` sebagai pengaman ganda.)
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
   v_nik TEXT;
 BEGIN
-  v_nik := 'KMA-' || LPAD(nextval('nik_seq')::text, 3, '0');
+  v_nik := 'KMA-' || LPAD(nextval('public.nik_seq')::text, 3, '0');
   -- Jaga-jaga bila nomor itu kebetulan sudah dipakai (mis. pernah diisi
   -- manual oleh HR) -> lompat ke nomor berikutnya yang belum dipakai.
   -- Sequence tidak pernah mundur, jadi NIK tidak pernah terpakai ulang.
-  WHILE EXISTS (SELECT 1 FROM karyawan WHERE nik = v_nik) LOOP
-    v_nik := 'KMA-' || LPAD(nextval('nik_seq')::text, 3, '0');
+  WHILE EXISTS (SELECT 1 FROM public.karyawan WHERE nik = v_nik) LOOP
+    v_nik := 'KMA-' || LPAD(nextval('public.nik_seq')::text, 3, '0');
   END LOOP;
 
   INSERT INTO public.karyawan (id, nik, nama_lengkap, email)
@@ -45,7 +55,7 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Trigger on_auth_user_created dari Fase 2 tetap dipakai (fungsi di atas
 -- di-CREATE OR REPLACE, jadi trigger yang sudah terpasang otomatis ikut
