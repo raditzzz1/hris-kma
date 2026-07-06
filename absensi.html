@@ -709,10 +709,20 @@ function renderAbsenCard (ab) {
 
 // Mode efektif absen: setelah masuk pakai mode tersimpan; sebelum masuk
 // ditentukan dari radius / izin luar yang disetujui.
+// Sabtu (getDay 6) & karyawan ditandai WFH otomatis tiap Sabtu -> boleh absen
+// dari luar radius tanpa perlu izin/persetujuan HR (mode tercatat sbg WFH).
+function isSabtuWFH () {
+  const today = new Date().toISOString().split('T')[0]
+  return new Date(today+'T00:00:00').getDay() === 6 && !!currentKaryw?.wfh_sabtu
+}
+
 function effMode () {
   const ab = absensiHariIni
   if (ab?.waktu_masuk) return ab.mode_kerja || 'kantor'
-  return dalamRadius ? 'kantor' : (izinLuarAktif ? izinLuarAktif.tipe : 'kantor')
+  if (dalamRadius) return 'kantor'
+  if (izinLuarAktif) return izinLuarAktif.tipe
+  if (isSabtuWFH()) return 'wfh'
+  return 'kantor'
 }
 
 function updateAbsenButton () {
@@ -730,12 +740,15 @@ function updateAbsenButton () {
   }
 
   const mode = effMode()
-  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif
+  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif || isSabtuWFH()
 
   if (chip) {
     if (!dalamRadius && izinLuarAktif && !ab?.waktu_keluar) {
       chip.style.display = ''
       chip.textContent = `Izin ${TIPE_LABEL[izinLuarAktif.tipe]||izinLuarAktif.tipe} disetujui untuk hari ini — Anda dapat absen dari luar kantor`
+    } else if (!dalamRadius && isSabtuWFH() && !ab?.waktu_keluar) {
+      chip.style.display = ''
+      chip.textContent = 'WFH Sabtu otomatis — Anda dapat absen dari luar kantor tanpa izin'
     } else { chip.style.display = 'none' }
   }
 
@@ -748,8 +761,9 @@ function updateAbsenButton () {
     btn.className = 'btn-absen btn-masuk'
     btn.textContent = mode !== 'kantor' ? `Absen Masuk (${mode.toUpperCase()})` : 'Absen Masuk'
     btn.disabled = !canAbsen
+    const luarReason = izinLuarAktif ? 'izin disetujui' : (isSabtuWFH() ? 'WFH Sabtu otomatis' : 'di luar radius')
     note.textContent = canAbsen
-      ? (dalamRadius ? 'Dalam radius kantor — siap absen' : `Mode ${mode.toUpperCase()} (izin disetujui) — siap absen`)
+      ? (dalamRadius ? 'Dalam radius kantor — siap absen' : `Mode ${mode.toUpperCase()} (${luarReason}) — siap absen`)
       : 'Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" & tunggu persetujuan HR.'
   } else {
     btn.className = 'btn-absen btn-keluar'
@@ -763,7 +777,7 @@ function updateAbsenButton () {
 async function doAbsen () {
   const ab = absensiHariIni
   const mode = effMode()
-  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif
+  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif || isSabtuWFH()
   if (!canAbsen) { toast('Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" dulu (perlu persetujuan HR).','error'); return }
 
   const btn = document.getElementById('btnAbsen')

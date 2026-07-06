@@ -523,6 +523,13 @@
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">WFH Otomatis tiap Sabtu</label>
+            <select class="form-select" id="editWfhSabtu">
+              <option value="false">Tidak — Sabtu tetap wajib absen di kantor</option>
+              <option value="true">Ya — Sabtu boleh absen dari luar (WFH) tanpa izin</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Tipe Gaji</label>
             <select class="form-select" id="editTipeGaji" onchange="document.getElementById('grpTarif').style.display = this.value==='per_jam' ? '' : 'none'">
               <option value="bulanan">Bulanan (default)</option>
@@ -872,6 +879,7 @@ async function openEdit (id) {
     document.getElementById('editPtkp').value     = k.status_ptkp    || 'TK/0'
     document.getElementById('editJamMasuk').value  = (k.jam_masuk_standar || '09:00').slice(0,5)
     document.getElementById('editFleksibel').value = k.jam_kerja_fleksibel ? 'true' : 'false'
+    document.getElementById('editWfhSabtu').value  = k.wfh_sabtu ? 'true' : 'false'
     document.getElementById('editTipeGaji').value  = k.tipe_gaji || 'bulanan'
     document.getElementById('editTarifJam').value  = k.tarif_per_jam || 0
     document.getElementById('grpTarif').style.display = (k.tipe_gaji === 'per_jam') ? '' : 'none'
@@ -949,6 +957,7 @@ async function saveEdit () {
     payload.status_ptkp      = document.getElementById('editPtkp').value || 'TK/0'
     payload.jam_masuk_standar   = document.getElementById('editJamMasuk').value || '09:00'
     payload.jam_kerja_fleksibel = document.getElementById('editFleksibel').value === 'true'
+    payload.wfh_sabtu           = document.getElementById('editWfhSabtu').value === 'true'
     payload.tipe_gaji           = document.getElementById('editTipeGaji').value || 'bulanan'
     payload.tarif_per_jam       = parseFloat(document.getElementById('editTarifJam').value) || 0
   }

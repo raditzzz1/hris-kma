@@ -45,6 +45,7 @@ Employee Self-Service (ESS) per akun.
    10. `supabase-fase10.sql` (NIK otomatis format KMA-XXX, tidak pernah dipakai ulang)
    11. `supabase-fase11.sql` (hari libur nasional dipindah ke database + migrasi data 2026)
    12. `supabase-fase12.sql` (aktifkan Realtime untuk notifikasi cuti/izin)
+   13. `supabase-fase13.sql` (WFH otomatis tiap Sabtu per karyawan)
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js
