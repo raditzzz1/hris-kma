@@ -214,6 +214,13 @@
     grid-template-columns: 1fr !important;
   }
 
+  /* Rekap mini-stat (4 kotak Hadir/Terlambat/Izin/Tidak Hadir): tetap 2x2
+     di mobile (bukan 4 baris). :has(> .time-box) hanya kena grid rekap,
+     BUKAN grid pembungkus kartu (yang harus tetap 1 kolom). */
+  .grid-2:has(> .time-box) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
   /* Kalender kehadiran (absensi karyawan): sel pakai aspect-ratio:1 yang
      tanpa min-width:0 tak mau menyusut -> grid 7 kolom meluber keluar layar.
      min-width:0 membiarkan sel mengecil mengikuti lebar layar. */
