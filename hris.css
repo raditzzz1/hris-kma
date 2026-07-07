@@ -199,12 +199,27 @@
   .content-grid,
   .grid-2,
   .grid-3,
-  .page-grid {
+  .page-grid,
+  .profile-info-grid {          /* profil karyawan: kartu Data Pribadi | Data Pekerjaan */
     grid-template-columns: 1fr !important;
   }
 
   /* Form input rows: single column */
   .inp-row { grid-template-columns: 1fr !important; }
+
+  /* Kartu statistik dashboard: yang berisi TEKS (divisi/jabatan karyawan)
+     -> 1 kolom, supaya teks panjang mis. "Creative Leader" tak meluber.
+     Kartu ANGKA (stat HR) tetap 2 kolom. */
+  .stats-grid:has(.stat-value.txt) {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Kalender kehadiran (absensi karyawan): sel pakai aspect-ratio:1 yang
+     tanpa min-width:0 tak mau menyusut -> grid 7 kolom meluber keluar layar.
+     min-width:0 membiarkan sel mengecil mengikuti lebar layar. */
+  .cal-grid { min-width: 0; }
+  .cal-grid .cal-day,
+  .cal-grid .cal-day-label { min-width: 0; }
 
   /* Tables: horizontal scroll */
   .tbl-wrap {
