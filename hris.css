@@ -132,11 +132,6 @@
     padding: 1rem 1rem 5rem !important;
   }
 
-  /* Top bars: tighter horizontal padding */
-  .top-header {
-    padding: 0 0.75rem !important;
-  }
-
   /* .top-bar header (payroll/cuti/absensi/pelatihan/lokasi):
      Di layar sempit, tinggi 64px yang dikunci membuat judul terpotong &
      tombol berdesakan. Biarkan header tumbuh, dan pindahkan slot kanan
@@ -161,6 +156,35 @@
   .top-bar > #headerDate { flex: 0 0 auto; margin-left: auto; }     /* chip tanggal absensi: ukuran natural, jangan melebar */
   .top-bar #topActions .btn-primary,
   .top-bar #topActions .btn-secondary { white-space: nowrap; }      /* label tombol tetap 1 baris */
+
+  /* .top-header header (dashboard/karyawan/laporan): sama seperti .top-bar.
+     Tanpa ini, justify-content:space-between + 3 item (hamburger|judul|kanan)
+     mendorong judul ke tengah (jauh dari hamburger), dan tinggi yang dikunci
+     bikin konten kaya (mis. tombol notif dashboard) terpotong. Biarkan header
+     tumbuh; judul mengisi baris 1 (menempel hamburger); slot kanan (chip
+     tanggal / tombol notif) tetap kanan / turun ke baris berikutnya bila sempit. */
+  .top-header {
+    height: auto !important;
+    min-height: 64px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    row-gap: 0.5rem;
+    padding: 0.55rem 0.75rem !important;
+  }
+  .top-header .header-left { flex: 1 1 auto; min-width: 0; }
+  .top-header .header-left h1 { font-size: 1rem !important; line-height: 1.2; }
+  .top-header .header-right { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+
+  /* Tab bar Laporan HR: geser horizontal, jangan terpotong & tak terjangkau */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs .tab { white-space: nowrap; flex: 0 0 auto; }
 
   /* Stats grid: 2 columns */
   .stats-grid {
