@@ -136,6 +136,14 @@
     tbody tr:hover { background:#f8fafc; }
     tbody td { padding:.75rem 1rem; vertical-align:middle; }
 
+    /* Tab (Lembur / Riwayat / Izin) di dalam kartu */
+    .tabs { display:flex; gap:.4rem; border-bottom:2px solid var(--border); padding:0 .5rem; overflow-x:auto; }
+    .tab { padding:.8rem .7rem; font-size:.85rem; font-weight:600; color:var(--muted); cursor:pointer; border:none; background:none; font-family:inherit; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color .15s; display:inline-flex; align-items:center; gap:.4rem; white-space:nowrap; }
+    .tab:hover { color:var(--text); }
+    .tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
     .badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:.72rem; font-weight:600; white-space:nowrap; }
     .bg-green  { background:#dcfce7; color:#15803d; }
     .bg-yellow { background:#fef9c3; color:#a16207; }
@@ -337,31 +345,37 @@
         </div>
       </div>
 
-      <!-- Riwayat Table -->
+      <!-- Lembur / Riwayat / Izin Absen Luar (tab) -->
       <div class="card">
-        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Riwayat Absensi</h3></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Tanggal</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Durasi Kerja</th><th>Status</th><th>Keterangan</th>
-              </tr>
-            </thead>
-            <tbody id="riwayatBody"></tbody>
-          </table>
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-abtab="lembur" onclick="switchAbsTab('lembur')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lembur Saya</button>
+          <button class="tab" data-abtab="riwayat" onclick="switchAbsTab('riwayat')"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Riwayat Absensi</button>
+          <button class="tab" data-abtab="izin" onclick="switchAbsTab('izin')"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar</button>
         </div>
-      </div>
 
-      <!-- Izin Absen Luar Lokasi Saya -->
-      <div class="card" style="margin-top:1rem;">
-        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar Lokasi Saya</h3></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Tipe</th><th>Alasan</th><th>Status</th></tr></thead><tbody id="izinMyBody"></tbody></table></div>
-      </div>
+        <!-- Panel: Lembur Saya -->
+        <div class="tab-panel active" id="abtab-lembur">
+          <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Mulai</th><th>Selesai</th><th>Durasi</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody id="lemburMyBody"></tbody></table></div>
+        </div>
 
-      <!-- Lembur Saya -->
-      <div class="card" style="margin-top:1rem;">
-        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lembur Saya</h3></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Mulai</th><th>Selesai</th><th>Durasi</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody id="lemburMyBody"></tbody></table></div>
+        <!-- Panel: Riwayat Absensi -->
+        <div class="tab-panel" id="abtab-riwayat">
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tanggal</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Durasi Kerja</th><th>Status</th><th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody id="riwayatBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Panel: Izin Absen Luar Lokasi Saya -->
+        <div class="tab-panel" id="abtab-izin">
+          <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Tipe</th><th>Alasan</th><th>Status</th></tr></thead><tbody id="izinMyBody"></tbody></table></div>
+        </div>
       </div>
     </div>
 
@@ -1304,6 +1318,15 @@ init()
 // ===== MOBILE SIDEBAR TOGGLE =====
 function toggleSidebar() { document.body.classList.toggle('nav-open') }
 function closeSidebar()   { document.body.classList.remove('nav-open') }
+
+// Tab Lembur / Riwayat / Izin Absen Luar (view karyawan)
+function switchAbsTab (name) {
+  document.querySelectorAll('.tab[data-abtab]').forEach(t => t.classList.toggle('active', t.dataset.abtab === name))
+  ;['lembur','riwayat','izin'].forEach(n => {
+    const p = document.getElementById('abtab-' + n)
+    if (p) p.classList.toggle('active', n === name)
+  })
+}
 ;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(el=>{ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
 </script>
 
