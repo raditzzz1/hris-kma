@@ -176,11 +176,15 @@
   .top-header .header-left h1 { font-size: 1rem !important; line-height: 1.2; }
   .top-header .header-right { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
 
-  /* Tab bar Laporan HR: geser horizontal, jangan terpotong & tak terjangkau */
+  /* Tab bar Laporan HR: geser horizontal, jangan terpotong & tak terjangkau.
+     overflow-y:hidden + overscroll-behavior:contain + touch-action:pan-x
+     mencegah efek "memantul"/geser naik-turun saat tab diseret di HP (iOS). */
   .tabs {
     overflow-x: auto;
+    overflow-y: hidden;
     flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-x;
     scrollbar-width: none;
   }
   .tabs::-webkit-scrollbar { display: none; }
