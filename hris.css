@@ -133,10 +133,34 @@
   }
 
   /* Top bars: tighter horizontal padding */
-  .top-bar,
   .top-header {
     padding: 0 0.75rem !important;
   }
+
+  /* .top-bar header (payroll/cuti/absensi/pelatihan/lokasi):
+     Di layar sempit, tinggi 64px yang dikunci membuat judul terpotong &
+     tombol berdesakan. Biarkan header tumbuh, dan pindahkan slot kanan
+     (tombol aksi / chip tanggal) ke barisnya sendiri, rata kanan. */
+  .top-bar {
+    height: auto !important;
+    min-height: 64px;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+    align-items: center;
+    padding: 0.55rem 0.75rem !important;
+  }
+  .top-bar h1 { font-size: 1rem !important; line-height: 1.2; }
+  .top-bar > div:first-of-type { flex: 1 1 auto; min-width: 0; }   /* blok judul boleh menyusut & wrap */
+  .top-bar > div:nth-of-type(2) {                                   /* slot kanan -> baris sendiri, rata kanan */
+    flex: 0 0 100%;
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .top-bar > #headerDate { flex: 0 0 auto; margin-left: auto; }     /* chip tanggal absensi: ukuran natural, jangan melebar */
+  .top-bar #topActions .btn-primary,
+  .top-bar #topActions .btn-secondary { white-space: nowrap; }      /* label tombol tetap 1 baris */
 
   /* Stats grid: 2 columns */
   .stats-grid {
