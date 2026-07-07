@@ -399,6 +399,7 @@
               <option value="tidak_hadir">Tidak Hadir</option>
               <option value="izin">Izin</option>
               <option value="cuti">Cuti</option>
+              <option value="belum_absen">Belum Absen</option>
             </select>
           </div>
         </div>
@@ -632,8 +633,8 @@ function haversine (lat1,lng1,lat2,lng2) {
 
 // STATUS BADGE HTML
 function statusBadge (s, mode) {
-  const m = { hadir:'bg-green', terlambat:'bg-yellow', tidak_hadir:'bg-red', izin:'bg-blue', cuti:'bg-purple', pulang_awal:'bg-yellow' }
-  const lbl = { hadir:'Hadir', terlambat:'Terlambat', tidak_hadir:'Tidak Hadir', izin:'Izin', cuti:'Cuti', pulang_awal:'Pulang Awal' }
+  const m = { hadir:'bg-green', terlambat:'bg-yellow', tidak_hadir:'bg-red', izin:'bg-blue', cuti:'bg-purple', pulang_awal:'bg-yellow', belum_absen:'bg-gray' }
+  const lbl = { hadir:'Hadir', terlambat:'Terlambat', tidak_hadir:'Tidak Hadir', izin:'Izin', cuti:'Cuti', pulang_awal:'Pulang Awal', belum_absen:'Belum Absen' }
   let html = `<span class="badge ${m[s]||'bg-gray'}">${lbl[s]||s}</span>`
   if (mode && mode !== 'kantor') {
     html += ` <span class="badge bg-blue" style="font-size:.65rem;">${mode.toUpperCase()}</span>`
@@ -934,11 +935,21 @@ async function loadRekap () {
 // ====== ADMIN: LOAD ABSENSI ======
 async function loadAdminAbsensi () {
   const tgl = document.getElementById('filterTgl').value
-  const { data } = await sb.from('absensi')
-    .select('*, karyawan(id,nama_lengkap,nik,jabatan(nama),divisi(nama))')
-    .eq('tanggal', tgl)
-    .order('waktu_masuk', { ascending: true })
-  allAdminAbsensi = data || []
+  // Ambil absensi hari itu + SEMUA karyawan aktif, lalu gabungkan: karyawan
+  // yang belum punya catatan hari itu ditandai baris "Belum Absen".
+  const [absRes, karRes] = await Promise.all([
+    sb.from('absensi')
+      .select('*, karyawan(id,nama_lengkap,nik,jabatan(nama),divisi(nama))')
+      .eq('tanggal', tgl)
+      .order('waktu_masuk', { ascending: true }),
+    sb.from('karyawan').select('id,nama_lengkap,nik').eq('status','aktif').order('nama_lengkap')
+  ])
+  const absen = absRes.data || []
+  const hadirIds = new Set(absen.map(a => a.karyawan_id))
+  const belum = (karRes.data || [])
+    .filter(k => !hadirIds.has(k.id))
+    .map(k => ({ id: null, karyawan_id: k.id, karyawan: k, waktu_masuk: null, waktu_keluar: null, durasi_kerja_menit: null, status: 'belum_absen', mode_kerja: null, __belum: true }))
+  allAdminAbsensi = [...absen, ...belum]
   renderAdminTable(allAdminAbsensi)
   updateAdminStats(tgl)
 }
@@ -987,7 +998,9 @@ function renderAdminTable (list) {
       <td>${fmt(a.waktu_keluar)}</td>
       <td>${durasi(a.durasi_kerja_menit)}</td>
       <td>${statusBadge(a.status, a.mode_kerja)}</td>
-      <td><button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="editAbsen('${a.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button></td>
+      <td>${a.__belum
+        ? `<button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="inputManualFor('${a.karyawan_id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Input</button>`
+        : `<button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="editAbsen('${a.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>`}</td>
     </tr>
   `).join('')
 }
@@ -1010,6 +1023,14 @@ async function openManualAbsen () {
   document.getElementById('manKaryawan').disabled = false
   document.getElementById('manTgl').disabled = false
   document.getElementById('modalManual').classList.add('open')
+}
+
+// Buka Input Manual dari baris "Belum Absen": prefill tanggal (sesuai filter) & karyawan
+async function inputManualFor (karyawanId) {
+  await openManualAbsen()
+  const tgl = document.getElementById('filterTgl').value
+  if (tgl) document.getElementById('manTgl').value = tgl
+  document.getElementById('manKaryawan').value = karyawanId
 }
 
 // ====== EDIT ABSENSI (HR) ======
