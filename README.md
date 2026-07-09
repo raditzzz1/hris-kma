@@ -23,6 +23,7 @@ Employee Self-Service (ESS) per akun.
 | `pelatihan.html` | Program pelatihan & sertifikasi |
 | `lokasi.html` | Lokasi kantor (geofencing) |
 | `laporan.html` | Rekap & export (absensi/cuti/payroll/lembur/izin) |
+| `marketing-kol.html` | Modul Marketing: dashboard & input data endorsement KOL |
 | `theme.css`, `hris.css` | Design system + responsif |
 | `responsive-tables.js` | Tabel → kartu di HP |
 | `logo-KMA.png` | Logo perusahaan |
@@ -46,6 +47,7 @@ Employee Self-Service (ESS) per akun.
    11. `supabase-fase11.sql` (hari libur nasional dipindah ke database + migrasi data 2026)
    12. `supabase-fase12.sql` (aktifkan Realtime untuk notifikasi cuti/izin)
    13. `supabase-fase13.sql` (WFH otomatis tiap Sabtu per karyawan)
+   14. `supabase-fase14.sql` (Modul Marketing/KOL: tabel kol, konten_kol, marketing_target + akses)
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js

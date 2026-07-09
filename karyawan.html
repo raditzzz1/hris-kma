@@ -530,6 +530,20 @@
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">Akses Modul Marketing</label>
+            <select class="form-select" id="editAksesMarketing" onchange="document.getElementById('grpMarketingRole').style.display = this.value==='true' ? '' : 'none'">
+              <option value="false">Tidak — tidak bisa buka modul Marketing/KOL</option>
+              <option value="true">Ya — bagian tim marketing</option>
+            </select>
+          </div>
+          <div class="form-group" id="grpMarketingRole" style="display:none;">
+            <label class="form-label">Role Marketing</label>
+            <select class="form-select" id="editMarketingRole">
+              <option value="staff">Staff — input & lihat data marketing</option>
+              <option value="admin">Admin — plus kelola Data KOL, target/budget, & ubah/hapus entri siapa pun</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Tipe Gaji</label>
             <select class="form-select" id="editTipeGaji" onchange="document.getElementById('grpTarif').style.display = this.value==='per_jam' ? '' : 'none'">
               <option value="bulanan">Bulanan (default)</option>
@@ -880,6 +894,9 @@ async function openEdit (id) {
     document.getElementById('editJamMasuk').value  = (k.jam_masuk_standar || '09:00').slice(0,5)
     document.getElementById('editFleksibel').value = k.jam_kerja_fleksibel ? 'true' : 'false'
     document.getElementById('editWfhSabtu').value  = k.wfh_sabtu ? 'true' : 'false'
+    document.getElementById('editAksesMarketing').value = k.akses_marketing ? 'true' : 'false'
+    document.getElementById('editMarketingRole').value  = k.marketing_role || 'staff'
+    document.getElementById('grpMarketingRole').style.display = k.akses_marketing ? '' : 'none'
     document.getElementById('editTipeGaji').value  = k.tipe_gaji || 'bulanan'
     document.getElementById('editTarifJam').value  = k.tarif_per_jam || 0
     document.getElementById('grpTarif').style.display = (k.tipe_gaji === 'per_jam') ? '' : 'none'
@@ -958,6 +975,8 @@ async function saveEdit () {
     payload.jam_masuk_standar   = document.getElementById('editJamMasuk').value || '09:00'
     payload.jam_kerja_fleksibel = document.getElementById('editFleksibel').value === 'true'
     payload.wfh_sabtu           = document.getElementById('editWfhSabtu').value === 'true'
+    payload.akses_marketing     = document.getElementById('editAksesMarketing').value === 'true'
+    payload.marketing_role      = document.getElementById('editMarketingRole').value || 'staff'
     payload.tipe_gaji           = document.getElementById('editTipeGaji').value || 'bulanan'
     payload.tarif_per_jam       = parseFloat(document.getElementById('editTarifJam').value) || 0
   }
