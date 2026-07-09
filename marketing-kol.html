@@ -6421,7 +6421,7 @@ function drawKontenTable(){
       <td>${escHtml(r.produk||'—')}</td>
       <td><span class="plat-tag">${STATUS_LABEL[r.status]||r.status}</span></td>
       <td>${fmt.views(r.views||0)}</td>
-      <td>${r.total_biaya>0?fmt.fee(r.total_biaya):'–'}</td>
+      <td>${(r.total_biaya||r.fee_ratecard)>0?fmt.fee(r.total_biaya||r.fee_ratecard):'–'}</td>
       <td>
         ${canEdit(r)?`<button class="btn btn-secondary" style="padding:5px 8px" onclick="editKonten('${r.id}')" title="Edit"><i data-lucide="pencil" class="icn-sm"></i></button>
         <button class="btn btn-danger" style="padding:5px 8px" onclick="deleteKonten('${r.id}')" title="Hapus"><i data-lucide="trash-2" class="icn-sm"></i></button>`:''}
