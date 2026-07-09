@@ -182,6 +182,7 @@
     <a class="nav-item" href="cuti.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg></span> Cuti & Izin</a>
     <a class="nav-item active" href="payroll.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span> Payroll</a>
     <a class="nav-item" href="pelatihan.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span> Pelatihan</a>
+    <a class="nav-item" href="marketing-kol.html" id="navMarketing" style="display:none;"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span> Marketing</a>
     <div class="nav-label" id="adminNavLbl" style="margin-top:.5rem;display:none;">Administrasi</div>
     <a class="nav-item" id="navLokasi" style="display:none;" href="lokasi.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M14.1 5.6a2 2 0 0 0 1.8 0l3.6-1.8A1 1 0 0 1 21 4.6v12.8a1 1 0 0 1-.5.9l-4.6 2.3a2 2 0 0 1-1.8 0l-4.2-2.1a2 2 0 0 0-1.8 0l-3.6 1.8A1 1 0 0 1 3 19.4V6.6a1 1 0 0 1 .5-.9l4.6-2.3a2 2 0 0 1 1.8 0Z"/><path d="M15 5.8v15M9 3.2v15"/></svg></span> Lokasi Kantor</a>
     <a class="nav-item" id="navLaporan" style="display:none;" href="laporan.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></span> Laporan</a>
@@ -865,6 +866,7 @@ async function init() {
   document.getElementById('sbName').textContent = k.nama_lengkap
   document.getElementById('sbRole').textContent = k.role==='hr_admin'?'HR Admin':'Karyawan'
   if (k.role === 'hr_admin') ['adminNavLbl','navLokasi','navLaporan'].forEach(function(id){var el=document.getElementById(id); if(el) el.style.display=''})
+  if (k.akses_marketing) document.getElementById('navMarketing').style.display = ''
   document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase()||'?')
 
   // Set bulan default di modal periode ke bulan sekarang
