@@ -287,9 +287,6 @@
     <a class="nav-item" href="pelatihan.html">
       <svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Pelatihan
     </a>
-    <a class="nav-item" href="marketing-kol.html" id="navMarketing" style="display:none;">
-      <svg class="ic" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> Marketing
-    </a>
 
     <div class="nav-section-label" id="adminNavLabel" style="display:none;">Administrasi</div>
     <a class="nav-item" href="lokasi.html" id="navLokasi" style="display:none;">
@@ -768,7 +765,6 @@ async function init () {
     renderStatsKaryawan(karyw)
     loadSaldoCuti()
   }
-  if (karyw.akses_marketing) document.getElementById('navMarketing').style.display = ''
 
   const today = now.toISOString().split('T')[0]
   const { data: absenData } = await sb.from('absensi').select('*').eq('karyawan_id', currentUser.id).eq('tanggal', today).single()

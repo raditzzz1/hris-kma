@@ -247,7 +247,6 @@
     <a class="nav-item" href="cuti.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg></span> Cuti & Izin</a>
     <a class="nav-item" href="payroll.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span> Payroll</a>
     <a class="nav-item" href="pelatihan.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span> Pelatihan</a>
-    <a class="nav-item" href="marketing-kol.html" id="navMarketing" style="display:none;"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span> Marketing</a>
     <div class="nav-section-label" id="adminNavLabel" style="margin-top:0.5rem;display:none;">Administrasi</div>
     <a class="nav-item" id="navLokasi" style="display:none;" href="lokasi.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M14.1 5.6a2 2 0 0 0 1.8 0l3.6-1.8A1 1 0 0 1 21 4.6v12.8a1 1 0 0 1-.5.9l-4.6 2.3a2 2 0 0 1-1.8 0l-4.2-2.1a2 2 0 0 0-1.8 0l-3.6 1.8A1 1 0 0 1 3 19.4V6.6a1 1 0 0 1 .5-.9l4.6-2.3a2 2 0 0 1 1.8 0Z"/><path d="M15 5.8v15M9 3.2v15"/></svg></span> Lokasi Kantor</a>
     <a class="nav-item" id="navLaporan" style="display:none;" href="laporan.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></span> Laporan</a>
@@ -528,20 +527,6 @@
             <select class="form-select" id="editWfhSabtu">
               <option value="false">Tidak — Sabtu tetap wajib absen di kantor</option>
               <option value="true">Ya — Sabtu boleh absen dari luar (WFH) tanpa izin</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Akses Modul Marketing</label>
-            <select class="form-select" id="editAksesMarketing" onchange="document.getElementById('grpMarketingRole').style.display = this.value==='true' ? '' : 'none'">
-              <option value="false">Tidak — tidak bisa buka modul Marketing/KOL</option>
-              <option value="true">Ya — bagian tim marketing</option>
-            </select>
-          </div>
-          <div class="form-group" id="grpMarketingRole" style="display:none;">
-            <label class="form-label">Role Marketing</label>
-            <select class="form-select" id="editMarketingRole">
-              <option value="staff">Staff — input & lihat data marketing</option>
-              <option value="admin">Admin — plus kelola Data KOL, target/budget, & ubah/hapus entri siapa pun</option>
             </select>
           </div>
           <div class="form-group">
@@ -895,9 +880,6 @@ async function openEdit (id) {
     document.getElementById('editJamMasuk').value  = (k.jam_masuk_standar || '09:00').slice(0,5)
     document.getElementById('editFleksibel').value = k.jam_kerja_fleksibel ? 'true' : 'false'
     document.getElementById('editWfhSabtu').value  = k.wfh_sabtu ? 'true' : 'false'
-    document.getElementById('editAksesMarketing').value = k.akses_marketing ? 'true' : 'false'
-    document.getElementById('editMarketingRole').value  = k.marketing_role || 'staff'
-    document.getElementById('grpMarketingRole').style.display = k.akses_marketing ? '' : 'none'
     document.getElementById('editTipeGaji').value  = k.tipe_gaji || 'bulanan'
     document.getElementById('editTarifJam').value  = k.tarif_per_jam || 0
     document.getElementById('grpTarif').style.display = (k.tipe_gaji === 'per_jam') ? '' : 'none'
@@ -976,8 +958,6 @@ async function saveEdit () {
     payload.jam_masuk_standar   = document.getElementById('editJamMasuk').value || '09:00'
     payload.jam_kerja_fleksibel = document.getElementById('editFleksibel').value === 'true'
     payload.wfh_sabtu           = document.getElementById('editWfhSabtu').value === 'true'
-    payload.akses_marketing     = document.getElementById('editAksesMarketing').value === 'true'
-    payload.marketing_role      = document.getElementById('editMarketingRole').value || 'staff'
     payload.tipe_gaji           = document.getElementById('editTipeGaji').value || 'bulanan'
     payload.tarif_per_jam       = parseFloat(document.getElementById('editTarifJam').value) || 0
   }
@@ -1082,7 +1062,6 @@ async function init () {
     document.getElementById('navLokasi').style.display     = ''
     document.getElementById('navLaporan').style.display    = ''
   }
-  if (karyw?.akses_marketing) document.getElementById('navMarketing').style.display = ''
 
   if (isAdmin) {
     document.getElementById('adminView').style.display = ''
