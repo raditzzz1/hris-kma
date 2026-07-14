@@ -459,6 +459,7 @@ let currentUser   = null
 let currentKaryw  = null
 let absensiHariIni = null
 let izinLuarAktif = null   // izin absen luar DISETUJUI mencakup hari ini (atau null)
+let isAdmin = false
 
 // ---- Helpers ----
 function toast (msg, type = 'success') {
@@ -558,6 +559,12 @@ function renderAbsensi (absen) {
   }
 }
 
+// Sabtu & karyawan ditandai WFH otomatis tiap Sabtu -> boleh absen dari luar
+// radius tanpa izin/persetujuan HR (dicatat sbg mode WFH).
+function isSabtuWFH () {
+  return new Date().getDay() === 6 && !!currentKaryw?.wfh_sabtu
+}
+
 // ---- Tombol Absen (geofencing) ----
 document.getElementById('btnAbsen').addEventListener('click', async () => {
   const btn = document.getElementById('btnAbsen')
@@ -575,9 +582,13 @@ document.getElementById('btnAbsen').addEventListener('click', async () => {
         if (hitungJarak(lat, lng, loc.latitude, loc.longitude) <= loc.radius_meter) { diDalamRadius = true; break }
       }
       if (!diDalamRadius) {
-        // Sebelum masuk: butuh izin disetujui. Setelah masuk: ikut mode record.
-        const modeAktif = absensiHariIni?.waktu_masuk ? (absensiHariIni.mode_kerja || 'kantor') : (izinLuarAktif ? izinLuarAktif.tipe : null)
-        if (!modeAktif || modeAktif === 'kantor') {
+        // Sebelum masuk: butuh izin disetujui atau WFH Sabtu otomatis (atau akun HR Admin,
+        // yang selalu boleh absen). Setelah masuk: ikut mode record.
+        const modeAktif = absensiHariIni?.waktu_masuk
+          ? (absensiHariIni.mode_kerja || 'kantor')
+          : (izinLuarAktif ? izinLuarAktif.tipe : (isSabtuWFH() ? 'wfh' : 'kantor'))
+        const canAbsen = isAdmin || !!izinLuarAktif || isSabtuWFH()
+        if (!canAbsen) {
           toast('Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" di halaman Absensi & tunggu persetujuan HR.', 'error')
           btn.disabled = false; renderAbsensi(absensiHariIni); return
         }
@@ -754,7 +765,7 @@ async function init () {
   document.getElementById('todayFull').textContent  = formatDate(now)
   document.getElementById('welcomeMsg').textContent = `${greetingByHour()}, ${karyw.nama_lengkap.split(' ')[0]}!`
 
-  const isAdmin = karyw.role === 'hr_admin'
+  isAdmin = karyw.role === 'hr_admin'
   renderQuickLinks(isAdmin)
   if (isAdmin) {
     document.getElementById('adminNavLabel').style.display = ''
@@ -771,12 +782,10 @@ async function init () {
   absensiHariIni = absenData || null
 
   // Izin absen luar yang DISETUJUI mencakup hari ini (agar bisa absen dari luar radius)
-  if (!isAdmin) {
-    const { data: izinList } = await sb.from('izin_absen_luar').select('*')
-      .eq('karyawan_id', currentUser.id).eq('status', 'disetujui')
-      .lte('tanggal_mulai', today).gte('tanggal_selesai', today)
-    izinLuarAktif = (izinList && izinList[0]) || null
-  }
+  const { data: izinList } = await sb.from('izin_absen_luar').select('*')
+    .eq('karyawan_id', currentUser.id).eq('status', 'disetujui')
+    .lte('tanggal_mulai', today).gte('tanggal_selesai', today)
+  izinLuarAktif = (izinList && izinList[0]) || null
 
   renderAbsensi(absensiHariIni)
 

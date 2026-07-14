@@ -727,8 +727,7 @@ function renderAbsenCard (ab) {
 // Sabtu (getDay 6) & karyawan ditandai WFH otomatis tiap Sabtu -> boleh absen
 // dari luar radius tanpa perlu izin/persetujuan HR (mode tercatat sbg WFH).
 function isSabtuWFH () {
-  const today = new Date().toISOString().split('T')[0]
-  return new Date(today+'T00:00:00').getDay() === 6 && !!currentKaryw?.wfh_sabtu
+  return new Date().getDay() === 6 && !!currentKaryw?.wfh_sabtu
 }
 
 function effMode () {
