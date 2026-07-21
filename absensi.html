@@ -10,6 +10,7 @@
   <title>Absensi — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -722,21 +723,13 @@ function renderAbsenCard (ab) {
   }
 }
 
-// Mode efektif absen: setelah masuk pakai mode tersimpan; sebelum masuk
-// ditentukan dari radius / izin luar yang disetujui.
-// Sabtu (getDay 6) & karyawan ditandai WFH otomatis tiap Sabtu -> boleh absen
-// dari luar radius tanpa perlu izin/persetujuan HR (mode tercatat sbg WFH).
-function isSabtuWFH () {
-  return new Date().getDay() === 6 && !!currentKaryw?.wfh_sabtu
-}
-
-function effMode () {
-  const ab = absensiHariIni
-  if (ab?.waktu_masuk) return ab.mode_kerja || 'kantor'
-  if (dalamRadius) return 'kantor'
-  if (izinLuarAktif) return izinLuarAktif.tipe
-  if (isSabtuWFH()) return 'wfh'
-  return 'kantor'
+// Aturan absen (mode kerja, boleh/tidak absen di luar radius, WFH Sabtu)
+// ada di hris-shared.js — dipakai bersama dengan absen cepat di dashboard.
+// Wrapper tipis di bawah ini cuma menyuplai state halaman ini.
+function sabtuWFH ()  { return isSabtuWFH(currentKaryw) }
+function effMode ()   { return modeAbsenEfektif({ absensiHariIni, dalamRadius, izinLuarAktif, karyw: currentKaryw }) }
+function bolehAbsen () {
+  return dalamRadius || bolehAbsenDiLuarRadius({ isAdmin, izinLuarAktif, karyw: currentKaryw })
 }
 
 function updateAbsenButton () {
@@ -745,7 +738,7 @@ function updateAbsenButton () {
   const chip = document.getElementById('izinChip')
   const ab   = absensiHariIni
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = tanggalLokal()
   if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
     btn.className = 'btn-absen btn-libur'; btn.textContent = 'Hari Libur'; btn.disabled = true
     note.textContent = `Hari ini ${getNamaLibur(today)}. Selamat beristirahat!`
@@ -754,13 +747,13 @@ function updateAbsenButton () {
   }
 
   const mode = effMode()
-  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif || isSabtuWFH()
+  const canAbsen = bolehAbsen()
 
   if (chip) {
     if (!dalamRadius && izinLuarAktif && !ab?.waktu_keluar) {
       chip.style.display = ''
       chip.textContent = `Izin ${TIPE_LABEL[izinLuarAktif.tipe]||izinLuarAktif.tipe} disetujui untuk hari ini — Anda dapat absen dari luar kantor`
-    } else if (!dalamRadius && isSabtuWFH() && !ab?.waktu_keluar) {
+    } else if (!dalamRadius && sabtuWFH() && !ab?.waktu_keluar) {
       chip.style.display = ''
       chip.textContent = 'WFH Sabtu otomatis — Anda dapat absen dari luar kantor tanpa izin'
     } else { chip.style.display = 'none' }
@@ -775,7 +768,7 @@ function updateAbsenButton () {
     btn.className = 'btn-absen btn-masuk'
     btn.textContent = mode !== 'kantor' ? `Absen Masuk (${mode.toUpperCase()})` : 'Absen Masuk'
     btn.disabled = !canAbsen
-    const luarReason = izinLuarAktif ? 'izin disetujui' : (isSabtuWFH() ? 'WFH Sabtu otomatis' : 'di luar radius')
+    const luarReason = izinLuarAktif ? 'izin disetujui' : (sabtuWFH() ? 'WFH Sabtu otomatis' : 'di luar radius')
     note.textContent = canAbsen
       ? (dalamRadius ? 'Dalam radius kantor — siap absen' : `Mode ${mode.toUpperCase()} (${luarReason}) — siap absen`)
       : 'Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" & tunggu persetujuan HR.'
@@ -791,24 +784,19 @@ function updateAbsenButton () {
 async function doAbsen () {
   const ab = absensiHariIni
   const mode = effMode()
-  const canAbsen = isAdmin || dalamRadius || !!izinLuarAktif || isSabtuWFH()
+  const canAbsen = bolehAbsen()
   if (!canAbsen) { toast('Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" dulu (perlu persetujuan HR).','error'); return }
 
   const btn = document.getElementById('btnAbsen')
   btn.disabled = true; btn.textContent = 'Memproses...'
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = tanggalLokal()
   const now   = new Date().toISOString()
 
   if (!ab?.waktu_masuk) {
     // --- ABSEN MASUK ---
     const luar = mode !== 'kantor'
-    const jamMasuk = new Date()
-    let status = 'hadir'
-    if (!currentKaryw?.jam_kerja_fleksibel) {
-      const [sh, sm] = (currentKaryw?.jam_masuk_standar || '09:00').slice(0,5).split(':').map(Number)
-      if (jamMasuk.getHours()*60 + jamMasuk.getMinutes() > sh*60 + sm) status = 'terlambat'
-    }
+    const status = hitungStatusMasuk(currentKaryw)
     const payload = {
       karyawan_id: currentUser.id, tanggal: today,
       waktu_masuk: now, status, mode_kerja: mode,
@@ -857,7 +845,7 @@ async function renderKalender () {
 
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month+1, 0).getDate()
-  const today = new Date().toISOString().split('T')[0]
+  const today = tanggalLokal()
   const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
 
   let html = days.map(d => `<div class="cal-day-label">${d}</div>`).join('')
@@ -922,8 +910,8 @@ async function loadRekap () {
   const now = new Date()
   const { data } = await sb.from('absensi').select('status')
     .eq('karyawan_id', currentUser.id)
-    .gte('tanggal', `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`)
-    .lte('tanggal', now.toISOString().split('T')[0])
+    .gte('tanggal', awalBulanLokal(now))
+    .lte('tanggal', tanggalLokal(now))
   if (!data) return
   document.getElementById('rHadir').textContent     = data.filter(a=>['hadir','terlambat','pulang_awal'].includes(a.status)).length
   document.getElementById('rTerlambat').textContent = data.filter(a=>a.status==='terlambat').length
@@ -1012,7 +1000,7 @@ async function openManualAbsen () {
     semua_karyawan = data || []
   }
   sel.innerHTML = semua_karyawan.map(k => `<option value="${k.id}">${k.nama_lengkap} (${k.nik||'—'})</option>`).join('')
-  document.getElementById('manTgl').value = new Date().toISOString().split('T')[0]
+  document.getElementById('manTgl').value = tanggalLokal()
   document.getElementById('manMasuk').value = ''
   document.getElementById('manKeluar').value = ''
   document.getElementById('manStatus').value = 'hadir'
@@ -1103,7 +1091,7 @@ function rentangTgl (a, b) { return a === b ? fmtTgl(a) : `${fmtTgl(a)} s/d ${fm
 
 // --- Karyawan: izin absen luar ---
 async function loadIzinLuar () {
-  const today = new Date().toISOString().split('T')[0]
+  const today = tanggalLokal()
   const { data } = await sb.from('izin_absen_luar').select('*')
     .eq('karyawan_id', currentUser.id).order('created_at', { ascending:false })
   const list = data || []
@@ -1132,7 +1120,7 @@ async function loadLemburMy () {
 
 // --- Modal izin ---
 function openIzinModal () {
-  const t = new Date().toISOString().split('T')[0]
+  const t = tanggalLokal()
   document.getElementById('izTglMulai').value = t
   document.getElementById('izTglSelesai').value = t
   document.getElementById('izTipe').value = 'wfh'
@@ -1154,7 +1142,7 @@ async function submitIzin () {
 
 // --- Modal lembur ---
 function openLemburModal () {
-  document.getElementById('lbTgl').value = new Date().toISOString().split('T')[0]
+  document.getElementById('lbTgl').value = tanggalLokal()
   document.getElementById('lbMulai').value = ''
   document.getElementById('lbSelesai').value = ''
   document.getElementById('lbAlasan').value = ''
@@ -1276,7 +1264,7 @@ async function init () {
 
   // Sidebar
   document.getElementById('sbName').textContent   = k?.nama_lengkap || currentUser.email
-  document.getElementById('sbRole').textContent   = ({hr_admin:'HR Admin',manager:'Manager',karyawan:'Karyawan'})[k?.role]||'—'
+  document.getElementById('sbRole').textContent   = ({hr_admin:'HR Admin',karyawan:'Karyawan'})[k?.role]||'—'
   document.getElementById('sbAvatar').innerHTML = k?.foto_url ? `<img src="${k.foto_url}" alt="">` : getInit(k?.nama_lengkap)
 
   if (isAdmin) {
@@ -1300,7 +1288,7 @@ async function init () {
     // Admin: sembunyikan GPS bar (tidak perlu radius)
     document.getElementById('gpsBar').style.display = 'none'
     document.getElementById('viewAdmin').style.display = ''
-    document.getElementById('filterTgl').value = new Date().toISOString().split('T')[0]
+    document.getElementById('filterTgl').value = tanggalLokal()
     await loadAdminAbsensi()
     await loadIzinAdmin()
     await loadLemburAdmin()
@@ -1310,7 +1298,7 @@ async function init () {
     document.getElementById('viewKaryawan').style.display = ''
 
     // Cek hari libur / Minggu — tampilkan banner
-    const today = new Date().toISOString().split('T')[0]
+    const today = tanggalLokal()
     if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
       const banner = document.getElementById('hariLiburBanner')
       document.getElementById('hariLiburNama').textContent = getNamaLibur(today)

@@ -10,6 +10,7 @@
   <title>Pelatihan & Pengembangan — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -611,7 +612,7 @@ async function daftarkanKaryawan(programId, namaProg) {
   document.getElementById('daftarInfo').textContent = `Program: ${namaProg}`
   document.getElementById('daftarKary').innerHTML =
     allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
-  document.getElementById('daftarTgl').value = new Date().toISOString().split('T')[0]
+  document.getElementById('daftarTgl').value = tanggalLokal()
   om('modalDaftar')
 }
 
@@ -637,7 +638,7 @@ function bukaUpdate(id, status, nilai, catatan) {
   document.getElementById('updateStatus').value     = status
   document.getElementById('updateNilai').value      = nilai||''
   document.getElementById('updateCatatan').value    = catatan
-  document.getElementById('updateTglSelesai').value = status==='selesai' ? new Date().toISOString().split('T')[0] : ''
+  document.getElementById('updateTglSelesai').value = status==='selesai' ? tanggalLokal() : ''
   om('modalUpdate')
 }
 
@@ -665,7 +666,7 @@ async function bukaSertif(id=null) {
     allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
   if (!id) {
     ['sertifNama','sertifLembaga','sertifNomor','sertifUrl'].forEach(f=>document.getElementById(f).value='')
-    document.getElementById('sertifTerbit').value   = new Date().toISOString().split('T')[0]
+    document.getElementById('sertifTerbit').value   = tanggalLokal()
     document.getElementById('sertifExpired').value  = ''
   }
   om('modalSertif')

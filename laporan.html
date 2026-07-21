@@ -10,6 +10,7 @@
   <title>Laporan — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
@@ -365,7 +366,7 @@ function toast (msg, type = 'success') {
   setTimeout(() => { el.style.display = 'none' }, 4000)
 }
 function getInitial (n) { return n ? n.charAt(0).toUpperCase() : '?' }
-function roleLabel (r) { return ({ hr_admin:'HR Admin', manager:'Manager', karyawan:'Karyawan' })[r] || r }
+function roleLabel (r) { return ({ hr_admin:'HR Admin', karyawan:'Karyawan' })[r] || r }
 function rupiah (n) { return 'Rp ' + (Number(n)||0).toLocaleString('id-ID') }
 function esc (s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
 function periodeRange () {
@@ -373,7 +374,7 @@ function periodeRange () {
   const t = +document.getElementById('selTahun').value
   const awal  = new Date(t, b, 1)
   const akhir = new Date(t, b + 1, 0)
-  const fmt = d => d.toISOString().split('T')[0]
+  const fmt = d => tanggalLokal(d)
   return { bulan: b + 1, tahun: t, awal: fmt(awal), akhir: fmt(akhir), label: `${BULAN[b]} ${t}` }
 }
 

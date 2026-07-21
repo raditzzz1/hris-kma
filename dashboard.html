@@ -10,6 +10,7 @@
   <title>Dashboard — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -478,7 +479,7 @@ function greetingByHour () {
   return 'Selamat Malam'
 }
 function getInitial (name) { return name ? name.charAt(0).toUpperCase() : '?' }
-function roleLabel (role) { return ({ hr_admin: 'HR Admin', manager: 'Manager', karyawan: 'Karyawan' })[role] || role }
+function roleLabel (role) { return ({ hr_admin: 'HR Admin', karyawan: 'Karyawan' })[role] || role }
 
 // ---- Quick links ----
 function renderQuickLinks (isAdmin) {
@@ -512,7 +513,7 @@ async function renderStatsHRAdmin () {
     <div class="stat-card"><div class="stat-icon yellow">${ic('clipboard')}</div><div class="stat-info"><div class="stat-value" id="izinToday">—</div><div class="stat-label">Izin / Cuti</div></div></div>
     <div class="stat-card"><div class="stat-icon red">${ic('xcircle')}</div><div class="stat-info"><div class="stat-value" id="alphaToday">—</div><div class="stat-label">Tidak Hadir</div></div></div>
   `
-  const today = new Date().toISOString().split('T')[0]
+  const today = tanggalLokal()
   const { count: totalK } = await sb.from('karyawan').select('*', { count: 'exact', head: true }).eq('status', 'aktif')
   document.getElementById('totalKaryw').textContent = totalK ?? '—'
 
@@ -559,13 +560,9 @@ function renderAbsensi (absen) {
   }
 }
 
-// Sabtu & karyawan ditandai WFH otomatis tiap Sabtu -> boleh absen dari luar
-// radius tanpa izin/persetujuan HR (dicatat sbg mode WFH).
-function isSabtuWFH () {
-  return new Date().getDay() === 6 && !!currentKaryw?.wfh_sabtu
-}
-
 // ---- Tombol Absen (geofencing) ----
+// Aturan absennya (mode kerja, boleh/tidak absen di luar radius, WFH Sabtu)
+// ada di hris-shared.js — sama persis dengan yang dipakai halaman Absensi.
 document.getElementById('btnAbsen').addEventListener('click', async () => {
   const btn = document.getElementById('btnAbsen')
   btn.disabled = true; btn.textContent = 'Memproses...'
@@ -582,12 +579,8 @@ document.getElementById('btnAbsen').addEventListener('click', async () => {
         if (hitungJarak(lat, lng, loc.latitude, loc.longitude) <= loc.radius_meter) { diDalamRadius = true; break }
       }
       if (!diDalamRadius) {
-        // Sebelum masuk: butuh izin disetujui atau WFH Sabtu otomatis (atau akun HR Admin,
-        // yang selalu boleh absen). Setelah masuk: ikut mode record.
-        const modeAktif = absensiHariIni?.waktu_masuk
-          ? (absensiHariIni.mode_kerja || 'kantor')
-          : (izinLuarAktif ? izinLuarAktif.tipe : (isSabtuWFH() ? 'wfh' : 'kantor'))
-        const canAbsen = isAdmin || !!izinLuarAktif || isSabtuWFH()
+        const modeAktif = modeAbsenEfektif({ absensiHariIni, dalamRadius: false, izinLuarAktif, karyw: currentKaryw })
+        const canAbsen = bolehAbsenDiLuarRadius({ isAdmin, izinLuarAktif, karyw: currentKaryw })
         if (!canAbsen) {
           toast('Anda di luar radius kantor. Ajukan "Izin Absen Luar Lokasi" di halaman Absensi & tunggu persetujuan HR.', 'error')
           btn.disabled = false; renderAbsensi(absensiHariIni); return
@@ -607,7 +600,7 @@ document.getElementById('btnAbsen').addEventListener('click', async () => {
 })
 
 async function prosesAbsen (lat, lng, mode = 'kantor') {
-  const today = new Date().toISOString().split('T')[0]
+  const today = tanggalLokal()
   const now   = new Date().toISOString()
   const luar  = mode !== 'kantor'
 
@@ -615,7 +608,7 @@ async function prosesAbsen (lat, lng, mode = 'kantor') {
     const { data, error } = await sb.from('absensi').insert({
       karyawan_id: currentUser.id, tanggal: today, waktu_masuk: now,
       lat_masuk: luar ? null : lat, lng_masuk: luar ? null : lng,
-      status: hitungStatus(), mode_kerja: mode,
+      status: hitungStatusMasuk(currentKaryw), mode_kerja: mode,
       keterangan: luar ? `${mode.toUpperCase()}${izinLuarAktif?.alasan ? ' — ' + izinLuarAktif.alasan : ''}` : null
     }).select().single()
     if (error) toast('Gagal menyimpan absensi: ' + error.message, 'error')
@@ -633,12 +626,6 @@ async function prosesAbsen (lat, lng, mode = 'kantor') {
   renderAbsensi(absensiHariIni); loadActivityList()
 }
 
-function hitungStatus () {
-  if (currentKaryw?.jam_kerja_fleksibel) return 'hadir'
-  const [sh, sm] = (currentKaryw?.jam_masuk_standar || '09:00').slice(0,5).split(':').map(Number)
-  const now = new Date()
-  return (now.getHours()*60 + now.getMinutes()) > (sh*60 + sm) ? 'terlambat' : 'hadir'
-}
 function hitungJarak (lat1, lng1, lat2, lng2) {
   const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180, dLng = (lng2 - lng1) * Math.PI / 180
@@ -649,7 +636,7 @@ function hitungJarak (lat1, lng1, lat2, lng2) {
 // ---- Activity list ----
 async function loadActivityList () {
   const isAdmin = currentKaryw?.role === 'hr_admin'
-  const today   = new Date().toISOString().split('T')[0]
+  const today   = tanggalLokal()
   let absenList
   if (isAdmin) {
     const { data } = await sb.from('absensi').select('*, karyawan(nama_lengkap)').eq('tanggal', today).order('created_at', { ascending: false }).limit(8)
@@ -694,8 +681,8 @@ async function loadSaldoCuti () {
 
 async function loadRekap () {
   const now = new Date()
-  const awal = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-  const akhir = now.toISOString().split('T')[0]
+  const awal = awalBulanLokal(now)
+  const akhir = tanggalLokal(now)
   const { data } = await sb.from('absensi').select('status').eq('karyawan_id', currentUser.id).gte('tanggal', awal).lte('tanggal', akhir)
   if (!data) return
   const hadir = data.filter(a => ['hadir','terlambat','pulang_awal'].includes(a.status)).length
@@ -777,7 +764,7 @@ async function init () {
     loadSaldoCuti()
   }
 
-  const today = now.toISOString().split('T')[0]
+  const today = tanggalLokal(now)
   const { data: absenData } = await sb.from('absensi').select('*').eq('karyawan_id', currentUser.id).eq('tanggal', today).single()
   absensiHariIni = absenData || null
 

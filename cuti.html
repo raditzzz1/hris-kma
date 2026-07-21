@@ -10,6 +10,7 @@
   <title>Cuti & Izin — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -539,7 +540,7 @@ async function openAjuan () {
   document.getElementById('ajAlasan').value  = ''
 
   // Set min date = today
-  const today = new Date().toISOString().split('T')[0]
+  const today = tanggalLokal()
   document.getElementById('ajMulai').min   = today
   document.getElementById('ajSelesai').min = today
 
