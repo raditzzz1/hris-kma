@@ -1072,6 +1072,12 @@ async function init () {
   }
 
   document.getElementById('loadingOverlay').style.display = 'none'
+
+  // Datang dari pengingat foto profil di Dashboard (karyawan.html?foto=1)
+  // -> langsung bukakan form edit datanya, biar tak perlu cari-cari tombol.
+  if (new URLSearchParams(location.search).get('foto') === '1') {
+    openEdit(currentUser.id)
+  }
 }
 
 init()

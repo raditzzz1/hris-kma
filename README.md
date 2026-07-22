@@ -46,6 +46,11 @@ Employee Self-Service (ESS) per akun.
    11. `supabase-fase11.sql` (hari libur nasional dipindah ke database + migrasi data 2026)
    12. `supabase-fase12.sql` (aktifkan Realtime untuk notifikasi cuti/izin)
    13. `supabase-fase13.sql` (WFH otomatis tiap Sabtu per karyawan)
+   14. `supabase-fase16.sql` (statistik foto profil — pengingat & papan skor)
+
+   > Nomor 14 & 15 sengaja dilewati: dulu dipakai modul Marketing/KOL yang
+   > akhirnya dibatalkan & dihapus, jadi tidak dipakai ulang agar riwayat
+   > commit lama tidak rancu.
 3. Ambil **Project URL** & **anon key** dari **Project Settings → API**.
 4. Tempel ke setiap file `.html` di bagian:
    ```js
