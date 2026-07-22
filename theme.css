@@ -105,6 +105,14 @@ body {
     padding: 0.55rem 0 !important; border: 0 !important;
     border-bottom: 1px solid var(--border, #eef2f7) !important;
     white-space: normal !important; text-align: right; min-height: 0;
+    /* Isi sel yang panjang & tanpa spasi (mis. link Drive di kolom Alasan)
+       tak punya titik potong alami -> dulu meluber keluar kartu & terpotong,
+       apalagi karena .tbl-wrap sengaja tidak bisa digeser mendatar di mode
+       kartu. `anywhere` boleh memotong di mana saja DAN ikut diperhitungkan
+       saat browser menghitung lebar minimum, jadi teksnya benar-benar
+       menyusut mengikuti kartu (beda dgn break-word yang tidak). */
+    overflow-wrap: anywhere;
+    word-break: break-word;   /* cadangan utk Safari/WebKit lama */
   }
   table.cardify tr td:last-child { border-bottom: 0 !important; }
   table.cardify td::before {
@@ -112,6 +120,8 @@ body {
     text-align: left; margin-right: auto; flex-shrink: 0; font-size: 0.78rem;
     letter-spacing: 0.2px;
   }
+  /* Link panjang di dalam sel ikut dipotong (kalau isinya <a>, bukan teks polos) */
+  table.cardify td a { overflow-wrap: anywhere; word-break: break-word; }
   table.cardify td[colspan]::before { display: none; }
   table.cardify td[colspan] { justify-content: center; text-align: center; }
   /* matikan scroll-horizontal saat sudah jadi kartu */
