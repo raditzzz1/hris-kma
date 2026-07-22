@@ -207,11 +207,12 @@
   /* Form input rows: single column */
   .inp-row { grid-template-columns: 1fr !important; }
 
-  /* Kartu statistik dashboard: yang berisi TEKS (divisi/jabatan karyawan)
-     -> 1 kolom, supaya teks panjang mis. "Creative Leader" tak meluber.
-     Kartu ANGKA (stat HR) tetap 2 kolom. */
+  /* Kartu statistik dashboard yang berisi TEKS (divisi/jabatan karyawan):
+     tetap 2x2 seperti kartu ANGKA -- teks panjang mis. "Creative Leader"
+     dibiarkan membungkus 2 baris (lihat .stat-value.txt di dashboard.html)
+     alih-alih dipaksa 1 kolom penuh-lebar seperti sebelumnya. */
   .stats-grid:has(.stat-value.txt) {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 
   /* Rekap mini-stat (4 kotak Hadir/Terlambat/Izin/Tidak Hadir): tetap 2x2

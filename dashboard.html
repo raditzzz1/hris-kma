@@ -262,6 +262,21 @@
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .content-grid { grid-template-columns: 1fr; }
     }
+
+    @media (max-width: 768px) {
+      /* Kartu statistik 2x2 (Divisi | Jabatan / Hari Kerja | Sisa Cuti):
+         teks panjang mis. "Creative Leader" boleh membungkus ke baris ke-2,
+         bukan dipotong "..." (nowrap+ellipsis dari .stat-value biasa) atau
+         dipaksa 1 kolom penuh-lebar seperti sebelumnya (lihat hris.css). */
+      .stat-info .stat-value.txt {
+        white-space: normal; overflow: visible; text-overflow: clip;
+        line-height: 1.25; overflow-wrap: break-word; word-break: break-word;
+      }
+      /* Sedikit dirapatkan supaya kartu setengah-lebar tak terlalu sempit */
+      .stat-card { padding: 1rem 0.9rem; gap: 0.7rem; }
+      .stat-icon { width: 42px; height: 42px; }
+      .stat-icon .ic { width: 1.3rem; height: 1.3rem; }
+    }
   </style>
   <link rel="stylesheet" href="hris.css">
 </head>
