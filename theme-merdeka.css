@@ -52,7 +52,8 @@
    PIL UCAPAN — Dashboard (disuntik ke dalam banner) & login
    ============================================================ */
 .merdeka-pill, .merdeka-login-note {
-  display: inline-flex; align-items: center; gap: 0.45rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 0.3rem; max-width: 100%;   /* boleh membungkus di layar sempit, tak meluber */
   padding: 0.45rem 1rem; border-radius: 999px;
   background: var(--merah); color: #fff;
   font-size: 0.82rem; font-weight: 600; letter-spacing: 0.2px;
@@ -72,9 +73,9 @@
    ============================================================ */
 .welcome-banner {
   background:
-    url("merdeka-garuda.svg") right center / auto 165% no-repeat,
+    url("merdeka-garuda.svg") right center / 260px auto no-repeat,
     linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
-  min-height: 160px; padding-right: 250px !important;
+  min-height: 168px; padding-right: 280px !important;   /* padding > lebar aset -> teks tak tertutup */
 }
 .welcome-banner::after { display: none !important; }        /* buang lingkaran deco */
 .welcome-banner .banner-icon { display: none !important; }  /* ikon matahari diganti aset */
@@ -121,9 +122,9 @@
 @media (max-width: 768px) {
   .welcome-banner {
     background:
-      url("merdeka-garuda.svg") right -6px center / auto 125% no-repeat,
+      url("merdeka-garuda.svg") right center / 120px auto no-repeat,
       linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
-    padding-right: 150px !important; min-height: 140px;
+    padding-right: 134px !important; min-height: 150px;
   }
 }
 
