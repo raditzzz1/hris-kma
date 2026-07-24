@@ -1,0 +1,136 @@
+/* ================================================================
+   theme-merdeka.css — Tema musiman HUT RI (Agustus)
+   PT Kawan Menengah Atas HRIS
+   ----------------------------------------------------------------
+   Dimuat & dilepas OTOMATIS oleh seasonal-theme.js. Di luar Agustus
+   file ini tak disuntik sama sekali -> nol dampak.
+
+   Konsep:
+   - Banner Dashboard & panel login: memakai ASET GARUDA berlisensi
+     (merdeka-garuda.svg — elang + gelombang merah-putih). Karena elang
+     di aset itu "ruang negatif", area diberi latar TERANG saat Agustus
+     supaya elang tampak putih & menyatu.
+   - Halaman modul (absensi/cuti/dll): pita ucapan di atas konten +
+     bunting bendera kecil di sidebar.
+
+   PENTING: warna semantik TIDAK disentuh (hijau=hadir, merah=error/
+   tidak-hadir, badge status, tombol absen) supaya makna tak rancu.
+   ================================================================ */
+
+:root {
+  --merah:     #D2232A;
+  --merah-tua: #B01319;
+  --putih:     #ffffff;
+}
+
+/* ============================================================
+   PITA UCAPAN — halaman modul (disuntik ke atas <main>)
+   ============================================================ */
+.merdeka-ribbon {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.5rem; flex-wrap: wrap;
+  margin: 0 0 1.25rem; padding: 0.62rem 1.1rem;
+  background: linear-gradient(135deg, var(--merah) 0%, var(--merah-tua) 100%);
+  color: #fff; font-weight: 600; font-size: 0.9rem; letter-spacing: 0.2px;
+  border-radius: 12px; text-align: center; line-height: 1.35;
+  border-bottom: 3px solid #fff;
+  box-shadow: 0 4px 14px rgba(178,19,25,0.26);
+  position: relative; overflow: hidden;
+}
+.merdeka-ribbon b { font-weight: 800; }
+.merdeka-ribbon--fixed {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  margin: 0; border-radius: 0; border-bottom-width: 2px;
+}
+.merdeka-ribbon::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+  transform: translateX(-120%); animation: mr-shine 5.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   PIL UCAPAN — Dashboard (disuntik ke dalam banner) & login
+   ============================================================ */
+.merdeka-pill, .merdeka-login-note {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.45rem 1rem; border-radius: 999px;
+  background: var(--merah); color: #fff;
+  font-size: 0.82rem; font-weight: 600; letter-spacing: 0.2px;
+  box-shadow: 0 3px 10px rgba(178,19,25,0.24);
+}
+.merdeka-pill { margin-top: 0.9rem; }
+.merdeka-login-note { position: relative; z-index: 1; margin-top: 0.9rem; }
+
+.mr-flag { display: inline-block; transform-origin: 50% 65%; animation: mr-wave 2.6s ease-in-out infinite; }
+
+@keyframes mr-wave  { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+@keyframes mr-shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+
+/* ============================================================
+   BANNER SAMBUTAN DASHBOARD — terang + aset garuda di kanan
+   (.welcome-banner biasanya gradient biru + teks putih)
+   ============================================================ */
+.welcome-banner {
+  background:
+    url("merdeka-garuda.svg") right center / auto 100% no-repeat,
+    linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
+  min-height: 150px; padding-right: 190px !important;
+}
+.welcome-banner::after { display: none !important; }        /* buang lingkaran deco */
+.welcome-banner .banner-icon { display: none !important; }  /* ikon matahari diganti aset */
+.welcome-banner h2 { color: var(--navy) !important; }
+.welcome-banner p  { color: var(--muted) !important; }
+
+/* ============================================================
+   HALAMAN LOGIN — panel kiri jadi terang + aset garuda
+   (.left-panel biasanya gradient biru + teks putih)
+   ============================================================ */
+.left-panel {
+  background: url("merdeka-garuda.svg") center / cover no-repeat, #f5f5f5 !important;
+}
+.left-panel::before, .left-panel::after { display: none !important; }  /* buang lingkaran deco putih */
+.left-panel .brand-name {
+  color: var(--navy) !important; text-shadow: 0 1px 6px rgba(255,255,255,0.85);
+}
+.left-panel .brand-sub {
+  color: var(--navy) !important; opacity: 0.72 !important; text-shadow: 0 1px 5px rgba(255,255,255,0.85);
+}
+.left-panel .version-tag { color: var(--navy) !important; opacity: 0.55 !important; }
+.left-panel .features { display: none !important; }   /* daftar fitur disembunyikan biar bersih di atas aset */
+.left-panel .divider {
+  width: 60px !important; height: 4px !important; border-radius: 4px !important; opacity: 1 !important;
+  background: linear-gradient(to bottom, var(--merah) 0 50%, var(--putih) 50% 100%) !important;
+}
+
+/* ============================================================
+   SIDEBAR — garland bendera kecil di bawah blok brand
+   (.sidebar-brand seragam di semua halaman modul + dashboard)
+   ============================================================ */
+.sidebar-brand { position: relative; }
+.sidebar-brand::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 12px;
+  background:
+    conic-gradient(from -45deg at 50% 0, var(--merah) 0 90deg, transparent 0 100%) 0 0   / 22px 12px repeat-x,
+    conic-gradient(from -45deg at 50% 0, var(--putih) 0 90deg, transparent 0 100%) 11px 0 / 22px 12px repeat-x;
+  opacity: 0.9; pointer-events: none;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+@media (max-width: 768px) {
+  .welcome-banner {
+    background:
+      url("merdeka-garuda.svg") right -6px center / auto 92% no-repeat,
+      linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
+    padding-right: 118px !important; min-height: 132px;
+  }
+}
+
+/* ============================================================
+   Hormati preferensi "kurangi animasi"
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .mr-flag, .merdeka-ribbon::after { animation: none; }
+  .merdeka-ribbon::after { display: none; }
+}

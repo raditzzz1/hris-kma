@@ -4,6 +4,10 @@ _recovered/
 # Pratinjau dev (bukan bagian aplikasi)
 _preview-*.html
 
+# Aset sumber referensi (berlisensi) — jangan di-deploy publik.
+# Yang dipakai aplikasi cuma hasil bersihnya: merdeka-garuda.svg (di root).
+referensi/
+
 # Pengaturan lokal Claude Code
 .claude/
 

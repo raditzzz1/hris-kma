@@ -25,6 +25,9 @@ Employee Self-Service (ESS) per akun.
 | `laporan.html` | Rekap & export (absensi/cuti/payroll/lembur/izin) |
 | `theme.css`, `hris.css` | Design system + responsif |
 | `responsive-tables.js` | Tabel → kartu di HP |
+| `seasonal-theme.js` | Pemuat tema musiman (aktif OTOMATIS tiap Agustus) |
+| `theme-merdeka.css` | Tema HUT RI (aksen merah-putih + aset garuda) |
+| `merdeka-garuda.svg` | Aset garuda berlisensi (versi bersih, dipakai tema Merdeka) |
 | `logo-KMA.png` | Logo perusahaan |
 | `supabase-*.sql` | Skema database (lihat urutan di bawah) |
 
@@ -149,3 +152,22 @@ disetujui/ditolak HR — di halaman mana pun mereka sedang buka.
 > layar lama. Untuk notifikasi yang benar-benar "sampai walau app tertutup",
 > dibutuhkan push notification server (Supabase Edge Function + Web Push) —
 > ini di luar cakupan implementasi saat ini.
+
+---
+
+## 11. Tema musiman HUT RI (Agustus)
+Aplikasi punya tema "Merdeka" yang **menyala & mati OTOMATIS**: aktif sepanjang
+bulan **Agustus**, lalu kembali normal 1 September — berulang tiap tahun tanpa
+perlu diutak-atik. Angka "ke-N" dihitung otomatis (`tahun − 1945`).
+
+- **Cara kerja:** `seasonal-theme.js` (dimuat di semua halaman) menyuntik
+  `theme-merdeka.css` + ucapan bila musim aktif. Di luar Agustus: nol dampak.
+- **Yang berubah:** banner Dashboard & panel login jadi terang memakai aset
+  garuda (`merdeka-garuda.svg`) + ucapan "Dirgahayu RI ke-N"; halaman modul
+  dapat pita ucapan + bunting bendera di sidebar. Warna status/absen **tidak**
+  disentuh.
+- **Pratinjau kapan saja:** tambahkan `?merdeka=1` di URL untuk memaksa nyala
+  (mis. `dashboard.html?merdeka=1`), atau `?merdeka=0` untuk memaksa mati.
+- **Aset:** `merdeka-garuda.svg` adalah versi bersih dari aset berlisensi yang
+  dibeli (file sumber `.ai/.eps` disimpan lokal di `referensi/`, sengaja
+  di-`.gitignore` agar tidak ter-deploy publik).
