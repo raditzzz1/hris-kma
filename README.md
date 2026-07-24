@@ -27,7 +27,7 @@ Employee Self-Service (ESS) per akun.
 | `responsive-tables.js` | Tabel → kartu di HP |
 | `seasonal-theme.js` | Pemuat tema musiman (aktif OTOMATIS tiap Agustus) |
 | `theme-merdeka.css` | Tema HUT RI (aksen merah-putih + aset garuda) |
-| `merdeka-garuda-merah.jpg` | Aset garuda merah berlisensi (dipakai tema Merdeka) |
+| `merdeka-garuda.svg` | Aset garuda berlisensi (versi bersih, dipakai tema Merdeka) |
 | `logo-KMA.png` | Logo perusahaan |
 | `supabase-*.sql` | Skema database (lihat urutan di bawah) |
 
@@ -163,11 +163,11 @@ perlu diutak-atik. Angka "ke-N" dihitung otomatis (`tahun − 1945`).
 - **Cara kerja:** `seasonal-theme.js` (dimuat di semua halaman) menyuntik
   `theme-merdeka.css` + ucapan bila musim aktif. Di luar Agustus: nol dampak.
 - **Yang berubah:** banner Dashboard & panel login jadi terang memakai aset
-  garuda merah (`merdeka-garuda-merah.jpg`) + ucapan "Dirgahayu RI ke-N";
-  halaman modul dapat pita ucapan + bunting bendera di sidebar. Warna status/
-  absen **tidak** disentuh.
+  garuda (`merdeka-garuda.svg`) + ucapan "Dirgahayu RI ke-N"; halaman modul
+  dapat pita ucapan + bunting bendera di sidebar. Warna status/absen **tidak**
+  disentuh.
 - **Pratinjau kapan saja:** tambahkan `?merdeka=1` di URL untuk memaksa nyala
   (mis. `dashboard.html?merdeka=1`), atau `?merdeka=0` untuk memaksa mati.
-- **Aset:** `merdeka-garuda-merah.jpg` adalah hasil crop+optimasi dari aset
-  berlisensi yang dibeli (file sumber disimpan lokal di `referensi/`, sengaja
+- **Aset:** `merdeka-garuda.svg` adalah versi bersih dari aset berlisensi yang
+  dibeli (file sumber `.ai/.eps` disimpan lokal di `referensi/`, sengaja
   di-`.gitignore` agar tidak ter-deploy publik).
