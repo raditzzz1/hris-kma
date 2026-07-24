@@ -72,9 +72,9 @@
    ============================================================ */
 .welcome-banner {
   background:
-    url("merdeka-garuda.svg") right center / auto 100% no-repeat,
+    url("merdeka-garuda.svg") right center / auto 165% no-repeat,
     linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
-  min-height: 150px; padding-right: 190px !important;
+  min-height: 160px; padding-right: 250px !important;
 }
 .welcome-banner::after { display: none !important; }        /* buang lingkaran deco */
 .welcome-banner .banner-icon { display: none !important; }  /* ikon matahari diganti aset */
@@ -121,9 +121,9 @@
 @media (max-width: 768px) {
   .welcome-banner {
     background:
-      url("merdeka-garuda.svg") right -6px center / auto 92% no-repeat,
+      url("merdeka-garuda.svg") right -6px center / auto 125% no-repeat,
       linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
-    padding-right: 118px !important; min-height: 132px;
+    padding-right: 150px !important; min-height: 140px;
   }
 }
 

@@ -40,7 +40,9 @@
   function pasangUcapan() {
     if (document.querySelector('.merdeka-pill, .merdeka-ribbon, .merdeka-login-note')) return;
 
-    var flag = '<span class="mr-flag" aria-hidden="true">🇮🇩</span> ';
+    // Emoji bendera sengaja tidak dipakai: di sebagian perangkat/OS ia tampil
+    // sebagai teks "ID" (kode regional) di depan tulisan, bukan gambar bendera.
+    var flag = '';
 
     // a) Dashboard: pil di dalam banner sambutan (banner sudah jadi hero aset)
     var banner = document.querySelector('.welcome-banner');
