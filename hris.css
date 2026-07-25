@@ -213,6 +213,7 @@
      dikecilkan otomatis oleh fitStatValues() di dashboard.html. */
   .stats-grid:has(.stat-value.txt) {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: 1fr !important;   /* semua kartu tinggi SAMA walau label "Hari Kerja Bulan Ini" 2 baris */
   }
 
   /* Rekap mini-stat (4 kotak Hadir/Terlambat/Izin/Tidak Hadir): tetap 2x2

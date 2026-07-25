@@ -265,9 +265,9 @@
 
     @media (max-width: 768px) {
       /* Kartu statistik 2x2 (Divisi | Jabatan / Hari Kerja | Sisa Cuti):
-         nilai teks (Divisi/Jabatan) dijaga TETAP 1 baris; ukuran fontnya
-         diperkecil otomatis oleh fitStatValues() agar muat, jadi tak ada
-         kata yang pecah ("Marketi/ng") atau turun baris. */
+         nilai teks (Divisi/Jabatan) dijaga 1 baris dengan font SERAGAM (tak
+         dikecilkan). Nilai yang tak muat digeser (marquee) oleh fitStatValues(),
+         jadi tak ada kata yang pecah ("Marketi/ng") atau turun baris. */
       .stat-info .stat-value.txt {
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
       }
@@ -577,49 +577,37 @@ function renderStatsKaryawan (karyw) {
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat-card"><div class="stat-icon blue">${ic('building')}</div><div class="stat-info"><div class="stat-value txt">${karyw.divisi?.nama || '—'}</div><div class="stat-label">Divisi</div></div></div>
     <div class="stat-card"><div class="stat-icon green">${ic('briefcase')}</div><div class="stat-info"><div class="stat-value txt">${karyw.jabatan?.nama || '—'}</div><div class="stat-label">Jabatan</div></div></div>
-    <div class="stat-card"><div class="stat-icon yellow">${ic('calendar')}</div><div class="stat-info"><div class="stat-value" id="hariKerja">—</div><div class="stat-label">Hari Kerja Bulan Ini</div></div></div>
-    <div class="stat-card"><div class="stat-icon blue">${ic('umbrella')}</div><div class="stat-info"><div class="stat-value" id="saldoCuti">—</div><div class="stat-label">Sisa Cuti</div></div></div>
+    <div class="stat-card"><div class="stat-icon yellow">${ic('calendar')}</div><div class="stat-info"><div class="stat-value txt" id="hariKerja">—</div><div class="stat-label">Hari Kerja Bulan Ini</div></div></div>
+    <div class="stat-card"><div class="stat-icon blue">${ic('umbrella')}</div><div class="stat-info"><div class="stat-value txt" id="saldoCuti">—</div><div class="stat-label">Sisa Cuti</div></div></div>
   `
   fitStatValues()
 }
 
-// Auto-fit HYBRID nilai teks (Divisi/Jabatan) di kartu sempit (HP):
-// 1) kecilkan font supaya PAS 1 baris (tanpa pecah kata / turun baris),
-//    TAPI hanya sampai ambang terbaca (READ_MIN px);
-// 2) kalau di ambang itu MASIH kepanjangan (mis. "Creative Leader"),
-//    nilai itu saja dibuat berjalan ke kiri (marquee) supaya tetap terbaca.
+// Nilai teks (Divisi/Jabatan) di kartu sempit (HP): FONT DIBIARKAN SERAGAM
+// (tak dikecilkan) agar konsisten antar kartu. Nilai yang tak muat dalam kotak
+// dibuat berjalan ke kiri (marquee ping-pong) supaya tetap terbaca penuh.
 // Nilai angka (Hari Kerja/Sisa Cuti) tak kena (hanya menyasar .stat-value.txt).
 function fitStatValues () {
-  const READ_MIN = 13
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   document.querySelectorAll('.stat-value.txt').forEach(el => {
-    // Simpan teks asli sekali; kembalikan ke keadaan bersih tiap dijalankan.
-    if (el.dataset.txt == null) el.dataset.txt = el.textContent
+    // Lepas marquee lama (kalau ada) TANPA mengubah nilai aktual. Penting:
+    // Hari Kerja/Sisa Cuti diisi belakangan, jadi jangan pernah menimpa isinya.
+    const inner = el.querySelector('.mq-inner')
+    if (inner) el.textContent = inner.textContent
     el.classList.remove('mq')
     el.style.removeProperty('--mq-shift'); el.style.removeProperty('--mq-dur')
-    el.textContent = el.dataset.txt
-    el.style.fontSize = ''
-
-    let size = parseFloat(getComputedStyle(el).fontSize)
-    let guard = 60
-    while (el.scrollWidth > el.clientWidth && size > READ_MIN && guard-- > 0) {
-      size -= 0.5
-      el.style.fontSize = size + 'px'
-    }
-    // Masih meluber di ambang terbaca -> marquee (kecuali user minta kurangi animasi).
+    el.style.removeProperty('font-size')   // pastikan tak ada sisa -> font seragam
+    // Font TIDAK diubah -> ukuran seragam di semua kartu.
     if (el.scrollWidth > el.clientWidth + 1 && !reduce) {
-      el.style.fontSize = READ_MIN + 'px'
       // Ukur luber LANGSUNG dari elemen (teks nowrap) sebelum dibungkus -> andal.
       const overflow = el.scrollWidth - el.clientWidth
       const box = el.clientWidth
       const span = document.createElement('span')
-      span.className = 'mq-inner'; span.textContent = el.dataset.txt
+      span.className = 'mq-inner'; span.textContent = el.textContent
       el.textContent = ''; el.appendChild(span)
-      if (overflow > 1) {
-        el.classList.add('mq')
-        el.style.setProperty('--mq-shift', (-(overflow + 6)) + 'px')
-        el.style.setProperty('--mq-dur', Math.max(5, (overflow + box) / 24).toFixed(1) + 's')
-      }
+      el.classList.add('mq')
+      el.style.setProperty('--mq-shift', (-(overflow + 6)) + 'px')
+      el.style.setProperty('--mq-dur', Math.max(5, (overflow + box) / 24).toFixed(1) + 's')
     }
   })
 }
