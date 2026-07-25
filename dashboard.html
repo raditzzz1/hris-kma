@@ -271,6 +271,18 @@
       .stat-info .stat-value.txt {
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
       }
+      /* Marquee: hanya untuk nilai yang MASIH kepanjangan di ambang terbaca.
+         Teks (dalam .mq-inner) bergeser ke kiri lalu balik (ping-pong), berhenti
+         sejenak di tiap ujung. Diaktifkan oleh fitStatValues(). */
+      .stat-info .stat-value.txt.mq { text-overflow: clip; }
+      .stat-info .stat-value.txt.mq .mq-inner {
+        display: inline-block; will-change: transform;
+        animation: mq-scroll var(--mq-dur, 6s) ease-in-out infinite alternate;
+      }
+      @keyframes mq-scroll {
+        0%, 14%  { transform: translateX(0); }
+        86%, 100%{ transform: translateX(var(--mq-shift, 0)); }
+      }
       /* Sedikit dirapatkan supaya kartu setengah-lebar tak terlalu sempit */
       .stat-card { padding: 1rem 0.9rem; gap: 0.7rem; }
       .stat-icon { width: 42px; height: 42px; }
@@ -571,17 +583,43 @@ function renderStatsKaryawan (karyw) {
   fitStatValues()
 }
 
-// Auto-fit: kecilkan font nilai teks (Divisi/Jabatan) supaya PAS 1 baris di
-// kartu sempit (HP) tanpa memecah kata atau turun baris. Nilai angka
-// (Hari Kerja/Sisa Cuti) tak kena karena hanya menyasar .stat-value.txt.
+// Auto-fit HYBRID nilai teks (Divisi/Jabatan) di kartu sempit (HP):
+// 1) kecilkan font supaya PAS 1 baris (tanpa pecah kata / turun baris),
+//    TAPI hanya sampai ambang terbaca (READ_MIN px);
+// 2) kalau di ambang itu MASIH kepanjangan (mis. "Creative Leader"),
+//    nilai itu saja dibuat berjalan ke kiri (marquee) supaya tetap terbaca.
+// Nilai angka (Hari Kerja/Sisa Cuti) tak kena (hanya menyasar .stat-value.txt).
 function fitStatValues () {
+  const READ_MIN = 13
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   document.querySelectorAll('.stat-value.txt').forEach(el => {
-    el.style.fontSize = ''                              // balik ke ukuran dari CSS
+    // Simpan teks asli sekali; kembalikan ke keadaan bersih tiap dijalankan.
+    if (el.dataset.txt == null) el.dataset.txt = el.textContent
+    el.classList.remove('mq')
+    el.style.removeProperty('--mq-shift'); el.style.removeProperty('--mq-dur')
+    el.textContent = el.dataset.txt
+    el.style.fontSize = ''
+
     let size = parseFloat(getComputedStyle(el).fontSize)
-    let guard = 40                                       // batas iterasi, jaga-jaga
-    while (el.scrollWidth > el.clientWidth && size > 9.5 && guard-- > 0) {
+    let guard = 60
+    while (el.scrollWidth > el.clientWidth && size > READ_MIN && guard-- > 0) {
       size -= 0.5
       el.style.fontSize = size + 'px'
+    }
+    // Masih meluber di ambang terbaca -> marquee (kecuali user minta kurangi animasi).
+    if (el.scrollWidth > el.clientWidth + 1 && !reduce) {
+      el.style.fontSize = READ_MIN + 'px'
+      // Ukur luber LANGSUNG dari elemen (teks nowrap) sebelum dibungkus -> andal.
+      const overflow = el.scrollWidth - el.clientWidth
+      const box = el.clientWidth
+      const span = document.createElement('span')
+      span.className = 'mq-inner'; span.textContent = el.dataset.txt
+      el.textContent = ''; el.appendChild(span)
+      if (overflow > 1) {
+        el.classList.add('mq')
+        el.style.setProperty('--mq-shift', (-(overflow + 6)) + 'px')
+        el.style.setProperty('--mq-dur', Math.max(5, (overflow + box) / 24).toFixed(1) + 's')
+      }
     }
   })
 }
