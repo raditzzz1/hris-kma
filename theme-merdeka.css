@@ -51,9 +51,8 @@
    PIL UCAPAN — Dashboard (disuntik ke dalam banner) & login
    ============================================================ */
 .merdeka-pill, .merdeka-login-note {
-  display: inline-flex; align-items: center; justify-content: center;
-  flex-wrap: wrap; gap: 0.3rem; max-width: 100%;   /* boleh membungkus di layar sempit, tak meluber */
-  padding: 0.45rem 1rem; border-radius: 999px;
+  display: inline-block; text-align: center; white-space: nowrap;   /* selalu 1 baris -> pil tipis, tak terkesan besar */
+  padding: 0.45rem 1rem; border-radius: 999px; line-height: 1.3;
   background: var(--merah); color: #fff;
   font-size: 0.82rem; font-weight: 600; letter-spacing: 0.2px;
   box-shadow: 0 3px 10px rgba(178,19,25,0.24);
@@ -126,6 +125,13 @@
       #ffffff !important;
     padding-right: 112px !important; min-height: 150px;
   }
+  /* Pil ucapan di HP: perkecil font + rapatkan padding + turunkan bobot
+     supaya tak terkesan besar (dan lebih mungkin muat 1 baris). */
+  .merdeka-pill {
+    font-size: 0.66rem; font-weight: 500; letter-spacing: 0;
+    padding: 0.32rem 0.72rem; margin-top: 0.7rem;
+  }
+  .merdeka-pill b { font-weight: 600; }
 }
 
 /* ============================================================
