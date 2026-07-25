@@ -24,9 +24,8 @@
   /* SIDEBAR jadi merah-putih: --hero cuma dipakai untuk latar (chrome),
      jadi aman dioverride tanpa mengubah warna teks/ikon. Banner & login
      sudah punya latar sendiri, tak terpengaruh. */
-  /* Pudar memancar dari POJOK KIRI-BAWAH & sempit: gradien radial berpusat di
-     kiri-bawah, area terang kecil lalu cepat menua ke maroon. */
-  --hero: radial-gradient(120% 100% at 0% 100%, #EF9A94 0%, #C7484A 12%, #911E26 40%, #45101A 100%) !important;
+  /* Sidebar merah POLOS sama seperti pil "Dirgahayu" (--merah #D2232A). */
+  --hero: var(--merah) !important;
 }
 
 /* ============================================================
