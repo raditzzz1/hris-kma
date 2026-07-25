@@ -24,7 +24,9 @@
   /* SIDEBAR jadi merah-putih: --hero cuma dipakai untuk latar (chrome),
      jadi aman dioverride tanpa mengubah warna teks/ikon. Banner & login
      sudah punya latar sendiri, tak terpengaruh. */
-  --hero: linear-gradient(to top right, #A6363B 0%, #8A2429 45%, #6E1418 100%) !important;
+  /* Meniru STRUKTUR gradien tema biru (terang -> gelap, posisi stop sama),
+     tapi dalam merah: merah muda pudar -> merah -> maroon gelap. */
+  --hero: linear-gradient(to top right, #EF9A94 0%, #DC625C 25%, #AB2830 60%, #45101A 100%) !important;
 }
 
 /* ============================================================
