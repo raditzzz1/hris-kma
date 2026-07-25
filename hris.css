@@ -208,11 +208,11 @@
   .inp-row { grid-template-columns: 1fr !important; }
 
   /* Kartu statistik dashboard yang berisi TEKS (divisi/jabatan karyawan):
-     tetap 2x2 seperti kartu ANGKA -- teks panjang mis. "Creative Leader"
-     dibiarkan membungkus 2 baris (lihat .stat-value.txt di dashboard.html)
-     alih-alih dipaksa 1 kolom penuh-lebar seperti sebelumnya. */
+     tetap 2x2 seperti kartu ANGKA. minmax(0,1fr) meng-CLAMP kolom supaya
+     teks 1-baris (nowrap) tak melebarkan kolom -> tak overflow; ukuran teks
+     dikecilkan otomatis oleh fitStatValues() di dashboard.html. */
   .stats-grid:has(.stat-value.txt) {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
   /* Rekap mini-stat (4 kotak Hadir/Terlambat/Izin/Tidak Hadir): tetap 2x2
