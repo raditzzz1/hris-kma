@@ -105,8 +105,10 @@
     overflow-x: hidden !important;
   }
 
-  /* Show hamburger button */
-  .menu-btn { display: flex !important; }
+  /* Hamburger di HP DISEMBUNYIKAN: navigasi sidebar sudah bisa dibuka lewat
+     tombol "Menu" di bar bawah (sama-sama toggleSidebar()). Ini juga memberi
+     ruang lebih lebar untuk judul di header. */
+  .menu-btn { display: none !important; }
 
   /* Sidebar: slide in from left */
   .sidebar {
