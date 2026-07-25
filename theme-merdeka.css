@@ -20,6 +20,11 @@
   --merah:     #D2232A;
   --merah-tua: #B01319;
   --putih:     #ffffff;
+
+  /* SIDEBAR jadi merah-putih: --hero cuma dipakai untuk latar (chrome),
+     jadi aman dioverride tanpa mengubah warna teks/ikon. Banner & login
+     sudah punya latar sendiri, tak terpengaruh. */
+  --hero: linear-gradient(to top right, #E23B3B 0%, #D2232A 30%, #B01319 70%, #7A0D12 100%) !important;
 }
 
 /* ============================================================
@@ -107,13 +112,19 @@
    (.sidebar-brand seragam di semua halaman modul + dashboard)
    ============================================================ */
 .sidebar-brand { position: relative; }
+/* Bunting: EMAS + PUTIH supaya terlihat di sidebar merah (kalau pakai merah,
+   segitiganya hilang / merah-di-merah). */
 .sidebar-brand::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 12px;
   background:
-    conic-gradient(from -45deg at 50% 0, var(--merah) 0 90deg, transparent 0 100%) 0 0   / 22px 12px repeat-x,
-    conic-gradient(from -45deg at 50% 0, var(--putih) 0 90deg, transparent 0 100%) 11px 0 / 22px 12px repeat-x;
-  opacity: 0.9; pointer-events: none;
+    conic-gradient(from -45deg at 50% 0, #F6D46B 0 90deg, transparent 0 100%) 0 0   / 22px 12px repeat-x,
+    conic-gradient(from -45deg at 50% 0, #ffffff 0 90deg, transparent 0 100%) 11px 0 / 22px 12px repeat-x;
+  opacity: 0.95; pointer-events: none;
 }
+
+/* Ikon menu aktif: default pakai --accent (lime) yang norak di atas merah.
+   Jadikan putih (scoped ke sidebar; tak mengubah --accent global). */
+.sidebar .nav-item.active .ic { color: #fff !important; }
 
 /* ============================================================
    Mobile
