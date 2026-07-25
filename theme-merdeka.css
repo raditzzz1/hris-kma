@@ -7,9 +7,8 @@
 
    Konsep:
    - Banner Dashboard & panel login: memakai ASET GARUDA berlisensi
-     (merdeka-garuda.svg — elang + gelombang merah-putih). Karena elang
-     di aset itu "ruang negatif", area diberi latar TERANG saat Agustus
-     supaya elang tampak putih & menyatu.
+     (merdeka-garuda-merah.jpg — elang MERAH berlatar putih). Area dibuat
+     TERANG saat Agustus supaya latar putih aset menyatu & elang merah menonjol.
    - Halaman modul (absensi/cuti/dll): pita ucapan di atas konten +
      bunting bendera kecil di sidebar.
 
@@ -73,9 +72,9 @@
    ============================================================ */
 .welcome-banner {
   background:
-    url("merdeka-garuda.svg") right center / 260px auto no-repeat,
-    linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
-  min-height: 168px; padding-right: 280px !important;   /* padding > lebar aset -> teks tak tertutup */
+    url("merdeka-garuda-merah.jpg") right center / 185px auto no-repeat,
+    linear-gradient(90deg, #ffffff 0%, #fff6f5 100%) !important;
+  min-height: 192px; padding-right: 205px !important;   /* padding > lebar aset -> teks tak tertutup */
 }
 .welcome-banner::after { display: none !important; }        /* buang lingkaran deco */
 .welcome-banner .banner-icon { display: none !important; }  /* ikon matahari diganti aset */
@@ -87,7 +86,12 @@
    (.left-panel biasanya gradient biru + teks putih)
    ============================================================ */
 .left-panel {
-  background: url("merdeka-garuda.svg") center / cover no-repeat, #f5f5f5 !important;
+  /* Scrim putih tipis di atas aset supaya teks navy tetap terbaca;
+     elang merah tampil sebagai watermark lembut. */
+  background:
+    linear-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.55)),
+    url("merdeka-garuda-merah.jpg") center / cover no-repeat,
+    #f5f5f5 !important;
 }
 .left-panel::before, .left-panel::after { display: none !important; }  /* buang lingkaran deco putih */
 .left-panel .brand-name {
@@ -122,9 +126,9 @@
 @media (max-width: 768px) {
   .welcome-banner {
     background:
-      url("merdeka-garuda.svg") right center / 120px auto no-repeat,
-      linear-gradient(90deg, #ffffff 0%, #fff5f5 100%) !important;
-    padding-right: 134px !important; min-height: 150px;
+      url("merdeka-garuda-merah.jpg") right center / 122px auto no-repeat,
+      linear-gradient(90deg, #ffffff 0%, #fff6f5 100%) !important;
+    padding-right: 135px !important; min-height: 150px;
   }
 }
 
