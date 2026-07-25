@@ -24,7 +24,7 @@
   /* SIDEBAR jadi merah-putih: --hero cuma dipakai untuk latar (chrome),
      jadi aman dioverride tanpa mengubah warna teks/ikon. Banner & login
      sudah punya latar sendiri, tak terpengaruh. */
-  --hero: linear-gradient(to top right, #E23B3B 0%, #D2232A 30%, #B01319 70%, #7A0D12 100%) !important;
+  --hero: linear-gradient(to top right, #A6363B 0%, #8A2429 45%, #6E1418 100%) !important;
 }
 
 /* ============================================================
