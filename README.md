@@ -27,7 +27,8 @@ Employee Self-Service (ESS) per akun.
 | `responsive-tables.js` | Tabel → kartu di HP |
 | `seasonal-theme.js` | Pemuat tema musiman (aktif OTOMATIS tiap Agustus) |
 | `theme-merdeka.css` | Tema HUT RI (aksen merah-putih + aset garuda) |
-| `merdeka-garuda-merah.jpg` | Aset garuda merah berlisensi (dipakai tema Merdeka) |
+| `merdeka-garuda-merah.jpg` | Aset garuda merah (banner Dashboard, tema Merdeka) |
+| `merdeka-garuda.svg` | Aset garuda putih (panel login, tema Merdeka) |
 | `logo-KMA.png` | Logo perusahaan |
 | `supabase-*.sql` | Skema database (lihat urutan di bawah) |
 
