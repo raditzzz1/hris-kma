@@ -109,23 +109,48 @@
 }
 
 /* ============================================================
-   SIDEBAR — garland bendera kecil di bawah blok brand
-   (.sidebar-brand seragam di semua halaman modul + dashboard)
+   SIDEBAR — PUTIH + elang merah di pojok kanan-bawah (tema Merdeka)
+   Teks/ikon digelapkan supaya terbaca di latar putih. Scoped ke .sidebar;
+   nama kelas konsisten di semua halaman.
    ============================================================ */
-.sidebar-brand { position: relative; }
-/* Bunting: EMAS + PUTIH supaya terlihat di sidebar merah (kalau pakai merah,
-   segitiganya hilang / merah-di-merah). */
-.sidebar-brand::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 12px;
-  background:
-    conic-gradient(from -45deg at 50% 0, #F6D46B 0 90deg, transparent 0 100%) 0 0   / 22px 12px repeat-x,
-    conic-gradient(from -45deg at 50% 0, #ffffff 0 90deg, transparent 0 100%) 11px 0 / 22px 12px repeat-x;
-  opacity: 0.95; pointer-events: none;
+.sidebar, .sb {
+  background: #ffffff !important;
+  color: #122359 !important;
+  border-right: 1px solid #E7ECF3;
 }
+.sidebar .sidebar-brand { border-bottom-color: #EEF2F7 !important; }
+.sidebar .logo-icon { border: 1px solid #E7ECF3; }          /* chip putih diberi garis biar terlihat */
+.sidebar .logo-text { color: #122359 !important; }
+.sidebar .logo-sub  { color: #122359 !important; opacity: 0.55 !important; }
+.sidebar .nav-section-label { color: #8A97AC !important; opacity: 1 !important; }
+.sidebar .nav-item { color: #445069 !important; }
+.sidebar .nav-item .ic { color: #6B7A93 !important; opacity: 1 !important; }
+.sidebar .nav-item:hover { background: #F3F6FB !important; color: #122359 !important; }
+.sidebar .nav-item.active { background: #FCE7E7 !important; color: #B01319 !important; }
+.sidebar .nav-item.active .ic { color: var(--merah) !important; opacity: 1 !important; }
+.sidebar .avatar { background: #FCE7E7 !important; color: #B01319 !important; }
+.sidebar .user-name { color: #122359 !important; }
+.sidebar .user-role { color: #8A97AC !important; opacity: 1 !important; }
+.sidebar .sidebar-footer .ic { color: #6B7A93 !important; }
+/* scrollbar (thumb putih tak terlihat di sidebar putih) */
+.sidebar .sidebar-nav { scrollbar-color: #cbd5e1 transparent !important; }
+.sidebar .sidebar-nav::-webkit-scrollbar-thumb { background: #cbd5e1 !important; }
 
-/* Ikon menu aktif: default pakai --accent (lime) yang norak di atas merah.
-   Jadikan putih (scoped ke sidebar; tak mengubah --accent global). */
-.sidebar .nav-item.active .ic { color: #fff !important; }
+/* Elang merah di POJOK KANAN-BAWAH. Latar putih aset menyatu dgn sidebar putih
+   -> hanya elang merah tampak. Ditaruh di BELAKANG konten (z-index 0); footer
+   (z-index 2, latar putih) menutup bagian bawah elang supaya nama/role tetap
+   terbaca -> kepala elang muncul rapi di pojok. */
+.sidebar > .sidebar-brand,
+.sidebar > .sidebar-nav { position: relative; z-index: 1; }
+.sidebar .sidebar-footer {
+  border-top-color: #EEF2F7 !important;
+  background: #ffffff !important; position: relative; z-index: 2;
+}
+.sidebar::after {
+  content: ''; position: absolute; right: 2px; bottom: 58px;   /* tepat di atas footer (~66px) */
+  width: 112px; height: 112px; z-index: 0; pointer-events: none;
+  background: url("merdeka-garuda-merah.jpg") right bottom / 112px auto no-repeat;
+}
 
 /* ============================================================
    Mobile
