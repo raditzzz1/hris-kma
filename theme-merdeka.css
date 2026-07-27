@@ -170,6 +170,11 @@
 .btn-login { background: var(--merah) !important; }
 .btn-login:hover { background: var(--merah-tua) !important; }
 
+/* Akses Cepat (kartu shortcut Dashboard): ikon & hover jadi merah. Navigasi
+   murni -> aman, tak ada makna warna. Label tetap abu (tak diubah). */
+.quick-link { color: var(--merah) !important; }
+.quick-link:hover { background: #FCE9E9 !important; border-color: #F3C6C6 !important; }
+
 /* ============================================================
    Mobile
    ============================================================ */
