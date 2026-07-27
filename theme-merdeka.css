@@ -175,6 +175,13 @@
 .quick-link { color: var(--merah) !important; }
 .quick-link:hover { background: #FCE9E9 !important; border-color: #F3C6C6 !important; }
 
+/* Ikon JUDUL kartu/section (halaman modul: Data Karyawan/Absensi/Cuti, dll):
+   ikon depan pada <h3>/<h2> jadi merah. Hanya ikon judul -> tak kena ikon
+   STATUS (hadir/error, punya makna) & tak kena tombol aksi. Teks judul tetap
+   gelap. */
+h3 > .ic:first-child,
+h2 > .ic:first-child { color: var(--merah) !important; }
+
 /* ============================================================
    Mobile
    ============================================================ */
