@@ -36,6 +36,12 @@
     document.head.appendChild(link);
   }
 
+  // 1b) Warna bilah browser/PWA di HP jadi merah (meta theme-color). Di luar
+  //     Agustus script ini tak jalan -> warna asli (#004499) tetap.
+  var tc = document.querySelector('meta[name="theme-color"]');
+  if (!tc) { tc = document.createElement('meta'); tc.setAttribute('name', 'theme-color'); document.head.appendChild(tc); }
+  tc.setAttribute('content', '#D2232A');
+
   // 2) Sisipkan ucapan setelah DOM siap
   function pasangUcapan() {
     if (document.querySelector('.merdeka-pill, .merdeka-ribbon, .merdeka-login-note')) return;

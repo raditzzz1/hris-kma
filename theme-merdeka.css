@@ -153,6 +153,24 @@
 }
 
 /* ============================================================
+   AKSEN MERAH TAMBAHAN (Agustus) — semua chrome/dekoratif, tak menyentuh
+   warna makna (error/bahaya/absen) & tak mengubah fungsi.
+   ============================================================ */
+/* Bottom-nav (HP): indikator menu aktif jadi merah (default biru). */
+.bn-item.active, .bn-item:focus { color: var(--merah) !important; }
+/* Chip tanggal & tombol notif di header: aksen merah-putih. */
+.date-chip, #headerDate {
+  background: #FCE9E9 !important; color: #B01319 !important; border: 1px solid #F3C6C6 !important;
+}
+.date-chip .ic, #headerDate .ic { color: var(--merah) !important; }
+.notif-btn { color: #B01319 !important; border: 1px solid #F3C6C6 !important; }
+.notif-btn:hover { background: #FCE9E9 !important; }
+.notif-btn .ic { color: var(--merah) !important; }
+/* Tombol "Masuk" di login (hanya halaman login pakai .btn-login -> aman). */
+.btn-login { background: var(--merah) !important; }
+.btn-login:hover { background: var(--merah-tua) !important; }
+
+/* ============================================================
    Mobile
    ============================================================ */
 @media (max-width: 768px) {
