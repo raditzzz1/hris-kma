@@ -8,6 +8,12 @@ _preview-*.html
 # Yang dipakai aplikasi cuma hasil bersihnya: merdeka-garuda.svg (di root).
 referensi/
 
+# DATA PRIBADI — JANGAN PERNAH DI-COMMIT.
+# Berisi kontrak asli karyawan (NIK KTP, alamat, gaji). Kalau ter-commit, file
+# ini ikut ter-deploy ke Netlify dan bisa diunduh siapa pun tanpa login.
+CONTOH PKWT/
+*.pdf
+
 # Pengaturan lokal Claude Code
 .claude/
 
