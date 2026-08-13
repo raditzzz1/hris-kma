@@ -26,6 +26,54 @@ function awalBulanLokal (d = new Date()) {
   return tanggalLokal(new Date(d.getFullYear(), d.getMonth(), 1))
 }
 
+// Selisih hari antara dua tanggal "YYYY-MM-DD". Hasil positif = `sampai`
+// masih di depan, negatif = sudah lewat. Sengaja memaksa jam 00:00 waktu
+// lokal supaya tak terpengaruh zona waktu / pergantian DST.
+function selisihHari (dari, sampai) {
+  if (!dari || !sampai) return null
+  const a = new Date(dari + 'T00:00:00')
+  const b = new Date(sampai + 'T00:00:00')
+  return Math.round((b - a) / 86400000)
+}
+
+// Tambah (atau kurang, bila n negatif) n hari dari tanggal "YYYY-MM-DD".
+function tambahHari (iso, n) {
+  const d = new Date((iso || tanggalLokal()) + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  return tanggalLokal(d)
+}
+
+// Berapa hari lagi menuju ulang tahun berikutnya dari `tanggalLahir`
+// ("YYYY-MM-DD"). 0 = hari ini. Tahun kabisat 29 Feb diperlakukan 1 Mar
+// pada tahun biasa (perilaku bawaan Date), cukup untuk keperluan pengingat.
+function hariMenujuUlangTahun (tanggalLahir, acuan = new Date()) {
+  if (!tanggalLahir) return null
+  const l = new Date(tanggalLahir + 'T00:00:00')
+  const hariIni = new Date(acuan.getFullYear(), acuan.getMonth(), acuan.getDate())
+  let next = new Date(hariIni.getFullYear(), l.getMonth(), l.getDate())
+  if (next < hariIni) next = new Date(hariIni.getFullYear() + 1, l.getMonth(), l.getDate())
+  return Math.round((next - hariIni) / 86400000)
+}
+
+// Tanggal "YYYY-MM-DD" -> "13 Agu 2026" (untuk ditampilkan ke pengguna).
+function tglIndo (iso, opsi) {
+  if (!iso) return '—'
+  return new Date(iso + 'T00:00:00').toLocaleDateString('id-ID',
+    opsi || { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+// ============================================================
+// KEAMANAN TAMPILAN
+// ============================================================
+// Selalu bungkus data dari database (nama, alasan, judul) dengan ini sebelum
+// disisipkan ke innerHTML. Tanpa ini, teks yang mengandung tag HTML bisa
+// mengubah/merusak tampilan halaman (XSS tersimpan).
+function escHtml (s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
+
 // ============================================================
 // ATURAN ABSEN
 // ============================================================

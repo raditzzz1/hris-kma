@@ -204,6 +204,37 @@
     .activity-text { flex: 1; color: var(--text); }
     .activity-time { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
 
+    /* Pengingat "Perlu Perhatian" */
+    .nag-list { list-style: none; }
+    .nag-row {
+      display: flex; align-items: center; gap: 0.8rem; padding: 0.72rem 0;
+      border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .nag-row:last-child { border-bottom: none; }
+    .nag-pin {
+      width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .nag-pin .ic { width: 1.05rem; height: 1.05rem; }
+    .nag-pin.bahaya { background: #fee2e2; color: #dc2626; }
+    .nag-pin.awas   { background: #fef9c3; color: #a16207; }
+    .nag-pin.info   { background: var(--pale); color: var(--deep); }
+    .nag-teks { flex: 1; min-width: 0; }
+    .nag-teks b { color: var(--navy); font-weight: 600; }
+    .nag-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .nag-sub.bahaya { color: #dc2626; font-weight: 600; }
+    .nag-sub.awas   { color: #a16207; font-weight: 600; }
+    .nag-aksi {
+      flex-shrink: 0; padding: 0.35rem 0.8rem; border-radius: 8px; border: 1.5px solid var(--border);
+      background: #fff; font-size: 0.75rem; font-weight: 600; color: var(--deep);
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+    }
+    .nag-aksi:hover { background: var(--pale); }
+    @media (max-width: 768px) {
+      .nag-row { flex-wrap: wrap; }
+      .nag-aksi { margin-left: 46px; }
+    }
+
     /* Quick Links */
     .quick-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
     .quick-link {
@@ -425,6 +456,17 @@
     <!-- Stats Grid -->
     <div class="stats-grid" id="statsGrid"></div>
 
+    <!-- Perlu Perhatian (HR Admin) — muncul hanya bila ada yang perlu ditindak -->
+    <div class="card" id="cardPengingat" style="display:none; margin-bottom:1.6rem;">
+      <div class="card-header">
+        <h3><svg class="ic" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg> Perlu Perhatian</h3>
+        <span class="badge badge-red" id="pengingatCount">0</span>
+      </div>
+      <div class="card-body" style="padding-top:.6rem;">
+        <ul class="nag-list" id="pengingatList"></ul>
+      </div>
+    </div>
+
     <!-- Content Grid -->
     <div class="content-grid">
 
@@ -528,6 +570,9 @@ const IC = {
   pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
   flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+  alert: '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/>',
+  cake: '<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2 1 4 1 2-1 4-1 2 1 2 1"/><path d="M2 21h20"/><path d="M7 8v3M12 8v3M17 8v3"/><path d="M7 4h.01M12 4h.01M17 4h.01"/>',
+  award: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>',
 }
 const ic = (n, cls = 'ic') => `<svg class="${cls}" viewBox="0 0 24 24">${IC[n] || ''}</svg>`
 
@@ -638,6 +683,93 @@ async function renderStatsHRAdmin () {
 }
 
 // ---- Render absensi ----
+// ---- Pengingat "Perlu Perhatian" (HR Admin) ----
+// Mengangkat hal-hal yang mudah terlewat tapi berkonsekuensi: kontrak PKWT
+// yang mau/sudah habis (risiko berubah jadi PKWTT), sertifikat kedaluwarsa,
+// dan ulang tahun karyawan. Kartu hanya muncul bila memang ada isinya.
+async function loadPengingat () {
+  if (!isAdmin) return
+  const kartu = document.getElementById('cardPengingat')
+  const daftar = document.getElementById('pengingatList')
+  if (!kartu || !daftar) return
+
+  const hariIni = tanggalLokal()
+  const item = []
+
+  // 1) Masa kontrak
+  const { data: kar } = await sb.from('karyawan')
+    .select('id, nama_lengkap, tanggal_lahir, tanggal_berakhir_kontrak')
+    .eq('status', 'aktif')
+
+  ;(kar || []).forEach(k => {
+    if (k.tanggal_berakhir_kontrak) {
+      const sisa = selisihHari(hariIni, k.tanggal_berakhir_kontrak)
+      if (sisa < 0) {
+        item.push({ urut: 0, tingkat: 'bahaya', ikon: 'alert',
+          judul: k.nama_lengkap,
+          sub: `Kontrak sudah lewat ${Math.abs(sisa)} hari (${tglIndo(k.tanggal_berakhir_kontrak)}) — segera perpanjang atau akhiri resmi`,
+          aksi: 'Buka', url: 'karyawan.html' })
+      } else if (sisa <= 30) {
+        item.push({ urut: 1, tingkat: 'bahaya', ikon: 'alert',
+          judul: k.nama_lengkap,
+          sub: `Kontrak berakhir ${sisa} hari lagi (${tglIndo(k.tanggal_berakhir_kontrak)}) — beritahu paling lambat H-14`,
+          aksi: 'Buka', url: 'karyawan.html' })
+      } else if (sisa <= 60) {
+        item.push({ urut: 2, tingkat: 'awas', ikon: 'alert',
+          judul: k.nama_lengkap,
+          sub: `Kontrak berakhir ${sisa} hari lagi (${tglIndo(k.tanggal_berakhir_kontrak)})`,
+          aksi: 'Buka', url: 'karyawan.html' })
+      }
+    }
+    // 2) Ulang tahun (7 hari ke depan)
+    const ke = hariMenujuUlangTahun(k.tanggal_lahir)
+    if (ke !== null && ke <= 7) {
+      item.push({ urut: 5, tingkat: 'info', ikon: 'cake',
+        judul: k.nama_lengkap,
+        sub: ke === 0 ? 'Berulang tahun hari ini 🎉' : `Berulang tahun ${ke} hari lagi`,
+        aksi: null })
+    }
+  })
+
+  // 3) Sertifikat kedaluwarsa / segera kedaluwarsa (60 hari)
+  const { data: sert } = await sb.from('sertifikasi')
+    .select('id, nama_sertifikat, tanggal_expired, karyawan:karyawan_id(nama_lengkap)')
+    .not('tanggal_expired', 'is', null)
+    .lte('tanggal_expired', tambahHari(hariIni, 60))
+    .order('tanggal_expired')
+
+  ;(sert || []).forEach(s => {
+    const sisa = selisihHari(hariIni, s.tanggal_expired)
+    item.push({
+      urut: sisa < 0 ? 3 : 4,
+      tingkat: sisa < 0 ? 'bahaya' : 'awas',
+      ikon: 'award',
+      judul: `${s.karyawan?.nama_lengkap || 'Karyawan'} — ${s.nama_sertifikat}`,
+      sub: sisa < 0 ? `Sertifikat kedaluwarsa ${Math.abs(sisa)} hari lalu` : `Sertifikat kedaluwarsa ${sisa} hari lagi`,
+      aksi: 'Buka', url: 'pelatihan.html'
+    })
+  })
+
+  if (!item.length) { kartu.style.display = 'none'; return }
+
+  item.sort((a, b) => a.urut - b.urut)
+  const perluTindak = item.filter(i => i.tingkat !== 'info').length
+  document.getElementById('pengingatCount').textContent = perluTindak || item.length
+  document.getElementById('pengingatCount').className = 'badge ' + (perluTindak ? 'badge-red' : 'badge-blue')
+
+  daftar.innerHTML = item.map(i => `
+    <li class="nag-row">
+      <div class="nag-pin ${i.tingkat}">${ic(i.ikon)}</div>
+      <div class="nag-teks">
+        <b>${escHtml(i.judul)}</b>
+        <div class="nag-sub ${i.tingkat}">${escHtml(i.sub)}</div>
+      </div>
+      ${i.aksi ? `<button class="nag-aksi" onclick="go('${i.url}')">${i.aksi}</button>` : ''}
+    </li>`).join('')
+
+  kartu.style.display = ''
+}
+
 function renderAbsensi (absen) {
   const circle = document.getElementById('absenCircle')
   const badge  = document.getElementById('absenBadge')
@@ -890,6 +1022,9 @@ async function init () {
 
   document.getElementById('loadingOverlay').style.display = 'none'
   cekFotoProfil()
+  // Pengingat dimuat setelah dashboard tampil & tak boleh menggagalkan halaman
+  // kalau querynya bermasalah — kartunya sekadar tak muncul.
+  loadPengingat().catch(e => console.warn('Pengingat gagal dimuat:', e))
 }
 
 // ---- Pengingat foto profil ----
