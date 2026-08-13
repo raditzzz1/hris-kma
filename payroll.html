@@ -10,6 +10,7 @@
   <title>Payroll — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -151,7 +152,11 @@
     @media print {
       * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
       body * { visibility:hidden; }
-      #printArea, #printArea * { visibility:visible; }
+      #printArea, #printArea *, #printBupot, #printBupot * { visibility:visible; }
+      #modalBupot { position:static !important; display:block !important; background:none !important; padding:0 !important; }
+      #modalBupot .modal { position:static !important; max-width:none !important; width:auto !important; max-height:none !important; margin:0 !important; box-shadow:none !important; border-radius:0 !important; }
+      #modalBupot .modal-head, #modalBupot .modal-foot, #bupotForm { display:none !important; }
+      #printBupot { position:absolute; left:0; top:0; width:100%; padding:1.5rem; }
       #modalSlip { position:static !important; display:block !important; background:none !important; padding:0 !important; }
       #modalSlip .modal { position:static !important; max-width:none !important; width:auto !important; max-height:none !important; margin:0 !important; box-shadow:none !important; border-radius:0 !important; }
       #modalSlip .modal-head, #modalSlip .modal-foot { display:none !important; }
@@ -241,6 +246,30 @@
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalSlip')">Tutup</button>
       <button class="btn-primary" onclick="window.print()"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V2h12v7"/><path d="M6 14h12v8H6z"/></svg> Cetak Slip</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Bukti Potong PPh 21 Tahunan (1721-A1) -->
+<div class="modal-overlay" id="modalBupot">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h3>Bukti Potong PPh 21 Tahunan</h3><button class="modal-close" onclick="cm('modalBupot')">×</button></div>
+    <div class="modal-body">
+      <div id="bupotForm" style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;">
+        <div style="flex:1;min-width:130px;">
+          <label style="display:block;font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:.3rem;">Tahun Pajak</label>
+          <select id="bupotTahun" onchange="buildBupot()" style="width:100%;padding:.55rem .7rem;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.875rem;"></select>
+        </div>
+        <div style="flex:2;min-width:200px;">
+          <label style="display:block;font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:.3rem;">Karyawan</label>
+          <select id="bupotKaryawan" onchange="buildBupot()" style="width:100%;padding:.55rem .7rem;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.875rem;"></select>
+        </div>
+      </div>
+      <div id="printBupot"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="cm('modalBupot')">Tutup</button>
+      <button class="btn-primary" onclick="window.print()"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V2h12v7"/><path d="M6 14h12v8H6z"/></svg> Cetak / PDF</button>
     </div>
   </div>
 </div>
@@ -413,10 +442,181 @@ async function renderPage() {
 // ============================================================
 // VIEW HR ADMIN
 // ============================================================
+// BUKTI POTONG PPh 21 TAHUNAN (Form 1721-A1)
+// ============================================================
+// Direkap dari slip bulanan yang SUDAH terbit sepanjang tahun. Angka bruto,
+// BPJS, dan PPh21 yang dipotong diambil apa adanya dari slip; PPh21 terutang
+// dihitung ulang atas dasar penghasilan setahun. Selisih keduanya ditampilkan
+// karena itulah yang perlu diselesaikan di akhir tahun (kurang/lebih potong)
+// -- terutama bila gaji berubah di tengah tahun.
+function pphProgresif (pkp) {
+  if (pkp <= 60000000)        return pkp * 0.05
+  if (pkp <= 250000000)       return 60000000*0.05 + (pkp-60000000)*0.15
+  if (pkp <= 500000000)       return 60000000*0.05 + 190000000*0.15 + (pkp-250000000)*0.25
+  if (pkp <= 5000000000)      return 60000000*0.05 + 190000000*0.15 + 250000000*0.25 + (pkp-500000000)*0.30
+  return 60000000*0.05 + 190000000*0.15 + 250000000*0.25 + 4500000000*0.30 + (pkp-5000000000)*0.35
+}
+
+let bupotSlip = []   // cache slip tahun terpilih
+
+async function openBupot () {
+  await muatIdentitasPemotong()
+  const selT = document.getElementById('bupotTahun')
+  const { data: per } = await sb.from('payroll_periode').select('tahun').order('tahun', { ascending: false })
+  const tahunAda = [...new Set((per || []).map(p => p.tahun))]
+  if (!tahunAda.length) tahunAda.push(new Date().getFullYear())
+  selT.innerHTML = tahunAda.map(t => `<option value="${t}">${t}</option>`).join('')
+
+  const { data: kar } = await sb.from('karyawan')
+    .select('id, nama_lengkap, nik, nik_ktp, npwp, alamat, status_ptkp, jabatan(nama)')
+    .order('nama_lengkap')
+  document.getElementById('bupotKaryawan').innerHTML =
+    (kar || []).map(k => `<option value="${k.id}">${escHtml(k.nama_lengkap)} (${escHtml(k.nik || '-')})</option>`).join('')
+  window.__bupotKar = kar || []
+
+  om('modalBupot')
+  buildBupot()
+}
+
+async function buildBupot () {
+  const area = document.getElementById('printBupot')
+  const tahun = parseInt(document.getElementById('bupotTahun').value, 10)
+  const idKar = document.getElementById('bupotKaryawan').value
+  const k = (window.__bupotKar || []).find(x => x.id === idKar)
+  if (!k || !tahun) { area.innerHTML = ''; return }
+
+  area.innerHTML = '<p style="font-size:.85rem;color:var(--muted);">Menghitung…</p>'
+
+  // Ambil semua slip milik karyawan ini pada tahun terpilih
+  const { data: slip, error } = await sb.from('slip_gaji')
+    .select('*, payroll_periode!inner(bulan, tahun, status)')
+    .eq('karyawan_id', idKar)
+    .eq('payroll_periode.tahun', tahun)
+
+  if (error) { area.innerHTML = `<p style="color:#dc2626;font-size:.85rem;">Gagal memuat: ${escHtml(error.message)}</p>`; return }
+  if (!slip || !slip.length) {
+    area.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">Belum ada slip gaji untuk ${k.nama_lengkap} di tahun ${tahun}.</p>`
+    return
+  }
+  bupotSlip = slip.sort((a, b) => a.payroll_periode.bulan - b.payroll_periode.bulan)
+
+  const jml = f => bupotSlip.reduce((s, x) => s + Number(x[f] || 0), 0)
+  const bulanKerja  = bupotSlip.length
+  const gajiPokok   = jml('gaji_pokok')
+  const tunjangan   = jml('total_tunjangan')
+  const bruto       = jml('total_pendapatan')
+  const bpjsKes     = jml('bpjs_kes_karyawan')
+  const bpjsJht     = jml('bpjs_jht_karyawan')
+  const bpjsJp      = jml('bpjs_jp_karyawan')
+  const bpjsTotal   = bpjsKes + bpjsJht + bpjsJp
+  const pphDipotong = jml('pph21')
+
+  // Biaya jabatan: 5% bruto, dibatasi Rp500.000 per bulan kerja
+  const biayaJabatan = Math.min(bruto * TARIF.BIAYA_JABATAN_PCT, TARIF.BIAYA_JABATAN_MAX * bulanKerja)
+  const netto = bruto - biayaJabatan - bpjsTotal
+  const ptkpStatus = k.status_ptkp || bupotSlip[bupotSlip.length - 1].status_ptkp || 'TK/0'
+  const ptkp = TARIF.PTKP[ptkpStatus] || TARIF.PTKP['TK/0']
+  const pkp  = Math.max(0, Math.floor((netto - ptkp) / 1000) * 1000)
+  const pphTerutang = Math.round(pphProgresif(pkp))
+  const selisih = pphTerutang - pphDipotong
+
+  const bulanTerbit = bupotSlip.map(s => BULAN_NAMA[s.payroll_periode.bulan]).join(', ')
+  const baris = (no, label, nilai, tebal) => `
+    <tr>
+      <td style="padding:4px 6px;border:1px solid #999;width:34px;text-align:center;">${no}</td>
+      <td style="padding:4px 6px;border:1px solid #999;${tebal ? 'font-weight:700;' : ''}">${label}</td>
+      <td style="padding:4px 6px;border:1px solid #999;text-align:right;white-space:nowrap;${tebal ? 'font-weight:700;' : ''}">${IDR(nilai)}</td>
+    </tr>`
+
+  area.innerHTML = `
+  <div style="font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#000;background:#fff;">
+    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:.5rem;margin-bottom:.8rem;">
+      <div style="font-size:13pt;font-weight:700;">BUKTI PEMOTONGAN PAJAK PENGHASILAN PASAL 21</div>
+      <div style="font-size:10pt;">Bagi Pegawai Tetap — Formulir 1721-A1</div>
+      <div style="font-size:10pt;margin-top:2px;">Masa Pajak: Januari–Desember ${tahun}</div>
+    </div>
+
+    <table style="width:100%;font-size:10pt;margin-bottom:.7rem;">
+      <tr><td style="width:135px;vertical-align:top;">Pemotong</td><td style="width:10px;">:</td>
+          <td>${escHtml(BUPOT_PERUSAHAAN.nama)}<br><span style="font-size:9pt;">${escHtml(BUPOT_PERUSAHAAN.alamat)}</span></td></tr>
+    </table>
+    <table style="width:100%;font-size:10pt;border-top:1px solid #999;padding-top:.4rem;margin-bottom:.8rem;">
+      <tr><td style="width:135px;">Nama Penerima</td><td style="width:10px;">:</td><td>${escHtml(k.nama_lengkap)}</td></tr>
+      <tr><td>NPWP</td><td>:</td><td>${escHtml(k.npwp || '-')}</td></tr>
+      <tr><td>NIK</td><td>:</td><td>${escHtml(k.nik_ktp || '-')}</td></tr>
+      <tr><td>Employee ID</td><td>:</td><td>${escHtml(k.nik || '-')}</td></tr>
+      <tr><td>Jabatan</td><td>:</td><td>${escHtml(k.jabatan?.nama || '-')}</td></tr>
+      <tr><td>Status PTKP</td><td>:</td><td>${escHtml(ptkpStatus)}</td></tr>
+      <tr><td>Masa Perolehan</td><td>:</td><td>${bulanKerja} bulan (${escHtml(bulanTerbit)})</td></tr>
+    </table>
+
+    <table style="width:100%;border-collapse:collapse;font-size:10pt;">
+      <tr style="background:#e8e8e8;">
+        <th style="padding:4px 6px;border:1px solid #999;">No</th>
+        <th style="padding:4px 6px;border:1px solid #999;text-align:left;">Uraian</th>
+        <th style="padding:4px 6px;border:1px solid #999;text-align:right;">Jumlah (Rp)</th>
+      </tr>
+      ${baris(1, 'Gaji / Upah Pokok', gajiPokok)}
+      ${baris(2, 'Tunjangan-tunjangan', tunjangan)}
+      ${baris(3, 'JUMLAH PENGHASILAN BRUTO (1+2)', bruto, true)}
+      ${baris(4, 'Biaya Jabatan (5%, maks. Rp500.000/bulan)', biayaJabatan)}
+      ${baris(5, 'Iuran BPJS Kesehatan (dibayar pegawai)', bpjsKes)}
+      ${baris(6, 'Iuran BPJS JHT (dibayar pegawai)', bpjsJht)}
+      ${baris(7, 'Iuran BPJS Jaminan Pensiun (dibayar pegawai)', bpjsJp)}
+      ${baris(8, 'JUMLAH PENGURANGAN (4+5+6+7)', biayaJabatan + bpjsTotal, true)}
+      ${baris(9, 'JUMLAH PENGHASILAN NETO (3−8)', netto, true)}
+      ${baris(10, `Penghasilan Tidak Kena Pajak (PTKP) — ${escHtml(ptkpStatus)}`, ptkp)}
+      ${baris(11, 'PENGHASILAN KENA PAJAK (9−10)', pkp, true)}
+      ${baris(12, 'PPh Pasal 21 TERUTANG setahun', pphTerutang, true)}
+      ${baris(13, 'PPh Pasal 21 yang SUDAH dipotong', pphDipotong)}
+      <tr>
+        <td style="padding:4px 6px;border:1px solid #999;text-align:center;">14</td>
+        <td style="padding:4px 6px;border:1px solid #999;font-weight:700;">
+          ${selisih > 0 ? 'PPh 21 KURANG dipotong' : selisih < 0 ? 'PPh 21 LEBIH dipotong' : 'Selisih'}
+        </td>
+        <td style="padding:4px 6px;border:1px solid #999;text-align:right;font-weight:700;${selisih !== 0 ? 'color:#b91c1c;' : ''}">
+          ${IDR(Math.abs(selisih))}
+        </td>
+      </tr>
+    </table>
+
+    ${selisih !== 0 ? `<p style="font-size:9pt;margin-top:.5rem;color:#b91c1c;">
+      Catatan: terdapat selisih karena PPh 21 bulanan dihitung dengan asumsi penghasilan tetap sepanjang tahun.
+      Selisih ini lazimnya diselesaikan pada pemotongan masa Desember.</p>` : ''}
+
+    <div style="display:flex;justify-content:flex-end;margin-top:1.6rem;font-size:10pt;">
+      <div style="text-align:center;width:46%;">
+        <div>${escHtml(BUPOT_PERUSAHAAN.kota)}, ${tglIndo(tanggalLokal(), { day:'numeric', month:'long', year:'numeric' })}</div>
+        <div style="margin-top:.2rem;">Pemotong Pajak,</div>
+        <div style="font-weight:700;text-decoration:underline;margin-top:4rem;">${escHtml(BUPOT_PERUSAHAAN.penandatangan)}</div>
+        <div style="font-style:italic;font-size:9pt;">${escHtml(BUPOT_PERUSAHAAN.jabatan)}</div>
+      </div>
+    </div>
+    <p style="font-size:8.5pt;color:#555;margin-top:1rem;border-top:1px solid #ccc;padding-top:.4rem;">
+      Dokumen ini dihasilkan otomatis dari data payroll HRIS sebagai dokumen kerja.
+      Untuk pelaporan resmi (e-Bupot/e-SPT), cocokkan kembali dengan ketentuan pajak yang berlaku.
+    </p>
+  </div>`
+}
+
+// Identitas pemotong diambil dari tabel `pengaturan`; nilai di bawah dipakai
+// sebagai cadangan bila pengaturan belum termuat.
+let BUPOT_PERUSAHAAN = { nama:'-', alamat:'-', kota:'-', penandatangan:'-', jabatan:'-' }
+async function muatIdentitasPemotong () {
+  const { data } = await sb.from('pengaturan').select('kunci, nilai')
+  const P = Object.fromEntries((data || []).map(r => [r.kunci, r.nilai]))
+  BUPOT_PERUSAHAAN = {
+    nama: P.perusahaan_nama || '-', alamat: P.perusahaan_alamat || '-',
+    kota: P.perusahaan_kota || '-', penandatangan: P.penandatangan_nama || '-',
+    jabatan: P.penandatangan_jabatan || '-'
+  }
+}
+
 async function renderHR() {
   document.getElementById('topBc').textContent = 'Generate & kelola payroll bulanan'
   document.getElementById('topActions').innerHTML = `
     <div style="display:flex;gap:.6rem;">
+      <button class="btn-secondary" onclick="openBupot()"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h6"/></svg> Bukti Potong</button>
       <button class="btn-secondary" onclick="om('modalKomp');loadKompModal()"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg> Komponen Gaji</button>
       <button class="btn-primary"   onclick="om('modalPeriode')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Periode Baru</button>
     </div>`
