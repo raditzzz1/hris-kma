@@ -331,6 +331,7 @@
           <button class="tab active" data-abtab="lembur" onclick="switchAbsTab('lembur')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lembur Saya</button>
           <button class="tab" data-abtab="riwayat" onclick="switchAbsTab('riwayat')"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Riwayat Absensi</button>
           <button class="tab" data-abtab="izin" onclick="switchAbsTab('izin')"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar</button>
+          <button class="tab" data-abtab="koreksi" onclick="switchAbsTab('koreksi')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Koreksi Absen</button>
         </div>
 
         <!-- Panel: Lembur Saya -->
@@ -355,6 +356,26 @@
         <!-- Panel: Izin Absen Luar Lokasi Saya -->
         <div class="tab-panel" id="abtab-izin">
           <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Tipe</th><th>Alasan</th><th>Status</th></tr></thead><tbody id="izinMyBody"></tbody></table></div>
+        </div>
+
+        <div class="tab-panel" id="abtab-koreksi">
+          <div style="padding:.9rem 1.25rem;background:var(--bg);border-bottom:1px solid var(--border);">
+            <p style="font-size:.8rem;color:var(--muted);margin-bottom:.7rem;">
+              Lupa absen atau jamnya keliru? Ajukan perbaikan di sini — HR akan meninjau sebelum data absensi diubah.
+            </p>
+            <div class="toolbar" style="align-items:flex-end;">
+              <div><label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.25rem;">Tanggal</label>
+                <input type="date" class="inp" id="korTanggal"></div>
+              <div><label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.25rem;">Jam Masuk</label>
+                <input type="time" class="inp" id="korMasuk"></div>
+              <div><label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.25rem;">Jam Keluar</label>
+                <input type="time" class="inp" id="korKeluar"></div>
+              <div style="flex:1;min-width:180px;"><label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.25rem;">Alasan</label>
+                <input type="text" class="inp" id="korAlasan" placeholder="Mis. lupa absen keluar" style="width:100%;"></div>
+              <button class="btn-primary" id="btnKirimKoreksi" onclick="kirimKoreksi()">Ajukan</button>
+            </div>
+          </div>
+          <div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Usulan Masuk</th><th>Usulan Keluar</th><th>Alasan</th><th>Status</th></tr></thead><tbody id="korMyBody"></tbody></table></div>
         </div>
       </div>
 
@@ -419,6 +440,12 @@
       <div class="card" style="margin-top:1rem;">
         <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar — Persetujuan</h3></div>
         <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Tipe</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="izinAdminBody"></tbody></table></div>
+      </div>
+
+      <!-- Koreksi Absen — Persetujuan (HR) -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Koreksi Absen — Persetujuan</h3></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Usulan Masuk</th><th>Usulan Keluar</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korAdminBody"></tbody></table></div>
       </div>
 
       <!-- Lembur Karyawan (HR) -->
@@ -1196,6 +1223,133 @@ async function rejectIzin (id) {
   toast('Izin ditolak'); loadIzinAdmin()
 }
 
+// ============================================================
+// KOREKSI ABSEN — karyawan mengajukan, HR memutuskan
+// ============================================================
+// Data absensi menyangkut gaji, jadi karyawan TIDAK boleh mengubahnya
+// sendiri. Alurnya: ajukan -> HR tinjau -> baru record absensi diperbarui.
+function korBadge (s) {
+  const w = { menunggu:['#fef9c3','#a16207'], disetujui:['#dcfce7','#15803d'], ditolak:['#fee2e2','#dc2626'] }[s] || ['#f1f5f9','#64748b']
+  const t = { menunggu:'Menunggu', disetujui:'Disetujui', ditolak:'Ditolak' }[s] || s
+  return `<span style="background:${w[0]};color:${w[1]};padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:600;">${t}</span>`
+}
+
+async function kirimKoreksi () {
+  const tanggal = document.getElementById('korTanggal').value
+  const masuk   = document.getElementById('korMasuk').value || null
+  const keluar  = document.getElementById('korKeluar').value || null
+  const alasan  = document.getElementById('korAlasan').value.trim()
+  const btn     = document.getElementById('btnKirimKoreksi')
+
+  if (!tanggal) { toast('Pilih tanggal yang ingin dikoreksi.', 'error'); return }
+  if (!masuk && !keluar) { toast('Isi minimal salah satu jam (masuk atau keluar).', 'error'); return }
+  if (!alasan) { toast('Alasan wajib diisi.', 'error'); return }
+  if (selisihHari(tanggal, tanggalLokal()) < 0) { toast('Tanggal tidak boleh di masa depan.', 'error'); return }
+
+  btn.disabled = true; btn.textContent = 'Mengirim...'
+  const { error } = await sb.from('koreksi_absen').insert({
+    karyawan_id: currentUser.id, tanggal,
+    jam_masuk_usulan: masuk, jam_keluar_usulan: keluar, alasan
+  })
+  btn.disabled = false; btn.textContent = 'Ajukan'
+  if (error) { toast('Gagal mengirim: ' + error.message, 'error'); return }
+
+  toast('Pengajuan koreksi terkirim — menunggu persetujuan HR')
+  document.getElementById('korAlasan').value = ''
+  document.getElementById('korMasuk').value = ''
+  document.getElementById('korKeluar').value = ''
+  loadKoreksiSaya()
+}
+
+async function loadKoreksiSaya () {
+  const body = document.getElementById('korMyBody')
+  if (!body) return
+  const { data } = await sb.from('koreksi_absen').select('*')
+    .eq('karyawan_id', currentUser.id).order('created_at', { ascending: false }).limit(50)
+  const list = data || []
+  body.innerHTML = list.length ? list.map(k => `
+    <tr><td>${fmtTgl(k.tanggal)}</td>
+    <td>${(k.jam_masuk_usulan || '—').slice(0,5)}</td>
+    <td>${(k.jam_keluar_usulan || '—').slice(0,5)}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${escHtml(k.alasan)}${k.catatan_hr ? `<br><i style="font-size:.75rem;">Catatan HR: ${escHtml(k.catatan_hr)}</i>` : ''}</td>
+    <td>${korBadge(k.status)}</td></tr>`).join('')
+    : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan koreksi</td></tr>`
+}
+
+async function loadKoreksiAdmin () {
+  const body = document.getElementById('korAdminBody')
+  if (!body) return
+  const { data } = await sb.from('koreksi_absen')
+    .select('*, karyawan:karyawan_id(nama_lengkap, nik)')
+    .order('status', { ascending: true }).order('created_at', { ascending: false }).limit(100)
+  const list = data || []
+  body.innerHTML = list.length ? list.map(k => `
+    <tr><td><div class="k-cell"><div class="k-av">${getInit(k.karyawan?.nama_lengkap)}</div><div><div class="k-name">${escHtml(k.karyawan?.nama_lengkap || '—')}</div><div class="k-nik">${escHtml(k.karyawan?.nik || '')}</div></div></div></td>
+    <td>${fmtTgl(k.tanggal)}</td>
+    <td>${(k.jam_masuk_usulan || '—').slice(0,5)}</td>
+    <td>${(k.jam_keluar_usulan || '—').slice(0,5)}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${escHtml(k.alasan)}</td>
+    <td>${korBadge(k.status)}</td>
+    <td>${k.status === 'menunggu'
+      ? `<button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#16a34a;border-color:#bbf7d0;" onclick="putusKoreksi('${k.id}', true)">Setujui</button>
+         <button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#dc2626;border-color:#fecaca;" onclick="putusKoreksi('${k.id}', false)">Tolak</button>`
+      : '—'}</td></tr>`).join('')
+    : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan koreksi</td></tr>`
+}
+
+// Gabungkan tanggal + jam jadi timestamp waktu LOKAL, lalu simpan sebagai ISO
+// (kolom absensi bertipe TIMESTAMPTZ). Jangan rangkai string manual -- itu
+// sumber bug zona waktu yang pernah kita alami.
+function jamKeTimestamp (tanggal, jam) {
+  if (!jam) return null
+  return new Date(`${tanggal}T${jam.slice(0,5)}:00`).toISOString()
+}
+
+async function putusKoreksi (id, setuju) {
+  const { data: rows } = await sb.from('koreksi_absen').select('*').eq('id', id).limit(1)
+  const k = rows && rows[0]
+  if (!k) { toast('Pengajuan tidak ditemukan.', 'error'); return }
+
+  let catatan = null
+  if (!setuju) {
+    catatan = prompt('Alasan penolakan (opsional):') || null
+  } else {
+    // Terapkan ke data absensi. UNIQUE(karyawan_id, tanggal) -> pakai upsert.
+    const { data: kar } = await sb.from('karyawan')
+      .select('jam_masuk_standar, jam_kerja_fleksibel').eq('id', k.karyawan_id).single()
+
+    const masukTs  = jamKeTimestamp(k.tanggal, k.jam_masuk_usulan)
+    const keluarTs = jamKeTimestamp(k.tanggal, k.jam_keluar_usulan)
+
+    const baris = { karyawan_id: k.karyawan_id, tanggal: k.tanggal }
+    if (masukTs)  baris.waktu_masuk  = masukTs
+    if (keluarTs) baris.waktu_keluar = keluarTs
+    if (masukTs) {
+      baris.status = hitungStatusMasuk(kar || {}, new Date(masukTs))
+    }
+    if (masukTs && keluarTs) {
+      baris.durasi_kerja_menit = Math.max(0, Math.round((new Date(keluarTs) - new Date(masukTs)) / 60000))
+    }
+    baris.keterangan = 'Koreksi disetujui HR: ' + k.alasan
+
+    const { error: eAbs } = await sb.from('absensi')
+      .upsert(baris, { onConflict: 'karyawan_id,tanggal' })
+    if (eAbs) { toast('Gagal memperbarui absensi: ' + eAbs.message, 'error'); return }
+  }
+
+  const { error } = await sb.from('koreksi_absen').update({
+    status: setuju ? 'disetujui' : 'ditolak',
+    catatan_hr: catatan,
+    diproses_oleh: currentUser.id,
+    diproses_pada: new Date().toISOString()
+  }).eq('id', id)
+  if (error) { toast('Gagal: ' + error.message, 'error'); return }
+
+  toast(setuju ? 'Koreksi disetujui & absensi diperbarui' : 'Koreksi ditolak')
+  loadKoreksiAdmin()
+  if (typeof loadAdminAbsensi === 'function') loadAdminAbsensi()
+}
+
 // --- HR: log lembur ---
 async function loadLemburAdmin () {
   const { data } = await sb.from('lembur').select('*, karyawan(nama_lengkap,nik)').order('tanggal', { ascending:false }).limit(200)
@@ -1293,6 +1447,7 @@ async function init () {
     await loadAdminAbsensi()
     await loadIzinAdmin()
     await loadLemburAdmin()
+    await loadKoreksiAdmin()
     renderHariLiburAdmin()
   } else {
     startGPS()
@@ -1312,6 +1467,8 @@ async function init () {
     // Muat izin absen luar (set izinLuarAktif utk hari ini) + daftar pengajuan & lembur
     await loadIzinLuar()
     await loadLemburMy()
+    document.getElementById('korTanggal').value = today
+    await loadKoreksiSaya()
     renderAbsenCard(absensiHariIni)
     updateAbsenButton()
     await renderKalender()
@@ -1331,7 +1488,7 @@ function closeSidebar()   { document.body.classList.remove('nav-open') }
 // Tab Lembur / Riwayat / Izin Absen Luar (view karyawan)
 function switchAbsTab (name) {
   document.querySelectorAll('.tab[data-abtab]').forEach(t => t.classList.toggle('active', t.dataset.abtab === name))
-  ;['lembur','riwayat','izin'].forEach(n => {
+  ;['lembur','riwayat','izin','koreksi'].forEach(n => {
     const p = document.getElementById('abtab-' + n)
     if (p) p.classList.toggle('active', n === name)
   })
