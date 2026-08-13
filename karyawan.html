@@ -422,8 +422,64 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modalDetail')">Tutup</button>
+      <button class="btn-secondary" id="btnDetailDokumen" onclick="openDokumen()"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Dokumen</button>
       <button class="btn-secondary" id="btnDetailSurat" onclick="openSurat()" style="display:none;"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg> Buat Surat</button>
       <button class="btn-submit" id="btnDetailEdit" onclick="openEditFromDetail()"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ARSIP DOKUMEN ===== -->
+<div class="modal-overlay" id="modalDokumen">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="dokJudul">Arsip Dokumen</h3>
+      <button class="modal-close" onclick="closeModal('modalDokumen')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem;">
+        <p style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.6rem;">Unggah Dokumen Baru</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Jenis</label>
+            <select class="form-select" id="dokJenis">
+              <option value="kontrak">Kontrak Kerja</option>
+              <option value="ktp">KTP</option>
+              <option value="npwp">NPWP</option>
+              <option value="ijazah">Ijazah</option>
+              <option value="sertifikat">Sertifikat</option>
+              <option value="bpjs">BPJS</option>
+              <option value="surat">Surat</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Judul</label>
+            <input class="form-input" type="text" id="dokJudulInput" placeholder="Mis. PKWT III 2026">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Berlaku Sampai <span style="font-weight:400;color:var(--muted);">(opsional)</span></label>
+            <input class="form-input" type="date" id="dokBerlaku">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Berkas</label>
+            <input class="form-input" type="file" id="dokFile" accept=".pdf,.jpg,.jpeg,.png,.webp">
+            <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">PDF/JPG/PNG, maksimal 5 MB.</p>
+          </div>
+        </div>
+        <button class="btn-submit" id="btnUploadDok" onclick="uploadDokumen()" style="margin-top:.6rem;">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Unggah
+        </button>
+      </div>
+
+      <p style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.5rem;">Dokumen Tersimpan</p>
+      <div id="dokList"><p style="font-size:.82rem;color:var(--muted);">Memuat…</p></div>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:.8rem;">
+        🔒 Berkas disimpan di penyimpanan privat. Tautan unduhan berlaku 60 detik dan tak bisa dibuka tanpa login.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalDokumen')">Tutup</button>
     </div>
   </div>
 </div>
@@ -994,6 +1050,133 @@ function openDetail (id) {
 }
 
 let editingFromDetail = false
+// ============================================================
+// ARSIP DOKUMEN KARYAWAN
+// ============================================================
+// Bucket 'dokumen-karyawan' bersifat PRIVAT (beda dari foto profil yang
+// publik) karena isinya KTP, kontrak, ijazah. Karena itu berkas tak punya
+// URL publik — diunduh lewat signed URL berumur pendek.
+const LABEL_DOK = { kontrak:'Kontrak Kerja', ktp:'KTP', npwp:'NPWP', ijazah:'Ijazah',
+  sertifikat:'Sertifikat', bpjs:'BPJS', surat:'Surat', foto:'Foto', lainnya:'Lainnya' }
+const MAKS_DOK = 5 * 1024 * 1024
+
+function openDokumen () {
+  if (!suratKaryw) return
+  closeModal('modalDetail')
+  document.getElementById('dokJudul').textContent = 'Arsip Dokumen — ' + suratKaryw.nama_lengkap
+  document.getElementById('dokJudulInput').value = ''
+  document.getElementById('dokBerlaku').value = ''
+  document.getElementById('dokFile').value = ''
+  openModal('modalDokumen')
+  loadDokumen()
+}
+
+function ukuranRingkas (b) {
+  if (!b) return ''
+  return b < 1024 * 1024 ? Math.round(b / 1024) + ' KB'
+                         : (b / 1024 / 1024).toFixed(1) + ' MB'
+}
+
+async function loadDokumen () {
+  const wadah = document.getElementById('dokList')
+  const { data, error } = await sb.from('dokumen_karyawan')
+    .select('*').eq('karyawan_id', suratKaryw.id).order('created_at', { ascending: false })
+
+  if (error) { wadah.innerHTML = `<p style="font-size:.82rem;color:#dc2626;">Gagal memuat: ${escHtml(error.message)}</p>`; return }
+  if (!data || !data.length) {
+    wadah.innerHTML = '<p style="font-size:.82rem;color:var(--muted);">Belum ada dokumen tersimpan.</p>'
+    return
+  }
+
+  const hariIni = tanggalLokal()
+  wadah.innerHTML = data.map(d => {
+    let ket = ''
+    if (d.berlaku_sampai) {
+      const sisa = selisihHari(hariIni, d.berlaku_sampai)
+      ket = sisa < 0
+        ? `<span style="color:#dc2626;font-weight:600;">Kedaluwarsa ${Math.abs(sisa)} hari lalu</span>`
+        : `Berlaku s/d ${tglIndo(d.berlaku_sampai)}`
+    }
+    return `
+    <div style="display:flex;align-items:center;gap:.8rem;padding:.7rem 0;border-bottom:1px solid var(--border);">
+      <div style="width:34px;height:34px;border-radius:9px;background:var(--pale);color:var(--deep);display:grid;place-items:center;flex-shrink:0;">
+        <svg class="ic" viewBox="0 0 24 24" style="width:1rem;height:1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.84rem;font-weight:600;color:var(--navy);">${escHtml(d.judul)}</div>
+        <div style="font-size:.72rem;color:var(--muted);">
+          ${escHtml(LABEL_DOK[d.jenis] || d.jenis)} · ${tglIndo(String(d.created_at).slice(0,10))}
+          ${d.ukuran_byte ? ' · ' + ukuranRingkas(d.ukuran_byte) : ''} ${ket ? ' · ' + ket : ''}
+        </div>
+      </div>
+      <button class="btn-secondary" style="padding:.35rem .7rem;font-size:.75rem;" onclick="unduhDokumen('${encodeURIComponent(d.path)}')">Unduh</button>
+      ${isAdmin ? `<button class="btn-secondary" style="padding:.35rem .7rem;font-size:.75rem;color:#dc2626;border-color:#fecaca;" onclick="hapusDokumen('${d.id}','${encodeURIComponent(d.path)}')">Hapus</button>` : ''}
+    </div>`
+  }).join('')
+}
+
+async function uploadDokumen () {
+  const btn   = document.getElementById('btnUploadDok')
+  const file  = document.getElementById('dokFile').files[0]
+  const judul = document.getElementById('dokJudulInput').value.trim()
+  const jenis = document.getElementById('dokJenis').value
+  const berlaku = document.getElementById('dokBerlaku').value || null
+
+  if (!file)  { toast('Pilih berkas dulu.', 'error'); return }
+  if (!judul) { toast('Judul dokumen wajib diisi.', 'error'); return }
+  if (file.size > MAKS_DOK) { toast('Ukuran berkas melebihi 5 MB.', 'error'); return }
+
+  btn.disabled = true; btn.textContent = 'Mengunggah...'
+  // Folder = id karyawan, sesuai policy storage (pemilik atau HR Admin)
+  const aman = file.name.replace(/[^\w.\-]+/g, '_')
+  const path = `${suratKaryw.id}/${Date.now()}-${aman}`
+
+  const { error: upErr } = await sb.storage.from('dokumen-karyawan')
+    .upload(path, file, { contentType: file.type || 'application/octet-stream' })
+  if (upErr) {
+    toast('Gagal mengunggah: ' + upErr.message, 'error')
+    btn.disabled = false; btn.innerHTML = 'Unggah'; return
+  }
+
+  const { error: dbErr } = await sb.from('dokumen_karyawan').insert({
+    karyawan_id: suratKaryw.id, jenis, judul, path,
+    nama_file: file.name, ukuran_byte: file.size,
+    berlaku_sampai: berlaku, diunggah_oleh: currentUser.id
+  })
+  if (dbErr) {
+    // Jangan tinggalkan berkas yatim di storage bila pencatatan gagal
+    await sb.storage.from('dokumen-karyawan').remove([path])
+    toast('Gagal mencatat dokumen: ' + dbErr.message, 'error')
+    btn.disabled = false; btn.innerHTML = 'Unggah'; return
+  }
+
+  toast('Dokumen tersimpan.', 'success')
+  document.getElementById('dokFile').value = ''
+  document.getElementById('dokJudulInput').value = ''
+  document.getElementById('dokBerlaku').value = ''
+  btn.disabled = false
+  btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Unggah'
+  loadDokumen()
+}
+
+async function unduhDokumen (pathEnc) {
+  const path = decodeURIComponent(pathEnc)
+  const { data, error } = await sb.storage.from('dokumen-karyawan').createSignedUrl(path, 60)
+  if (error || !data?.signedUrl) { toast('Gagal membuka berkas: ' + (error?.message || ''), 'error'); return }
+  window.open(data.signedUrl, '_blank')
+}
+
+async function hapusDokumen (id, pathEnc) {
+  if (!isAdmin) return
+  if (!confirm('Hapus dokumen ini? Berkasnya ikut terhapus permanen.')) return
+  const path = decodeURIComponent(pathEnc)
+  const { error } = await sb.from('dokumen_karyawan').delete().eq('id', id)
+  if (error) { toast('Gagal menghapus: ' + error.message, 'error'); return }
+  await sb.storage.from('dokumen-karyawan').remove([path])
+  toast('Dokumen dihapus.', 'success')
+  loadDokumen()
+}
+
 // ============================================================
 // GENERATOR SURAT — PKWT & Surat Keterangan Kerja
 // ============================================================
