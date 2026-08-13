@@ -10,6 +10,7 @@
   <title>Data Karyawan — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -448,6 +449,45 @@
             <label class="form-label">Alamat</label>
             <textarea class="form-textarea" id="editAlamat" placeholder="Alamat lengkap..."></textarea>
           </div>
+
+          <div class="form-group full" style="border-top:1px solid var(--border);padding-top:.9rem;margin-top:.2rem;">
+            <p style="font-size:.78rem;font-weight:700;color:var(--navy);">Identitas &amp; Administrasi</p>
+            <p style="font-size:.72rem;color:var(--muted);margin-top:.15rem;">Dipakai untuk kontrak kerja, pelaporan pajak, dan klaim BPJS.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">NIK KTP</label>
+            <input class="form-input" type="text" id="editNikKtp" inputmode="numeric" maxlength="16" placeholder="16 digit sesuai KTP">
+            <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">Berbeda dari NIK karyawan di atas. Wajib untuk pembuatan kontrak (PKWT).</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">NPWP</label>
+            <input class="form-input" type="text" id="editNpwp" placeholder="Kosongkan bila belum punya">
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. BPJS Kesehatan</label>
+            <input class="form-input" type="text" id="editBpjsKes" placeholder="Nomor kartu">
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. BPJS Ketenagakerjaan</label>
+            <input class="form-input" type="text" id="editBpjsTk" placeholder="Nomor kepesertaan">
+          </div>
+
+          <div class="form-group full" style="border-top:1px solid var(--border);padding-top:.9rem;margin-top:.2rem;">
+            <p style="font-size:.78rem;font-weight:700;color:var(--navy);">Kontak Darurat</p>
+            <p style="font-size:.72rem;color:var(--muted);margin-top:.15rem;">Dihubungi bila terjadi keadaan darurat saat bekerja.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nama</label>
+            <input class="form-input" type="text" id="editDaruratNama" style="text-transform:uppercase;" oninput="uppercaseInput(this)" placeholder="Nama yang dihubungi">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hubungan</label>
+            <input class="form-input" type="text" id="editDaruratRelasi" placeholder="Mis. Orang tua / Pasangan">
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. HP Kontak Darurat</label>
+            <input class="form-input" type="text" id="editDaruratHp" placeholder="08xxxxxxxxxx">
+          </div>
         </div>
       </div>
 
@@ -467,13 +507,43 @@
             </select>
           </div>
           <div class="form-group">
+            <label class="form-label">Department</label>
+            <input class="form-input" type="text" id="editDepartment" placeholder="Mis. Creative">
+            <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">Lebih spesifik dari divisi. Tercetak di kontrak.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Atasan Langsung</label>
+            <input class="form-input" type="text" id="editAtasan" placeholder="Nama atasan">
+          </div>
+          <div class="form-group">
             <label class="form-label">Tipe Kontrak</label>
-            <select class="form-select" id="editKontrak">
+            <select class="form-select" id="editKontrak" onchange="toggleFieldKontrak()">
               <option value="tetap">Tetap</option>
               <option value="kontrak">Kontrak</option>
               <option value="magang">Magang</option>
               <option value="freelance">Freelance</option>
             </select>
+          </div>
+          <div class="form-group" id="grpPkwtKe" style="display:none;">
+            <label class="form-label">PKWT ke-</label>
+            <select class="form-select" id="editPkwtKe">
+              <option value="">—</option>
+              <option value="1">I (pertama)</option>
+              <option value="2">II (kedua)</option>
+              <option value="3">III (ketiga)</option>
+              <option value="4">IV (keempat)</option>
+            </select>
+          </div>
+          <div class="form-group" id="grpMulaiKontrak" style="display:none;">
+            <label class="form-label">Kontrak Mulai</label>
+            <input class="form-input" type="date" id="editMulaiKontrak">
+          </div>
+          <div class="form-group" id="grpAkhirKontrak" style="display:none;">
+            <label class="form-label">Kontrak Berakhir</label>
+            <input class="form-input" type="date" id="editAkhirKontrak" onchange="hitungSisaKontrak()">
+            <p id="infoSisaKontrak" style="font-size:.72rem;margin-top:.35rem;color:var(--muted);">
+              Wajib diisi untuk karyawan kontrak — dipakai pengingat perpanjangan &amp; pembuatan PKWT.
+            </p>
           </div>
           <div class="form-group">
             <label class="form-label">Status</label>
@@ -858,6 +928,14 @@ async function openEdit (id) {
   document.getElementById('editTglLahir').value   = k.tanggal_lahir  || ''
   document.getElementById('editAlamat').value     = k.alamat         || ''
   document.getElementById('editNik').disabled     = !isAdmin  // karyawan biasa tidak bisa edit NIK
+  // Identitas & administrasi (boleh diisi karyawan sendiri)
+  document.getElementById('editNikKtp').value        = k.nik_ktp               || ''
+  document.getElementById('editNpwp').value          = k.npwp                  || ''
+  document.getElementById('editBpjsKes').value       = k.no_bpjs_kesehatan     || ''
+  document.getElementById('editBpjsTk').value        = k.no_bpjs_tk            || ''
+  document.getElementById('editDaruratNama').value   = k.kontak_darurat_nama   || ''
+  document.getElementById('editDaruratRelasi').value = k.kontak_darurat_relasi || ''
+  document.getElementById('editDaruratHp').value     = k.kontak_darurat_hp     || ''
 
   // Foto profil
   editFotoUrl = k.foto_url || null
@@ -883,6 +961,13 @@ async function openEdit (id) {
     document.getElementById('editTipeGaji').value  = k.tipe_gaji || 'bulanan'
     document.getElementById('editTarifJam').value  = k.tarif_per_jam || 0
     document.getElementById('grpTarif').style.display = (k.tipe_gaji === 'per_jam') ? '' : 'none'
+    // Data kontrak
+    document.getElementById('editDepartment').value   = k.department              || ''
+    document.getElementById('editAtasan').value       = k.atasan_langsung         || ''
+    document.getElementById('editPkwtKe').value       = k.pkwt_ke                 || ''
+    document.getElementById('editMulaiKontrak').value = k.tanggal_mulai_kontrak   || ''
+    document.getElementById('editAkhirKontrak').value = k.tanggal_berakhir_kontrak|| ''
+    toggleFieldKontrak()
   }
 
   // Reset ke tab pertama
@@ -892,6 +977,45 @@ async function openEdit (id) {
   document.querySelector('.tab-btn').classList.add('active')
 
   openModal('modalEdit')
+}
+
+// Isian masa kontrak hanya relevan untuk karyawan non-tetap (PKWT/magang/
+// freelance). Untuk karyawan tetap disembunyikan agar form tidak ramai.
+function toggleFieldKontrak () {
+  const tipe = document.getElementById('editKontrak')?.value
+  const perluKontrak = tipe && tipe !== 'tetap'
+  ;['grpPkwtKe', 'grpMulaiKontrak', 'grpAkhirKontrak'].forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.style.display = perluKontrak ? '' : 'none'
+  })
+  if (perluKontrak) hitungSisaKontrak()
+}
+
+// Tampilkan sisa masa kontrak begitu tanggal diisi, supaya HR langsung sadar
+// kalau kontraknya sudah dekat/lewat (risiko PKWT berubah jadi PKWTT).
+function hitungSisaKontrak () {
+  const info = document.getElementById('infoSisaKontrak')
+  const nilai = document.getElementById('editAkhirKontrak')?.value
+  if (!info) return
+  if (!nilai) {
+    info.textContent = 'Wajib diisi untuk karyawan kontrak — dipakai pengingat perpanjangan & pembuatan PKWT.'
+    info.style.color = 'var(--muted)'
+    return
+  }
+  const hari = Math.round((new Date(nilai + 'T00:00:00') - new Date(tanggalLokal() + 'T00:00:00')) / 86400000)
+  if (hari < 0) {
+    info.textContent = `⚠ Sudah lewat ${Math.abs(hari)} hari. Segera perpanjang atau akhiri secara resmi.`
+    info.style.color = '#dc2626'
+  } else if (hari <= 30) {
+    info.textContent = `⚠ Berakhir dalam ${hari} hari. Beri tahu karyawan paling lambat 14 hari sebelumnya.`
+    info.style.color = '#dc2626'
+  } else if (hari <= 60) {
+    info.textContent = `Berakhir dalam ${hari} hari — siapkan keputusan perpanjangan.`
+    info.style.color = '#a16207'
+  } else {
+    info.textContent = `Berakhir dalam ${hari} hari.`
+    info.style.color = 'var(--muted)'
+  }
 }
 
 // ---- Foto profil ----
@@ -943,6 +1067,14 @@ async function saveEdit () {
     tempat_lahir:  document.getElementById('editTempatLahir').value.trim() || null,
     tanggal_lahir: document.getElementById('editTglLahir').value     || null,
     alamat:        document.getElementById('editAlamat').value.trim()|| null,
+    // Identitas & administrasi — boleh diisi karyawan sendiri (self-service)
+    nik_ktp:               document.getElementById('editNikKtp').value.trim()        || null,
+    npwp:                  document.getElementById('editNpwp').value.trim()          || null,
+    no_bpjs_kesehatan:     document.getElementById('editBpjsKes').value.trim()       || null,
+    no_bpjs_tk:            document.getElementById('editBpjsTk').value.trim()        || null,
+    kontak_darurat_nama:   document.getElementById('editDaruratNama').value.trim()   || null,
+    kontak_darurat_relasi: document.getElementById('editDaruratRelasi').value.trim() || null,
+    kontak_darurat_hp:     document.getElementById('editDaruratHp').value.trim()     || null,
   }
 
   if (isAdmin) {
@@ -960,6 +1092,20 @@ async function saveEdit () {
     payload.wfh_sabtu           = document.getElementById('editWfhSabtu').value === 'true'
     payload.tipe_gaji           = document.getElementById('editTipeGaji').value || 'bulanan'
     payload.tarif_per_jam       = parseFloat(document.getElementById('editTarifJam').value) || 0
+    // Data kontrak (hanya HR). Karyawan "tetap" tak punya masa berlaku ->
+    // dikosongkan supaya tak ikut terbaca pengingat kontrak habis.
+    const tipeKontrak = payload.tipe_kontrak
+    payload.department      = document.getElementById('editDepartment').value.trim() || null
+    payload.atasan_langsung = document.getElementById('editAtasan').value.trim()      || null
+    if (tipeKontrak === 'tetap') {
+      payload.pkwt_ke = null
+      payload.tanggal_mulai_kontrak = null
+      payload.tanggal_berakhir_kontrak = null
+    } else {
+      payload.pkwt_ke = parseInt(document.getElementById('editPkwtKe').value, 10) || null
+      payload.tanggal_mulai_kontrak    = document.getElementById('editMulaiKontrak').value || null
+      payload.tanggal_berakhir_kontrak = document.getElementById('editAkhirKontrak').value || null
+    }
   }
 
   // Foto profil: upload bila ada file baru, atau set null bila dihapus
