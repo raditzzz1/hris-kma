@@ -165,6 +165,45 @@
     .modal-body { overflow-y: auto; padding: 1.5rem; flex: 1; }
     .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
 
+    /* ===== Dokumen surat (PKWT / Keterangan Kerja) ===== */
+    .surat {
+      font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.5;
+      color: #000; background: #fff; text-align: justify;
+      border: 1px solid var(--border); border-radius: 10px; padding: 1.6rem;
+    }
+    .surat .kop { display: flex; align-items: center; gap: .9rem; border: 2px solid #000; padding: .5rem .8rem; }
+    .surat .kop img { width: 54px; height: 54px; object-fit: contain; }
+    .surat .kop-teks { flex: 1; text-align: center; }
+    .surat .kop-teks h1 { font-size: 16pt; font-weight: 700; letter-spacing: .5px; }
+    .surat .kop-teks p { font-size: 9pt; margin-top: 2px; }
+    .surat h2.judul { text-align: center; font-size: 12pt; font-weight: 700; text-decoration: underline; margin: 1.2rem 0 .2rem; }
+    .surat .nomor { text-align: center; font-size: 10.5pt; margin-bottom: 1rem; }
+    .surat .pasal { text-align: center; font-weight: 700; margin: 1rem 0 .4rem; }
+    .surat ol, .surat ul { margin: 0 0 0 1.1rem; }
+    .surat ol li, .surat ul li { margin-bottom: .35rem; }
+    .surat table.pihak { border-collapse: collapse; margin: .2rem 0 .6rem 1.6rem; }
+    .surat table.pihak td { vertical-align: top; padding: 1px 0; font-size: 11pt; }
+    .surat table.pihak td:first-child { width: 130px; }
+    .surat table.pihak td.sep { width: 12px; }
+    .surat .ttd { display: flex; justify-content: space-between; margin-top: 2.2rem; }
+    .surat .ttd div { text-align: center; width: 46%; }
+    .surat .ttd .nama { font-weight: 700; text-decoration: underline; margin-top: 4.5rem; }
+    .surat .ttd .jab { font-style: italic; font-size: 10pt; }
+    .surat .hal { page-break-after: always; }
+    .surat .hal:last-child { page-break-after: auto; }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body * { visibility: hidden; }
+      #printSurat, #printSurat * { visibility: visible; }
+      #modalSurat { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
+      #modalSurat .modal { position: static !important; max-width: none !important; width: auto !important; max-height: none !important; margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+      #modalSurat .modal-header, #modalSurat .modal-footer, #suratForm { display: none !important; }
+      #modalSurat .modal-body { max-height: none !important; overflow: visible !important; padding: 0 !important; }
+      #printSurat { position: absolute; left: 0; top: 0; width: 100%; border: 0; border-radius: 0; padding: 0; font-size: 11pt; }
+      @page { size: A4; margin: 18mm 16mm; }
+    }
+
     /* Tabs dalam modal */
     .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
     .tab-btn { padding: 0.6rem 1rem; font-size: 0.83rem; font-weight: 600; border: none; background: none; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
@@ -383,7 +422,60 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modalDetail')">Tutup</button>
+      <button class="btn-secondary" id="btnDetailSurat" onclick="openSurat()" style="display:none;"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg> Buat Surat</button>
       <button class="btn-submit" id="btnDetailEdit" onclick="openEditFromDetail()"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL BUAT SURAT (HR Admin) ===== -->
+<div class="modal-overlay" id="modalSurat">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="suratJudul">Buat Surat</h3>
+      <button class="modal-close" onclick="closeModal('modalSurat')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="suratForm">
+        <div class="form-group">
+          <label class="form-label">Jenis Surat</label>
+          <select class="form-select" id="suratJenis" onchange="gantiJenisSurat()">
+            <option value="pkwt">Perjanjian Kerja Waktu Tertentu (PKWT)</option>
+            <option value="skk">Surat Keterangan Kerja</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nomor Surat</label>
+          <input class="form-input" type="text" id="suratNomor" placeholder="Contoh: 082/HRD-KMA/IN/PKWT/I/2026">
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">Diisi manual sesuai buku agenda surat.</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal Surat</label>
+          <input class="form-input" type="date" id="suratTanggal">
+        </div>
+        <div class="form-group" id="grpSuratTunjangan">
+          <label class="form-label">Tunjangan Tetap (Rp)</label>
+          <input class="form-input" type="number" id="suratTunjangan" min="0" placeholder="0">
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">Terisi dari komponen gaji; boleh disesuaikan.</p>
+        </div>
+        <div class="form-group full" id="grpSuratKeperluan" style="display:none;">
+          <label class="form-label">Keperluan</label>
+          <input class="form-input" type="text" id="suratKeperluan" placeholder="Contoh: pengajuan KPR di Bank ABC">
+        </div>
+        <div class="form-group full">
+          <div id="suratPeringatan" style="display:none;font-size:.8rem;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:.7rem .9rem;border-radius:10px;"></div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);margin:1rem 0 .8rem;padding-top:.8rem;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:.8rem;font-weight:700;color:var(--navy);">Pratinjau</span>
+        <span style="font-size:.72rem;color:var(--muted);">Yang tercetak hanya bagian pratinjau ini</span>
+      </div>
+      <div id="printSurat" class="surat"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalSurat')">Tutup</button>
+      <button class="btn-submit" onclick="window.print()"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V2h12v7"/><path d="M6 14h12v8H6z"/></svg> Cetak / Simpan PDF</button>
     </div>
   </div>
 </div>
@@ -875,6 +967,10 @@ function openDetail (id) {
   document.getElementById('detailSub').textContent    = `${k.jabatan?.nama || '—'} · ${k.divisi?.nama || '—'}`
   document.getElementById('detailBadges').innerHTML   = statusBadge(k.status) + ' ' + kontrakBadge(k.tipe_kontrak)
   document.getElementById('btnDetailEdit').onclick    = () => { closeModal('modalDetail'); openEdit(id) }
+  // Tombol "Buat Surat" hanya untuk HR Admin
+  suratKaryw = k
+  const btnSurat = document.getElementById('btnDetailSurat')
+  if (btnSurat) btnSurat.style.display = isAdmin ? '' : 'none'
 
   document.getElementById('detailGrid').innerHTML = [
     ['NIK',              k.nik             || '—'],
@@ -898,6 +994,345 @@ function openDetail (id) {
 }
 
 let editingFromDetail = false
+// ============================================================
+// GENERATOR SURAT — PKWT & Surat Keterangan Kerja
+// ============================================================
+// Semua isian diambil dari data karyawan + tabel `pengaturan` (kop surat,
+// penandatangan, jam kerja). Yang manual hanya nomor surat & tanggal, sesuai
+// kesepakatan. Jangka waktu kontrak DIHITUNG dari tanggal, bukan diketik,
+// supaya tak terjadi salah tulis seperti pada kontrak yang dibuat manual.
+let suratKaryw = null
+let pengaturanApp = null
+
+async function muatPengaturan () {
+  if (pengaturanApp) return pengaturanApp
+  const { data } = await sb.from('pengaturan').select('kunci, nilai')
+  pengaturanApp = Object.fromEntries((data || []).map(r => [r.kunci, r.nilai]))
+  return pengaturanApp
+}
+
+const ROMAWI = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
+const SATUAN = ['nol','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan',
+                'sepuluh','sebelas']
+
+// Angka -> kata (cukup untuk jumlah bulan/tahun kontrak).
+function terbilang (n) {
+  n = Math.abs(Math.round(n))
+  if (n < 12) return SATUAN[n]
+  if (n < 20) return terbilang(n - 10) + ' belas'
+  if (n < 100) {
+    const p = Math.floor(n / 10), s = n % 10
+    return SATUAN[p] + ' puluh' + (s ? ' ' + SATUAN[s] : '')
+  }
+  return String(n)
+}
+
+function rp (n) { return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID') + ',-' }
+
+// Selisih bulan antara dua tanggal ISO. Dibulatkan ke bulan penuh terdekat
+// bila tanggalnya tidak pas sama.
+function selisihBulan (mulai, akhir) {
+  if (!mulai || !akhir) return null
+  const a = new Date(mulai + 'T00:00:00'), b = new Date(akhir + 'T00:00:00')
+  let bulan = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth())
+  if (b.getDate() < a.getDate()) bulan -= 1
+  return bulan
+}
+
+async function openSurat () {
+  if (!isAdmin || !suratKaryw) return
+  await muatPengaturan()
+  closeModal('modalDetail')
+
+  document.getElementById('suratTanggal').value = tanggalLokal()
+  document.getElementById('suratNomor').value   = ''
+  document.getElementById('suratKeperluan').value = ''
+
+  // Tunjangan tetap: jumlah komponen bertipe 'tunjangan' milik karyawan ini
+  const { data: komp } = await sb.from('karyawan_komponen')
+    .select('nilai, komponen_gaji(tipe)')
+    .eq('karyawan_id', suratKaryw.id)
+  const totalTunjangan = (komp || [])
+    .filter(k => k.komponen_gaji?.tipe === 'tunjangan')
+    .reduce((s, k) => s + Number(k.nilai || 0), 0)
+  document.getElementById('suratTunjangan').value = totalTunjangan
+
+  gantiJenisSurat()
+  openModal('modalSurat')
+}
+
+// Pratinjau ikut berubah begitu isian manual diketik, jadi HR bisa langsung
+// melihat hasilnya sebelum mencetak.
+;['suratNomor', 'suratTanggal', 'suratTunjangan', 'suratKeperluan'].forEach(id => {
+  document.addEventListener('input', e => { if (e.target.id === id) buildSurat() })
+})
+
+function gantiJenisSurat () {
+  const jenis = document.getElementById('suratJenis').value
+  document.getElementById('grpSuratKeperluan').style.display = jenis === 'skk' ? '' : 'none'
+  document.getElementById('grpSuratTunjangan').style.display = jenis === 'pkwt' ? '' : 'none'
+  document.getElementById('suratJudul').textContent =
+    jenis === 'pkwt' ? 'Buat PKWT' : 'Buat Surat Keterangan Kerja'
+  buildSurat()
+}
+
+// Data wajib per jenis surat. Kalau ada yang kosong, HR diberi tahu SEBELUM
+// mencetak — jangan sampai kontrak terbit dengan bagian kosong.
+function cekKelengkapan (jenis, k) {
+  const kurang = []
+  if (!k.nama_lengkap) kurang.push('Nama lengkap')
+  if (!k.jabatan?.nama) kurang.push('Jabatan')
+  if (jenis === 'pkwt') {
+    if (!k.nik_ktp) kurang.push('NIK KTP')
+    if (!k.tempat_lahir || !k.tanggal_lahir) kurang.push('Tempat/tanggal lahir')
+    if (!k.alamat) kurang.push('Alamat')
+    if (!k.tanggal_mulai_kontrak) kurang.push('Tanggal mulai kontrak')
+    if (!k.tanggal_berakhir_kontrak) kurang.push('Tanggal berakhir kontrak')
+    if (!Number(k.gaji_pokok)) kurang.push('Gaji pokok')
+  } else {
+    if (!k.tanggal_bergabung) kurang.push('Tanggal bergabung')
+  }
+  return kurang
+}
+
+function buildSurat () {
+  const k = suratKaryw
+  const area = document.getElementById('printSurat')
+  if (!k || !area) return
+  const jenis = document.getElementById('suratJenis').value
+  const P = pengaturanApp || {}
+
+  // Peringatan kelengkapan
+  const kurang = cekKelengkapan(jenis, k)
+  const box = document.getElementById('suratPeringatan')
+  if (kurang.length) {
+    box.style.display = ''
+    box.innerHTML = '<b>Data belum lengkap:</b> ' + escHtml(kurang.join(', ')) +
+      '. Lengkapi dulu lewat tombol Edit agar surat tidak terbit dengan bagian kosong.'
+  } else {
+    box.style.display = 'none'
+  }
+
+  const nomor   = document.getElementById('suratNomor').value.trim() || '____/____/____'
+  const tglSrt  = document.getElementById('suratTanggal').value || tanggalLokal()
+  const tglPjg  = d => tglIndo(d, { day: 'numeric', month: 'long', year: 'numeric' })
+  const kop = `
+    <div class="kop">
+      <img src="logo-KMA.png" alt="" onerror="this.style.display='none'">
+      <div class="kop-teks">
+        <h1>${escHtml((P.perusahaan_nama || '').toUpperCase())}</h1>
+        <p>${escHtml(P.perusahaan_alamat || '')}</p>
+      </div>
+    </div>`
+  const ttd = `
+    <div class="ttd">
+      <div>
+        <div>PIHAK PERTAMA</div>
+        <div class="nama">${escHtml(P.penandatangan_nama || '')}</div>
+        <div class="jab">${escHtml(P.penandatangan_jabatan || '')}</div>
+      </div>
+      <div>
+        <div>PIHAK KEDUA</div>
+        <div class="nama">${escHtml(k.nama_lengkap || '')}</div>
+        <div class="jab">Employee</div>
+      </div>
+    </div>`
+
+  area.innerHTML = jenis === 'pkwt'
+    ? templatePKWT(k, P, nomor, tglSrt, tglPjg, kop, ttd)
+    : templateSKK(k, P, nomor, tglSrt, tglPjg, kop)
+}
+
+function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
+  const bulan  = selisihBulan(k.tanggal_mulai_kontrak, k.tanggal_berakhir_kontrak)
+  const jangka = bulan ? `${bulan} (${terbilang(bulan)}) bulan` : '____'
+  const pokok  = Number(k.gaji_pokok) || 0
+  const tunj   = Number(document.getElementById('suratTunjangan').value) || 0
+  const cuti   = P.cuti_tahunan_hari || '12'
+  const ke     = k.pkwt_ke ? ` ${ROMAWI[k.pkwt_ke] || k.pkwt_ke}` : ''
+
+  return `${kop}
+  <h2 class="judul">SURAT PERJANJIAN KERJA WAKTU TERTENTU (PKWT)${escHtml(ke)}</h2>
+  <div class="nomor">No: ${escHtml(nomor)}</div>
+
+  <p>Surat Perjanjian Kerja ini dibuat pada tanggal ${tglPjg(tglSrt)} antara,</p>
+  <p style="margin-top:.5rem;">I.</p>
+  <table class="pihak">
+    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(P.penandatangan_nama || '')}</td></tr>
+    <tr><td>Jabatan</td><td class="sep">:</td><td><i>${escHtml(P.penandatangan_jabatan || '')}</i></td></tr>
+  </table>
+  <p style="margin-left:1.6rem;">Dalam hal ini bertindak untuk dan atas nama ${escHtml(P.perusahaan_nama || '')} yang berkedudukan di ${escHtml(P.perusahaan_alamat || '')} dan selanjutnya disebut sebagai <b>Pihak Pertama</b>.</p>
+
+  <p style="margin-top:.6rem;">II.</p>
+  <table class="pihak">
+    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(k.nama_lengkap || '')}</td></tr>
+    <tr><td>NIK</td><td class="sep">:</td><td>${escHtml(k.nik_ktp || '')}</td></tr>
+    <tr><td>Employee ID</td><td class="sep">:</td><td>${escHtml(k.nik || '')}</td></tr>
+    <tr><td>Tempat/Tgl Lahir</td><td class="sep">:</td><td>${escHtml(k.tempat_lahir || '')}, ${tglPjg(k.tanggal_lahir)}</td></tr>
+    <tr><td>Alamat</td><td class="sep">:</td><td>${escHtml(k.alamat || '')}</td></tr>
+  </table>
+  <p style="margin-left:1.6rem;">Bertindak untuk dan atas nama sendiri yang selanjutnya disebut <b>Pihak Kedua</b>.</p>
+
+  <p style="margin-top:.6rem;">Bahwa antara kedua belah pihak telah sepakat untuk mengadakan Perjanjian Kerja Waktu Tertentu, dengan ketentuan-ketentuan seperti tersebut dalam pasal-pasal berikut ini:</p>
+
+  <div class="pasal">Pasal 1<br>Jangka Waktu</div>
+  <ol>
+    <li>Perjanjian ini dibuat untuk jangka waktu ${escHtml(jangka)}, terhitung mulai dari tanggal <b>${tglPjg(k.tanggal_mulai_kontrak)}</b> sampai dengan tanggal <b>${tglPjg(k.tanggal_berakhir_kontrak)}</b>.</li>
+    <li>Apabila Perjanjian Kerja Waktu Tertentu akan diperpanjang, Perusahaan akan memberikan pemberitahuan lisan atau tertulis selambat-lambatnya 14 (empat belas) hari sebelum masa kontrak berakhir.</li>
+  </ol>
+
+  <div class="pasal">Pasal 2<br>Tugas dan Penempatan</div>
+  <p>Pihak Pertama mempekerjakan Pihak Kedua sebagai:</p>
+  <table class="pihak">
+    <tr><td>Jabatan</td><td class="sep">:</td><td>${escHtml(k.jabatan?.nama || '')}</td></tr>
+    <tr><td>Department</td><td class="sep">:</td><td>${escHtml(k.department || '-')}</td></tr>
+    <tr><td>Divisi</td><td class="sep">:</td><td>${escHtml(k.divisi?.nama || '-')}</td></tr>
+    <tr><td>Atasan Langsung</td><td class="sep">:</td><td>${escHtml(k.atasan_langsung || '-')}</td></tr>
+  </table>
+  <ol>
+    <li>Di Unit Usaha ${escHtml(P.perusahaan_nama || '')} dengan tugas-tugas yang dijelaskan dalam uraian tugas. Pihak Pertama mempunyai wewenang untuk mengalihtugaskan atau memindahkan Pihak Kedua ke pekerjaan dan/atau bagian lain apabila diperlukan oleh perusahaan baik dengan maupun tanpa persetujuan Pihak Kedua.</li>
+  </ol>
+
+  <div class="pasal">Pasal 3<br>Upah &amp; Fasilitas</div>
+  <ol>
+    <li>Terhitung mulai tanggal bekerja dan selama berlakunya masa Perjanjian Kerja Waktu Tertentu, Pihak Kedua akan memperoleh upah bulanan dengan rincian sebagai berikut:
+      <table class="pihak" style="margin-top:.3rem;">
+        <tr><td>Upah Pokok</td><td class="sep">:</td><td>${rp(pokok)}</td></tr>
+        <tr><td>Tunjangan Tetap</td><td class="sep">:</td><td>${rp(tunj)}</td></tr>
+        <tr><td><b>Total Upah</b></td><td class="sep">:</td><td><b>${rp(pokok + tunj)}</b></td></tr>
+      </table>
+    </li>
+    <li>Tunjangan Hari Raya diberikan sebesar 100% dari Total Upah setelah bekerja 12 bulan penuh. Apabila pekerja telah bekerja selama kurang dari 12 bulan dengan sedikitnya 1 bulan secara terus-menerus maka akan diberikan secara proporsional sesuai dengan masa kerja.</li>
+    <li>Pihak Kedua tidak akan mendapat penghasilan lain, selain yang tersebut diatas kecuali ditentukan lain sesuai dengan peraturan yang berlaku.</li>
+    <li>Bahwa upah kerja bulanan sebagaimana dimaksud pada poin 1 akan dibayarkan kepada Pihak Kedua setiap tanggal 25 (dua puluh lima) pada setiap bulannya setelah Pihak Kedua bekerja, dengan sistem perhitungan berdasarkan ketentuan yang diatur oleh Pihak Pertama.</li>
+    <li>Inventaris aset dapat diberikan Pihak Pertama kepada Pihak Kedua untuk menunjang pekerjaan Pihak Kedua.</li>
+  </ol>
+
+  <div class="pasal">Pasal 4<br>Jaminan Sosial dan Kesehatan Pekerja</div>
+  <ol>
+    <li>Pekerja yang sudah bekerja selama 1 (satu) tahun atau 12 (dua belas) bulan berturut-turut akan diikutsertakan dalam program BPJS Ketenagakerjaan dan Kesehatan sesuai dengan Perundang-undangan yang berlaku.</li>
+    <li>Hak dan kewajiban Perusahaan serta Pekerja terkait dengan keikutsertaan program BPJS tersebut mengikuti peraturan perundang-undangan yang berlaku.</li>
+  </ol>
+
+  <div class="pasal">Pasal 5<br>Waktu Kerja dan Cuti</div>
+  <ol>
+    <li>Waktu kerja di perusahaan adalah 8 jam kerja, yaitu:<br>
+      Senin – Jumat : ${escHtml(P.jam_kerja_senin_jumat || '')}<br>
+      Sabtu : ${escHtml(P.jam_kerja_sabtu || '')}</li>
+    <li>Untuk pelaksanaan istirahat dan libur serta melaksanakan Sholat Jumat diberikan kesempatan yang cukup dengan memperhatikan ketentuan Undang-Undang Ketenagakerjaan.</li>
+    <li>Cuti diberikan sebanyak ${escHtml(cuti)} (${escHtml(terbilang(Number(cuti)))}) hari dalam 1 (satu) tahun, dan dapat diambil setelah bekerja selama 1 (satu) tahun secara berturut-turut. Izin meninggalkan pekerjaan dengan atau tanpa upah harus sesuai dengan Undang-Undang Ketenagakerjaan yang berlaku.</li>
+    <li>Apabila dibutuhkan untuk kelancaran operasional, Pihak Kedua bersedia untuk melakukan kerja lembur baik pada hari kerja maupun hari libur dengan perintah dari atasan perusahaan.</li>
+    <li>Karyawan yang terlambat masuk kerja atau pulang lebih awal dari waktu yang telah ditentukan perusahaan maka karyawan wajib memberitahukan kepada atasan langsung dan juga bagian HRD.</li>
+    <li>Selama jam kerja berlangsung, karyawan tidak dibenarkan meninggalkan tempat kerja tanpa seizin atasan langsung dan mengetahui bagian HRD.</li>
+    <li>Apabila Pihak Kedua tidak hadir kerja pada hari kerjanya karena sakit maka yang bersangkutan/keluarganya wajib memberitahukan atasan langsung dan HRD secara lisan maupun secara tertulis.</li>
+    <li>Pihak Kedua yang tidak hadir kerja pada hari kerjanya karena sakit, harus didukung dengan surat keterangan dokter.</li>
+    <li>Karyawan yang tidak hadir pada hari kerjanya, tanpa izin atau tanpa memberitahukan atasannya, dianggap tidak hadir atau mangkir dan akan mendapatkan sanksi berupa pemotongan upah dan Surat Peringatan sampai pemutusan hubungan kerja sepihak.</li>
+    <li>Jumlah hari ketidakhadiran karena mangkir atau izin karena sakit tanpa surat dokter akan mengurangi jatah cuti tahunan dan jika jatah cuti tahunan sudah habis maka akan dilakukan pemotongan gaji dengan sistem <i>prorata</i>.</li>
+    <li>Ketidakhadiran karena izin untuk keperluan pribadi melebihi 2,5 jam atau 150 menit pada satu hari, maka akan dianggap cuti yang mengurangi jatah cuti tahunan.</li>
+    <li>Pihak Kedua yang tidak masuk kerja tanpa pemberitahuan yang sah dengan alasan yang tidak dapat diterima dianggap mangkir; jika mangkir 3 (tiga) hari berturut-turut maka dianggap mengundurkan diri secara sepihak.</li>
+  </ol>
+
+  <div class="pasal">Pasal 6<br>Tata Tertib Perusahaan</div>
+  <ol>
+    <li>Pihak Kedua wajib melaksanakan tugas dan kewajibannya dengan penuh disiplin dan mematuhi ketentuan-ketentuan yang tercantum dalam peraturan dan ketentuan lainnya yang diterbitkan.</li>
+    <li>Apabila Pihak Kedua melakukan pelanggaran terhadap ketentuan tata tertib maka Pihak Kedua akan dikenai sanksi sesuai dengan ketentuan perundang-undangan yang berlaku.</li>
+    <li>Pihak Kedua dilarang menyebarkan informasi rahasia Pihak Pertama kepada pihak yang tidak berhak selama dan setelah hubungan kerja berakhir.</li>
+    <li>Pihak Kedua tidak boleh terikat pada perjanjian kerja lain dengan pihak ketiga.</li>
+    <li>Peraturan mengenai Tata Tertib Perusahaan disampaikan dalam informasi terpisah.</li>
+  </ol>
+
+  <div class="pasal">Pasal 7<br>Rahasia &amp; Aset Perusahaan</div>
+  <ol>
+    <li>Seluruh data bisnis, rencana kerja, informasi keuangan, pemasaran, pelanggan, program komputer, serta penemuan atau ciptaan Pihak Kedua selama masa kerja (selanjutnya disebut “Rahasia Perusahaan”) adalah hak milik tunggal dan eksklusif Pihak Pertama.</li>
+    <li>Pihak Kedua berkewajiban menyimpan semua Rahasia Perusahaan dan tidak diperkenankan membagikannya kepada pihak ketiga mana pun, kecuali dalam pekerjaan di lingkup ${escHtml(P.perusahaan_nama || '')}.</li>
+    <li>Pihak Kedua akan mengembalikan semua Rahasia Perusahaan kepada Pihak Pertama dalam hal terjadinya Pemutusan Hubungan Kerja.</li>
+    <li>Pihak Kedua tidak boleh menggunakan logo atau <i>Intellectual Property</i> perusahaan di media, iklan, promosi, atau website tanpa persetujuan tertulis dari Pihak Pertama.</li>
+    <li>Pihak Kedua wajib menjaga aset perusahaan yang dipinjamkan untuk keperluan pekerjaan dan tidak boleh memperjualbelikannya tanpa persetujuan Pihak Pertama.</li>
+    <li>Bila aset perusahaan hilang atau rusak karena kelalaian Pihak Kedua, maka Pihak Pertama akan memberikan sanksi dan meminta ganti rugi.</li>
+    <li>Apabila hubungan kerja berakhir, Pihak Kedua harus mengembalikan semua aset perusahaan dan data/informasi rahasia kepada Pihak Pertama.</li>
+  </ol>
+
+  <div class="pasal">Pasal 8<br>Sanksi</div>
+  <ol>
+    <li>Setiap ucapan, tulisan maupun perbuatan Karyawan yang melanggar ketentuan dalam Perjanjian Kerja maupun tata tertib perusahaan dapat dikenakan Sanksi.</li>
+    <li>Pemberian Sanksi kepada Karyawan berupa teguran, menerbitkan Surat Peringatan, bahkan sampai Pemutusan Hubungan Kerja.</li>
+    <li>Pemberian Surat Peringatan pertama, kedua atau ketiga tidak wajib dikeluarkan secara berurutan tetapi tergantung kadar berat pelanggaran. Masing-masing Surat Peringatan berlaku selama 6 (enam) bulan.</li>
+    <li>Apabila terjadi tindak pidana maupun perdata yang disertai kerugian terhadap Perusahaan, klien beserta afiliasinya, maka Karyawan wajib mengganti kerugian tersebut dan tanggung jawab itu tidak berakhir karena berakhirnya hubungan kerja.</li>
+    <li>Ketidakmampuan Karyawan baik berupa <i>skill</i> maupun sikap serta disiplin dalam melakukan pekerjaannya sehingga tidak memenuhi target dapat dikenakan sanksi sesuai peraturan yang berlaku.</li>
+  </ol>
+
+  <div class="pasal">Pasal 9<br>Pemutusan Hubungan Kerja</div>
+  <ol>
+    <li>Perjanjian kerja dapat berakhir apabila:
+      <ol type="a">
+        <li>Berakhirnya jangka waktu perjanjian kerja dan kedua belah pihak sepakat untuk tidak melanjutkan kerjasama.</li>
+        <li>Selesainya suatu pekerjaan tertentu.</li>
+        <li>Pihak Kedua meninggal dunia.</li>
+        <li>Adanya putusan pengadilan dan/atau lembaga penyelesaian perselisihan hubungan industrial yang berkekuatan hukum tetap.</li>
+        <li>Pihak Pertama mengalami situasi yang memaksa untuk melakukan efisiensi atau pemutusan hubungan kerja.</li>
+      </ol>
+    </li>
+    <li>Pihak Pertama dapat memutuskan hubungan kerja terhadap Pihak Kedua dengan alasan telah melakukan kesalahan berat, antara lain: penipuan/pencurian/penggelapan; memberikan keterangan palsu; mabuk di lingkungan kerja; memakai atau mengedarkan narkotika; menyerang/mengancam rekan kerja; membujuk rekan kerja melakukan perbuatan melanggar hukum; atau merusak barang milik perusahaan.</li>
+    <li>Apabila salah satu Pihak mengakhiri perjanjian ini sebelum waktunya, maka Pihak yang berinisiatif wajib memberitahukan 1 (satu) bulan sebelumnya.</li>
+    <li>Apabila salah satu Pihak mengakhiri perjanjian ini sebelum waktunya, maka Pihak yang berinisiatif wajib membayar denda sesuai dengan sisa upah yang berlaku.</li>
+  </ol>
+
+  <div class="pasal">Pasal 10<br>Hal-Hal Lain</div>
+  <ol>
+    <li>Kedua belah pihak harus menghormati Perjanjian Kerja ini.</li>
+    <li>Segala perselisihan yang timbul dalam pelaksanaan perjanjian ini akan diselesaikan secara musyawarah untuk mencapai mufakat.</li>
+    <li>Apabila tidak tercapai mufakat, maka penyelesaiannya akan dilakukan melalui pengadilan yang berwenang.</li>
+    <li>Syarat kerja, hak dan kewajiban yang belum tercantum diatur sesuai peraturan perundang-undangan yang berlaku.</li>
+    <li>Perubahan terhadap perjanjian ini terlebih dahulu akan dibicarakan oleh Kedua Pihak.</li>
+    <li>Perjanjian kerja ini dibuat dalam rangkap 2 (dua) dan masing-masing mempunyai kekuatan hukum yang sama serta dibuat tanpa paksaan dari pihak mana pun, dalam keadaan sehat jasmani dan rohani.</li>
+    <li>Dalam hal di kemudian hari terjadi perubahan atau syarat tambahan, maka akan ditambahkan dalam addendum.</li>
+    <li>Dengan berakhirnya masa perjanjian kerja, Pihak Kedua wajib mengembalikan seluruh aset dan inventaris yang diberikan saat bekerja.</li>
+  </ol>
+
+  <p style="margin-top:1.4rem;">${escHtml(P.perusahaan_kota || '')}, ${tglPjg(tglSrt)}</p>
+  ${ttd}`
+}
+
+function templateSKK (k, P, nomor, tglSrt, tglPjg, kop) {
+  const keperluan = document.getElementById('suratKeperluan').value.trim()
+  const masih = k.status === 'aktif'
+  return `${kop}
+  <h2 class="judul">SURAT KETERANGAN KERJA</h2>
+  <div class="nomor">No: ${escHtml(nomor)}</div>
+
+  <p>Yang bertanda tangan di bawah ini:</p>
+  <table class="pihak">
+    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(P.penandatangan_nama || '')}</td></tr>
+    <tr><td>Jabatan</td><td class="sep">:</td><td>${escHtml(P.penandatangan_jabatan || '')}</td></tr>
+    <tr><td>Perusahaan</td><td class="sep">:</td><td>${escHtml(P.perusahaan_nama || '')}</td></tr>
+  </table>
+
+  <p style="margin-top:.6rem;">Dengan ini menerangkan bahwa:</p>
+  <table class="pihak">
+    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(k.nama_lengkap || '')}</td></tr>
+    ${k.nik_ktp ? `<tr><td>NIK</td><td class="sep">:</td><td>${escHtml(k.nik_ktp)}</td></tr>` : ''}
+    <tr><td>Employee ID</td><td class="sep">:</td><td>${escHtml(k.nik || '')}</td></tr>
+    <tr><td>Jabatan</td><td class="sep">:</td><td>${escHtml(k.jabatan?.nama || '')}</td></tr>
+    <tr><td>Divisi</td><td class="sep">:</td><td>${escHtml(k.divisi?.nama || '-')}</td></tr>
+    ${k.alamat ? `<tr><td>Alamat</td><td class="sep">:</td><td>${escHtml(k.alamat)}</td></tr>` : ''}
+  </table>
+
+  <p style="margin-top:.6rem;">Adalah benar ${masih ? 'merupakan karyawan yang masih aktif bekerja' : 'pernah bekerja'} di ${escHtml(P.perusahaan_nama || '')} terhitung sejak tanggal ${tglPjg(k.tanggal_bergabung)}${masih ? ' sampai dengan saat ini' : ''}.</p>
+
+  <p>Selama bekerja, yang bersangkutan telah menunjukkan dedikasi dan tanggung jawab yang baik dalam melaksanakan tugasnya.</p>
+
+  <p>Surat keterangan ini dibuat untuk ${keperluan ? escHtml(keperluan) : 'dipergunakan sebagaimana mestinya'}.</p>
+
+  <p style="margin-top:1.4rem;">${escHtml(P.perusahaan_kota || '')}, ${tglPjg(tglSrt)}</p>
+  <div class="ttd">
+    <div style="margin-left:auto;">
+      <div>Hormat kami,</div>
+      <div class="nama">${escHtml(P.penandatangan_nama || '')}</div>
+      <div class="jab">${escHtml(P.penandatangan_jabatan || '')}</div>
+    </div>
+  </div>`
+}
+
 function openEditFromDetail () {
   const id = document.getElementById('btnDetailEdit').onclick.toString().match(/'([^']+)'/)?.[1]
   closeModal('modalDetail')
