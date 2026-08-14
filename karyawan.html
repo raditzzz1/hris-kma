@@ -179,28 +179,47 @@
     .surat h2.judul { text-align: center; font-size: 12pt; font-weight: 700; text-decoration: underline; margin: 1.2rem 0 .2rem; }
     .surat .nomor { text-align: center; font-size: 10.5pt; margin-bottom: 1rem; }
     .surat .pasal { text-align: center; font-weight: 700; margin: 1rem 0 .4rem; }
-    .surat ol, .surat ul { margin: 0 0 0 1.1rem; }
-    .surat ol li, .surat ul li { margin-bottom: .35rem; }
+    /* padding-left cukup lebar supaya penanda 2 digit (10., 11., 12.) tidak
+       terpotong -- penting karena ayat kontrak dirujuk berdasarkan nomornya. */
+    .surat ol, .surat ul { margin: 0; padding-left: 2.1rem; }
+    .surat ol li, .surat ul li { margin-bottom: .35rem; padding-left: .15rem; }
+    .surat ol ol { padding-left: 1.6rem; margin-top: .3rem; }
     .surat table.pihak { border-collapse: collapse; margin: .2rem 0 .6rem 1.6rem; }
     .surat table.pihak td { vertical-align: top; padding: 1px 0; font-size: 11pt; }
     .surat table.pihak td:first-child { width: 130px; }
     .surat table.pihak td.sep { width: 12px; }
-    .surat .ttd { display: flex; justify-content: space-between; margin-top: 2.2rem; }
-    .surat .ttd div { text-align: center; width: 46%; }
-    .surat .ttd .nama { font-weight: 700; text-decoration: underline; margin-top: 4.5rem; }
+    .surat .ttd { display: flex; justify-content: space-between; margin-top: 2.2rem; page-break-inside: avoid; }
+    .surat .ttd div { text-align: center; width: 48%; }
+    .surat .ttd .nama { font-weight: 700; text-decoration: underline; margin-top: 4.5rem; white-space: nowrap; }
     .surat .ttd .jab { font-style: italic; font-size: 10pt; }
     .surat .hal { page-break-after: always; }
     .surat .hal:last-child { page-break-after: auto; }
 
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      body * { visibility: hidden; }
-      #printSurat, #printSurat * { visibility: visible; }
-      #modalSurat { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
-      #modalSurat .modal { position: static !important; max-width: none !important; width: auto !important; max-height: none !important; margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+      /* PENTING: pakai display:none, bukan visibility:hidden. visibility hanya
+         menyembunyikan tampilan tapi elemennya TETAP memakan tinggi halaman —
+         itu yang dulu menghasilkan halaman-halaman kosong di akhir PDF. */
+      body > * { display: none !important; }
+      body > #modalSurat {
+        display: block !important; position: static !important;
+        background: none !important; padding: 0 !important;
+        overflow: visible !important; height: auto !important;
+      }
+      #modalSurat .modal {
+        position: static !important; max-width: none !important; width: auto !important;
+        max-height: none !important; height: auto !important; margin: 0 !important;
+        box-shadow: none !important; border-radius: 0 !important; overflow: visible !important;
+      }
       #modalSurat .modal-header, #modalSurat .modal-footer, #suratForm { display: none !important; }
-      #modalSurat .modal-body { max-height: none !important; overflow: visible !important; padding: 0 !important; }
-      #printSurat { position: absolute; left: 0; top: 0; width: 100%; border: 0; border-radius: 0; padding: 0; font-size: 11pt; }
+      #modalSurat .modal-body {
+        max-height: none !important; height: auto !important;
+        overflow: visible !important; padding: 0 !important;
+      }
+      #printSurat { border: 0; border-radius: 0; padding: 0; font-size: 11pt; background: #fff; }
+      /* Jangan biarkan judul pasal tertinggal sendirian di dasar halaman */
+      .surat .pasal { page-break-after: avoid; break-after: avoid; }
+      .surat li { page-break-inside: avoid; break-inside: avoid; }
       @page { size: A4; margin: 18mm 16mm; }
     }
 
@@ -1332,10 +1351,14 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
   const pokok  = Number(k.gaji_pokok) || 0
   const tunj   = Number(document.getElementById('suratTunjangan').value) || 0
   const cuti   = P.cuti_tahunan_hari || '12'
-  const ke     = k.pkwt_ke ? ` ${ROMAWI[k.pkwt_ke] || k.pkwt_ke}` : ''
+  // Isian yang masih kosong dicetak sebagai titik-titik, supaya jelas harus
+  // dilengkapi manual — bukan terlihat seperti dokumen yang rusak.
+  const isi = v => (v && String(v).trim()) ? escHtml(v) : '.'.repeat(28)
 
+  // Judul mengikuti contoh resmi: TANPA angka romawi. Urutan PKWT (I/II/III)
+  // muncul di nomor surat, bukan di judul.
   return `${kop}
-  <h2 class="judul">SURAT PERJANJIAN KERJA WAKTU TERTENTU (PKWT)${escHtml(ke)}</h2>
+  <h2 class="judul">SURAT PERJANJIAN KERJA WAKTU TERTENTU (PKWT)</h2>
   <div class="nomor">No: ${escHtml(nomor)}</div>
 
   <p>Surat Perjanjian Kerja ini dibuat pada tanggal ${tglPjg(tglSrt)} antara,</p>
@@ -1349,10 +1372,10 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
   <p style="margin-top:.6rem;">II.</p>
   <table class="pihak">
     <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(k.nama_lengkap || '')}</td></tr>
-    <tr><td>NIK</td><td class="sep">:</td><td>${escHtml(k.nik_ktp || '')}</td></tr>
-    <tr><td>Employee ID</td><td class="sep">:</td><td>${escHtml(k.nik || '')}</td></tr>
-    <tr><td>Tempat/Tgl Lahir</td><td class="sep">:</td><td>${escHtml(k.tempat_lahir || '')}, ${tglPjg(k.tanggal_lahir)}</td></tr>
-    <tr><td>Alamat</td><td class="sep">:</td><td>${escHtml(k.alamat || '')}</td></tr>
+    <tr><td>NIK</td><td class="sep">:</td><td>${isi(k.nik_ktp)}</td></tr>
+    <tr><td>Employee ID</td><td class="sep">:</td><td>${isi(k.nik)}</td></tr>
+    <tr><td>Tempat/Tgl Lahir</td><td class="sep">:</td><td>${k.tempat_lahir ? escHtml(k.tempat_lahir) + ', ' + tglPjg(k.tanggal_lahir) : isi(null)}</td></tr>
+    <tr><td>Alamat</td><td class="sep">:</td><td>${isi(k.alamat)}</td></tr>
   </table>
   <p style="margin-left:1.6rem;">Bertindak untuk dan atas nama sendiri yang selanjutnya disebut <b>Pihak Kedua</b>.</p>
 
