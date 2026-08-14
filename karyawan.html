@@ -242,7 +242,8 @@
         max-height: none !important; height: auto !important; margin: 0 !important;
         box-shadow: none !important; border-radius: 0 !important; overflow: visible !important;
       }
-      #modalSurat .modal-header, #modalSurat .modal-footer, #suratForm { display: none !important; }
+      #modalSurat .modal-header, #modalSurat .modal-footer,
+      #suratForm, #suratPratinjauLabel, #suratPeringatan { display: none !important; }
       #modalSurat .modal-body {
         max-height: none !important; height: auto !important;
         overflow: visible !important; padding: 0 !important;
@@ -620,7 +621,7 @@
         </div>
       </div>
 
-      <div style="border-top:1px solid var(--border);margin:1rem 0 .8rem;padding-top:.8rem;display:flex;align-items:center;justify-content:space-between;">
+      <div id="suratPratinjauLabel" style="border-top:1px solid var(--border);margin:1rem 0 .8rem;padding-top:.8rem;display:flex;align-items:center;justify-content:space-between;">
         <span style="font-size:.8rem;font-weight:700;color:var(--navy);">Pratinjau</span>
         <span style="font-size:.72rem;color:var(--muted);">Yang tercetak hanya bagian pratinjau ini</span>
       </div>
@@ -1683,9 +1684,9 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
     <li>Selama jam kerja berlangsung, karyawan tidak dibenarkan meninggalkan tempat kerja tanpa seizin atasan langsung dan mengetahui bagian HRD.</li>
     <li>Apabila Pihak Kedua tidak hadir kerja pada hari kerjanya karena sakit maka yang bersangkutan/keluarganya wajib memberitahukan atasan langsung dan HRD secara lisan maupun secara tertulis.</li>
     <li>Pihak Kedua yang tidak hadir kerja pada hari kerjanya karena sakit, harus didukung dengan surat keterangan dokter.</li>
-    <li>Karyawan yang tidak hadir pada hari kerjanya, tanpa izin atau tanpa memberitahukan atasannya, dianggap tidak hadir atau mangkir dan akan mendapatkan sanksi berupa pemotongan upah dan Surat Peringatan sampai pemutusan hubungan kerja sepihak.</li>
-    <li>Jumlah hari ketidakhadiran karena mangkir atau izin karena sakit tanpa surat dokter akan mengurangi jatah cuti tahunan dan jika jatah cuti tahunan sudah habis maka akan dilakukan pemotongan gaji dengan sistem <i>prorata</i>.</li>
-    <li>Ketidakhadiran karena izin untuk keperluan pribadi melebihi 2,5 jam atau 150 menit pada satu hari, maka akan dianggap cuti yang mengurangi jatah cuti tahunan.</li>
+    <li>Karyawan yang tidak hadir pada hari kerjanya, tanpa izin atau tanpa memberitahukan atasannya, dianggap tidak hadir atau mangkir dan akan mendapatkan sanksi berupa pemotongan upah dan Surat Peringatan sampai pemutusan hubungan kerja sepihak. Karyawan yang hadir terlambat, meninggalkan lokasi tempat kerja tanpa seizin atasan dan memberitahukan ke bagian HRD dapat diberi teguran lisan, teguran tertulis, dan Surat Peringatan.</li>
+    <li>Jumlah hari ketidakhadiran karena mangkir atau izin karena sakit tanpa surat dokter atau izin yang akan mengurangi jatah cuti tahunan dan jika jatah cuti tahunan sudah habis atau belum timbul maka akan dilakukan pemotongan gaji dengan sistem <i>prorata</i> (jumlah ketidakhadiran x (gaji + tunjangan) / jumlah hari kalender bulan berjalan) kecuali ditentukan lain oleh Undang-Undang Ketenagakerjaan.</li>
+    <li>Ketidakhadiran karena izin untuk keperluan pribadi melebihi 2,5 jam atau 150 menit pada satu hari, maka akan dianggap cuti yang mengurangi jatah cuti tahunan. Jika hak cuti tahunan sudah habis atau belum timbul maka akan berlaku sesuai pasal 4 ayat 7.</li>
     <li>Pihak Kedua yang tidak masuk kerja tanpa pemberitahuan yang sah dengan alasan yang tidak dapat diterima dianggap mangkir; jika mangkir 3 (tiga) hari berturut-turut maka dianggap mengundurkan diri secara sepihak.</li>
   </ol>
 
@@ -1700,13 +1701,14 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
 
   <div class="pasal">Pasal 7<br>Rahasia &amp; Aset Perusahaan</div>
   <ol>
-    <li>Seluruh data bisnis, rencana kerja, informasi keuangan, pemasaran, pelanggan, program komputer, serta penemuan atau ciptaan Pihak Kedua selama masa kerja (selanjutnya disebut “Rahasia Perusahaan”) adalah hak milik tunggal dan eksklusif Pihak Pertama.</li>
-    <li>Pihak Kedua berkewajiban menyimpan semua Rahasia Perusahaan dan tidak diperkenankan membagikannya kepada pihak ketiga mana pun, kecuali dalam pekerjaan di lingkup ${escHtml(P.perusahaan_nama || '')}.</li>
-    <li>Pihak Kedua akan mengembalikan semua Rahasia Perusahaan kepada Pihak Pertama dalam hal terjadinya Pemutusan Hubungan Kerja.</li>
-    <li>Pihak Kedua tidak boleh menggunakan logo atau <i>Intellectual Property</i> perusahaan di media, iklan, promosi, atau website tanpa persetujuan tertulis dari Pihak Pertama.</li>
-    <li>Pihak Kedua wajib menjaga aset perusahaan yang dipinjamkan untuk keperluan pekerjaan dan tidak boleh memperjualbelikannya tanpa persetujuan Pihak Pertama.</li>
-    <li>Bila aset perusahaan hilang atau rusak karena kelalaian Pihak Kedua, maka Pihak Pertama akan memberikan sanksi dan meminta ganti rugi.</li>
-    <li>Apabila hubungan kerja berakhir, Pihak Kedua harus mengembalikan semua aset perusahaan dan data/informasi rahasia kepada Pihak Pertama.</li>
+    <li>Semua manual pelatihan, manual operasional, data bisnis, rencana kerja, proyeksi dan hasil-hasil olah data keuangan, informasi penjualan dan pemasaran, strategi pemasaran, informasi pelanggan, program komputer dan informasi bisnis, komersil atau teknis lainnya atau data yang berhubungan prospek, strategi, tujuan, dan transaksi bisnis, pengaturan perihal keuangan, operasional, sistem dan organisasi, metode, standard, spesifikasi, konsep, gagasan, rencana, proyek, program, prosedur dan kecakapan teknik dari ${escHtml(P.perusahaan_nama || '')} yang tersedia bagi Pihak Kedua selama bekerja dengan Pihak Pertama, dalam bentuk ekspresi yang nyata, termasuk semua penemuan, ciptaan atau hasil sampingan lainnya yang Pihak Kedua ciptakan atau konseptualisasikan selama masa kerja (secara keseluruhan selanjutnya disebut sebagai “Rahasia Perusahaan”) adalah hak milik tunggal dan eksklusif Pihak Pertama.</li>
+    <li>Rahasia Perusahaan yang tersedia bagi Pihak Kedua selama masa kerja adalah rahasia dagang yang berharga milik Pihak Pertama beserta afiliasi-afiliasinya. Pihak Kedua berkewajiban menyimpan semua Rahasia Perusahaan ini dan tidak diperkenankan membaginya atau memberitahukannya pada pihak ketiga manapun atau menggunakannya kecuali dalam pekerjaan di lingkup ${escHtml(P.perusahaan_nama || '')}.</li>
+    <li>Pihak Kedua akan mengembalikan semua Rahasia Perusahaan, termasuk semua hasil penggandaan, kesimpulan atau kompilasi dari Rahasia Perusahaan, kepada Pihak Pertama atau perwakilan dalam hal terjadinya Pemutusan Hubungan Kerja.</li>
+    <li>Pihak Kedua tidak boleh menggunakan logo perusahaan atau <i>Intellectual Property</i> (IP) perusahaan lainnya di berbagai media, iklan, promosi, atau website tanpa persetujuan tertulis dari Pihak Pertama.</li>
+    <li>Pihak Kedua wajib menjaga aset perusahaan yang dipinjamkan oleh Pihak Pertama untuk keperluan pekerjaan.</li>
+    <li>Aset Perusahaan tidak boleh diperjualbelikan oleh Pihak Kedua tanpa persetujuan Pihak Pertama.</li>
+    <li>Bila aset perusahaan hilang atau rusak dikarenakan kelalaian Pihak Kedua, maka Pihak Pertama akan memberikan sanksi dan meminta ganti rugi kepada Pihak Kedua.</li>
+    <li>Apabila hubungan kerja berakhir, Pihak Kedua harus mengembalikan semua aset perusahaan dan semua data/informasi yang bersifat rahasia kepada Pihak Pertama yang dipegang, digunakan atau dikelola oleh Pihak Kedua.</li>
   </ol>
 
   <div class="pasal">Pasal 8<br>Sanksi</div>
@@ -1729,7 +1731,17 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
         <li>Pihak Pertama mengalami situasi yang memaksa untuk melakukan efisiensi atau pemutusan hubungan kerja.</li>
       </ol>
     </li>
-    <li>Pihak Pertama dapat memutuskan hubungan kerja terhadap Pihak Kedua dengan alasan telah melakukan kesalahan berat, antara lain: penipuan/pencurian/penggelapan; memberikan keterangan palsu; mabuk di lingkungan kerja; memakai atau mengedarkan narkotika; menyerang/mengancam rekan kerja; membujuk rekan kerja melakukan perbuatan melanggar hukum; atau merusak barang milik perusahaan.</li>
+    <li>Pihak Pertama dapat memutuskan hubungan kerja terhadap Pihak Kedua dengan alasan telah melakukan kesalahan berat, sebagai berikut:
+      <ol type="a">
+        <li>Melakukan penipuan, pencurian, atau penggelapan barang dan atau uang milik perusahaan.</li>
+        <li>Memberikan keterangan palsu atau yang dipalsukan sehingga merugikan perusahaan.</li>
+        <li>Mabuk, minum minuman keras yang memabukkan di lingkungan kerja.</li>
+        <li>Memakai dan atau mengedarkan narkotika, psikotropika, dan zat adiktif lainnya di lingkungan kerja.</li>
+        <li>Menyerang, menganiaya, mengancam atau mengintimidasi teman sekerja atau Pihak Pertama di lingkungan kerja.</li>
+        <li>Membujuk teman sekerja atau Pihak Pertama untuk melakukan perbuatan yang bertentangan dengan peraturan perundang-undangan.</li>
+        <li>Sengaja atau secara ceroboh merusak atau membiarkan dalam keadaan bahaya barang milik perusahaan yang menimbulkan kerugian bagi perusahaan.</li>
+      </ol>
+    </li>
     <li>Apabila salah satu Pihak mengakhiri perjanjian ini sebelum waktunya, maka Pihak yang berinisiatif wajib memberitahukan 1 (satu) bulan sebelumnya.</li>
     <li>Apabila salah satu Pihak mengakhiri perjanjian ini sebelum waktunya, maka Pihak yang berinisiatif wajib membayar denda sesuai dengan sisa upah yang berlaku.</li>
   </ol>
