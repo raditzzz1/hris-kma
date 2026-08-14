@@ -524,6 +524,42 @@
   </div>
 </div>
 
+<!-- ===== MODAL KELOLA PENANDATANGAN (HR Admin) ===== -->
+<div class="modal-overlay" id="modalTtd">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Kelola Penandatangan</h3>
+      <button class="modal-close" onclick="closeModal('modalTtd')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem;">
+        <p style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.6rem;">Tambah Penandatangan</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nama</label>
+            <input class="form-input" type="text" id="ttdNama" placeholder="Mis. Moammer">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jabatan</label>
+            <input class="form-input" type="text" id="ttdJabatan" placeholder="Mis. Direktur Utama">
+          </div>
+        </div>
+        <button class="btn-submit" style="margin-top:.6rem;" onclick="tambahPenandatangan()">Tambah</button>
+      </div>
+
+      <p style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.5rem;">Daftar Penandatangan</p>
+      <div id="ttdList"><p style="font-size:.82rem;color:var(--muted);">Memuat…</p></div>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:.8rem;">
+        🔒 Berkas tanda tangan disimpan di penyimpanan privat — tidak bisa diunduh tanpa login.
+        Gunakan gambar berlatar putih/transparan (PNG/JPG, maks. 1 MB).
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modalTtd')">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODAL BUAT SURAT (HR Admin) ===== -->
 <div class="modal-overlay" id="modalSurat">
   <div class="modal modal-lg">
@@ -548,6 +584,14 @@
         <div class="form-group">
           <label class="form-label">Tanggal Surat</label>
           <input class="form-input" type="date" id="suratTanggal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Penandatangan</label>
+          <div style="display:flex;gap:.4rem;">
+            <select class="form-select" id="suratPenandatangan" onchange="buildSurat()" style="flex:1;"></select>
+            <button type="button" class="btn-secondary" style="padding:.5rem .7rem;white-space:nowrap;" onclick="openKelolaTtd()">Kelola</button>
+          </div>
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.35rem;">Tanda tangan tampil otomatis sesuai pilihan.</p>
         </div>
         <div class="form-group" id="grpSuratTunjangan">
           <label class="form-label">Tunjangan Tetap (Rp)</label>
@@ -1272,6 +1316,7 @@ function selisihBulan (mulai, akhir) {
 async function openSurat () {
   if (!isAdmin || !suratKaryw) return
   await muatPengaturan()
+  await muatPenandatangan()
   closeModal('modalDetail')
 
   document.getElementById('suratTanggal').value = tanggalLokal()
@@ -1297,6 +1342,133 @@ async function openSurat () {
 ;['suratNomor', 'suratTanggal', 'suratTunjangan', 'suratKeperluan'].forEach(id => {
   document.addEventListener('input', e => { if (e.target.id === id) buildSurat() })
 })
+
+// ============================================================
+// PENANDATANGAN & TANDA TANGAN DIGITAL
+// ============================================================
+// Berkas tanda tangan ada di bucket PRIVAT 'tanda-tangan'. Ia tak punya URL
+// publik — dimuat lewat signed URL, lalu diubah jadi data URL supaya tetap
+// tampil saat dicetak (tautan bertenggat bisa kedaluwarsa di tengah proses
+// cetak, dan gambar eksternal kadang tak ikut ter-render ke PDF).
+let daftarTtd = []          // {id, nama, jabatan, ttd_path, gambar(dataURL)}
+const MAKS_TTD = 1024 * 1024
+
+async function muatPenandatangan () {
+  const { data, error } = await sb.from('penandatangan')
+    .select('*').eq('aktif', true).order('urutan').order('nama')
+  if (error) { daftarTtd = []; return }
+  daftarTtd = data || []
+  // Ambil gambar tanda tangan (sekali saja per pemuatan)
+  await Promise.all(daftarTtd.map(async p => {
+    if (!p.ttd_path) return
+    try {
+      const { data: s } = await sb.storage.from('tanda-tangan').createSignedUrl(p.ttd_path, 120)
+      if (!s?.signedUrl) return
+      const blob = await (await fetch(s.signedUrl)).blob()
+      p.gambar = await new Promise(res => {
+        const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob)
+      })
+    } catch (e) { /* tanda tangan gagal dimuat -> surat tetap bisa dicetak */ }
+  }))
+
+  const sel = document.getElementById('suratPenandatangan')
+  if (sel) {
+    const dipilih = sel.value
+    sel.innerHTML = daftarTtd.length
+      ? daftarTtd.map(p => `<option value="${p.id}">${escHtml(p.nama)} — ${escHtml(p.jabatan)}${p.ttd_path ? '' : ' (tanpa TTD)'}</option>`).join('')
+      : '<option value="">(belum ada penandatangan)</option>'
+    if (dipilih && daftarTtd.some(p => p.id === dipilih)) sel.value = dipilih
+  }
+}
+
+function penandatanganTerpilih () {
+  const id = document.getElementById('suratPenandatangan')?.value
+  return daftarTtd.find(p => p.id === id) || daftarTtd[0] || null
+}
+
+// Blok tanda tangan: gambar ditumpuk di atas garis nama bila tersedia.
+function blokTtd (p, judul) {
+  const nama = p?.nama || (pengaturanApp?.penandatangan_nama || '')
+  const jab  = p?.jabatan || (pengaturanApp?.penandatangan_jabatan || '')
+  const img  = p?.gambar
+    ? `<img src="${p.gambar}" alt="" style="height:64px;object-fit:contain;display:block;margin:.2rem auto -.3rem;">`
+    : ''
+  return `<div>
+      <div>${escHtml(judul)}</div>
+      ${img || '<div style="height:64px;"></div>'}
+      <div class="nama" style="margin-top:${p?.gambar ? '.1rem' : '3.4rem'};">${escHtml(nama)}</div>
+      <div class="jab">${escHtml(jab)}</div>
+    </div>`
+}
+
+function openKelolaTtd () { openModal('modalTtd'); renderDaftarTtd() }
+
+function renderDaftarTtd () {
+  const wadah = document.getElementById('ttdList')
+  if (!daftarTtd.length) {
+    wadah.innerHTML = '<p style="font-size:.82rem;color:var(--muted);">Belum ada penandatangan.</p>'
+    return
+  }
+  wadah.innerHTML = daftarTtd.map(p => `
+    <div style="display:flex;align-items:center;gap:.8rem;padding:.7rem 0;border-bottom:1px solid var(--border);">
+      <div style="width:96px;height:44px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;overflow:hidden;background:#fff;flex-shrink:0;">
+        ${p.gambar ? `<img src="${p.gambar}" style="max-width:100%;max-height:100%;object-fit:contain;">`
+                   : '<span style="font-size:.68rem;color:var(--muted);">belum ada</span>'}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.84rem;font-weight:600;color:var(--navy);">${escHtml(p.nama)}</div>
+        <div style="font-size:.72rem;color:var(--muted);">${escHtml(p.jabatan)}</div>
+      </div>
+      <label class="btn-secondary" style="padding:.35rem .7rem;font-size:.75rem;cursor:pointer;margin:0;">
+        ${p.ttd_path ? 'Ganti' : 'Unggah'} TTD
+        <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="unggahTtd('${p.id}', this)">
+      </label>
+      <button class="btn-secondary" style="padding:.35rem .7rem;font-size:.75rem;color:#dc2626;border-color:#fecaca;" onclick="hapusPenandatangan('${p.id}')">Hapus</button>
+    </div>`).join('')
+}
+
+async function tambahPenandatangan () {
+  const nama = document.getElementById('ttdNama').value.trim()
+  const jabatan = document.getElementById('ttdJabatan').value.trim()
+  if (!nama || !jabatan) { toast('Nama dan jabatan wajib diisi.', 'error'); return }
+  const { error } = await sb.from('penandatangan').insert({ nama, jabatan, urutan: daftarTtd.length + 1 })
+  if (error) { toast('Gagal menambah: ' + error.message, 'error'); return }
+  document.getElementById('ttdNama').value = ''
+  document.getElementById('ttdJabatan').value = ''
+  toast('Penandatangan ditambahkan')
+  await muatPenandatangan(); renderDaftarTtd(); buildSurat()
+}
+
+async function unggahTtd (id, input) {
+  const file = input.files[0]
+  if (!file) return
+  if (file.size > MAKS_TTD) { toast('Ukuran berkas melebihi 1 MB.', 'error'); return }
+  const aman = file.name.replace(/[^\w.\-]+/g, '_')
+  const path = `${id}/${Date.now()}-${aman}`
+  const { error: up } = await sb.storage.from('tanda-tangan')
+    .upload(path, file, { contentType: file.type || 'image/png' })
+  if (up) { toast('Gagal mengunggah: ' + up.message, 'error'); return }
+
+  const lama = daftarTtd.find(p => p.id === id)?.ttd_path
+  const { error } = await sb.from('penandatangan').update({ ttd_path: path }).eq('id', id)
+  if (error) {
+    await sb.storage.from('tanda-tangan').remove([path])   // jangan tinggalkan berkas yatim
+    toast('Gagal menyimpan: ' + error.message, 'error'); return
+  }
+  if (lama) await sb.storage.from('tanda-tangan').remove([lama])
+  toast('Tanda tangan tersimpan')
+  await muatPenandatangan(); renderDaftarTtd(); buildSurat()
+}
+
+async function hapusPenandatangan (id) {
+  if (!confirm('Hapus penandatangan ini beserta tanda tangannya?')) return
+  const p = daftarTtd.find(x => x.id === id)
+  const { error } = await sb.from('penandatangan').delete().eq('id', id)
+  if (error) { toast('Gagal menghapus: ' + error.message, 'error'); return }
+  if (p?.ttd_path) await sb.storage.from('tanda-tangan').remove([p.ttd_path])
+  toast('Penandatangan dihapus')
+  await muatPenandatangan(); renderDaftarTtd(); buildSurat()
+}
 
 // ---- Penomoran surat otomatis (tetap bisa diedit manual) ----
 // Pola: 001/HRD-KMA/IN/PKWT/VIII/2026
@@ -1391,16 +1563,14 @@ function buildSurat () {
         <p>${escHtml(P.perusahaan_alamat || '')}</p>
       </div>
     </div>`
+  const pt = penandatanganTerpilih()
   const ttd = `
     <div class="ttd">
-      <div>
-        <div>PIHAK PERTAMA</div>
-        <div class="nama">${escHtml(P.penandatangan_nama || '')}</div>
-        <div class="jab">${escHtml(P.penandatangan_jabatan || '')}</div>
-      </div>
+      ${blokTtd(pt, 'PIHAK PERTAMA')}
       <div>
         <div>PIHAK KEDUA</div>
-        <div class="nama">${escHtml(k.nama_lengkap || '')}</div>
+        <div style="height:64px;"></div>
+        <div class="nama" style="margin-top:3.4rem;">${escHtml(k.nama_lengkap || '')}</div>
         <div class="jab">Employee</div>
       </div>
     </div>`
@@ -1595,12 +1765,8 @@ function templateSKK (k, P, nomor, tglSrt, tglPjg, kop) {
   <p>Surat keterangan ini dibuat untuk ${keperluan ? escHtml(keperluan) : 'dipergunakan sebagaimana mestinya'}.</p>
 
   <p style="margin-top:1.4rem;">${escHtml(P.perusahaan_kota || '')}, ${tglPjg(tglSrt)}</p>
-  <div class="ttd">
-    <div style="margin-left:auto;">
-      <div>Hormat kami,</div>
-      <div class="nama">${escHtml(P.penandatangan_nama || '')}</div>
-      <div class="jab">${escHtml(P.penandatangan_jabatan || '')}</div>
-    </div>
+  <div class="ttd" style="justify-content:flex-end;">
+    ${blokTtd(penandatanganTerpilih(), 'Hormat kami,')}
   </div>`
 }
 
