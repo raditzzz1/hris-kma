@@ -205,8 +205,21 @@
       margin: 2.4rem 2.2rem 0; page-break-inside: avoid; break-inside: avoid;
     }
     .surat .ttd > div { text-align: center; width: 44%; }
+    /* Kotak tanda tangan dengan tinggi TETAP. Ini kuncinya supaya tata letak
+       di layar dan di PDF sama persis, baik penandatangan punya gambar TTD
+       maupun belum. */
+    .surat .ttd-slot {
+      height: 20mm; display: flex; align-items: flex-end; justify-content: center;
+      overflow: hidden; margin: 2mm 0 1mm;
+    }
+    .surat .ttd-img {
+      max-height: 20mm; max-width: 100%; object-fit: contain; display: block;
+      /* Banyak berkas TTD berupa JPG berlatar putih/abu. multiply membuat
+         latarnya melebur ke kertas sehingga tak tampak sebagai kotak. */
+      mix-blend-mode: multiply;
+    }
     .surat .ttd .nama {
-      font-weight: 700; text-decoration: underline; margin-top: 4.8rem;
+      font-weight: 700; text-decoration: underline;
       white-space: nowrap; display: inline-block;
     }
     .surat .ttd .jab { font-style: italic; font-size: 10pt; margin-top: 2px; }
@@ -1390,13 +1403,12 @@ function penandatanganTerpilih () {
 function blokTtd (p, judul) {
   const nama = p?.nama || (pengaturanApp?.penandatangan_nama || '')
   const jab  = p?.jabatan || (pengaturanApp?.penandatangan_jabatan || '')
-  const img  = p?.gambar
-    ? `<img src="${p.gambar}" alt="" style="height:64px;object-fit:contain;display:block;margin:.2rem auto -.3rem;">`
-    : ''
+  // Tinggi kotak tanda tangan DIKUNCI (lihat .ttd-slot) baik ada gambar
+  // maupun tidak, supaya posisi nama & jabatan tak bergeser saat dicetak.
   return `<div>
       <div>${escHtml(judul)}</div>
-      ${img || '<div style="height:64px;"></div>'}
-      <div class="nama" style="margin-top:${p?.gambar ? '.1rem' : '3.4rem'};">${escHtml(nama)}</div>
+      <div class="ttd-slot">${p?.gambar ? `<img class="ttd-img" src="${p.gambar}" alt="">` : ''}</div>
+      <div class="nama">${escHtml(nama)}</div>
       <div class="jab">${escHtml(jab)}</div>
     </div>`
 }
@@ -1569,8 +1581,8 @@ function buildSurat () {
       ${blokTtd(pt, 'PIHAK PERTAMA')}
       <div>
         <div>PIHAK KEDUA</div>
-        <div style="height:64px;"></div>
-        <div class="nama" style="margin-top:3.4rem;">${escHtml(k.nama_lengkap || '')}</div>
+        <div class="ttd-slot"></div>
+        <div class="nama">${escHtml(k.nama_lengkap || '')}</div>
         <div class="jab">Employee</div>
       </div>
     </div>`
@@ -1586,6 +1598,10 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
   const pokok  = Number(k.gaji_pokok) || 0
   const tunj   = Number(document.getElementById('suratTunjangan').value) || 0
   const cuti   = P.cuti_tahunan_hari || '12'
+  // Pihak Pertama harus mengikuti penandatangan yang DIPILIH, bukan nilai
+  // tetap di tabel pengaturan — kalau tidak, nama di atas & tanda tangan di
+  // bawah bisa berbeda orang.
+  const ptp = penandatanganTerpilih()
   // Isian yang masih kosong dicetak sebagai titik-titik, supaya jelas harus
   // dilengkapi manual — bukan terlihat seperti dokumen yang rusak.
   const isi = v => (v && String(v).trim()) ? escHtml(v) : '.'.repeat(28)
@@ -1599,8 +1615,8 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
   <p>Surat Perjanjian Kerja ini dibuat pada tanggal ${tglPjg(tglSrt)} antara,</p>
   <p style="margin-top:.5rem;">I.</p>
   <table class="pihak">
-    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(P.penandatangan_nama || '')}</td></tr>
-    <tr><td>Jabatan</td><td class="sep">:</td><td><i>${escHtml(P.penandatangan_jabatan || '')}</i></td></tr>
+    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(ptp?.nama || P.penandatangan_nama || '')}</td></tr>
+    <tr><td>Jabatan</td><td class="sep">:</td><td><i>${escHtml(ptp?.jabatan || P.penandatangan_jabatan || '')}</i></td></tr>
   </table>
   <p style="margin-left:1.6rem;">Dalam hal ini bertindak untuk dan atas nama ${escHtml(P.perusahaan_nama || '')} yang berkedudukan di ${escHtml(P.perusahaan_alamat || '')} dan selanjutnya disebut sebagai <b>Pihak Pertama</b>.</p>
 
@@ -1737,14 +1753,15 @@ function templatePKWT (k, P, nomor, tglSrt, tglPjg, kop, ttd) {
 function templateSKK (k, P, nomor, tglSrt, tglPjg, kop) {
   const keperluan = document.getElementById('suratKeperluan').value.trim()
   const masih = k.status === 'aktif'
+  const ptp = penandatanganTerpilih()
   return `${kop}
   <h2 class="judul">SURAT KETERANGAN KERJA</h2>
   <div class="nomor">No: ${escHtml(nomor)}</div>
 
   <p>Yang bertanda tangan di bawah ini:</p>
   <table class="pihak">
-    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(P.penandatangan_nama || '')}</td></tr>
-    <tr><td>Jabatan</td><td class="sep">:</td><td>${escHtml(P.penandatangan_jabatan || '')}</td></tr>
+    <tr><td>Nama</td><td class="sep">:</td><td>${escHtml(ptp?.nama || P.penandatangan_nama || '')}</td></tr>
+    <tr><td>Jabatan</td><td class="sep">:</td><td>${escHtml(ptp?.jabatan || P.penandatangan_jabatan || '')}</td></tr>
     <tr><td>Perusahaan</td><td class="sep">:</td><td>${escHtml(P.perusahaan_nama || '')}</td></tr>
   </table>
 
