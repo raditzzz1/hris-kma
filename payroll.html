@@ -655,10 +655,13 @@ async function muatTtdSlip () {
   if (p) TTD_SLIP = { nama: p.nama, jabatan: p.jabatan, gambar: await ambilGambarPrivat(p.ttd_path) }
   STEMPEL_SLIP = await ambilGambarPrivat(set.stempel_path)
 
-  // CADANGAN SEMENTARA: selama TTD/stempel belum diunggah ke bucket privat,
-  // pakai berkas lama supaya slip tidak terbit tanpa tanda tangan/stempel.
-  // Setelah keduanya diunggah, hapus ttd-direktur.png & stempel-kma.png dari
-  // repo — selama masih ada, keduanya bisa diunduh publik tanpa login.
+  // Slip gaji memakai berkas TTD & stempel lama (ttd-direktur.png,
+  // stempel-kma.png) — ini KEPUTUSAN yang disepakati, bukan sisa sementara.
+  // JANGAN hapus kedua berkas itu dari repo: slip akan terbit tanpa tanda
+  // tangan/stempel. Catatan yang disadari: keduanya berada di folder publik
+  // sehingga bisa diunduh tanpa login. Bila suatu saat ingin ditutup, unggah
+  // TTD lewat "Kelola Penandatangan" dan isi `pengaturan.stempel_path` —
+  // begitu terisi, kode di atas otomatis memakai versi privat.
   if (!TTD_SLIP) TTD_SLIP = { nama: 'Moammer Bahreza Baharuddin', jabatan: 'Board of Director', gambar: null }
   if (!TTD_SLIP.gambar) TTD_SLIP.gambar = 'ttd-direktur.png'
   if (!STEMPEL_SLIP) STEMPEL_SLIP = 'stempel-kma.png'
