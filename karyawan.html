@@ -184,14 +184,32 @@
     .surat ol, .surat ul { margin: 0; padding-left: 2.1rem; }
     .surat ol li, .surat ul li { margin-bottom: .35rem; padding-left: .15rem; }
     .surat ol ol { padding-left: 1.6rem; margin-top: .3rem; }
-    .surat table.pihak { border-collapse: collapse; margin: .2rem 0 .6rem 1.6rem; }
-    .surat table.pihak td { vertical-align: top; padding: 1px 0; font-size: 11pt; }
+    /* Tabel identitas harus POLOS. Gaya tabel umum halaman ini punya garis
+       bawah tiap baris, dan itu ikut terbawa ke dokumen -> dinolkan di sini. */
+    .surat table.pihak, .surat table.pihak tr, .surat table.pihak td,
+    .surat table.pihak thead, .surat table.pihak tbody {
+      border: 0 !important; border-collapse: collapse !important;
+      background: none !important; box-shadow: none !important;
+    }
+    .surat table.pihak { margin: .2rem 0 .6rem 1.6rem; width: auto; }
+    .surat table.pihak td {
+      vertical-align: top; padding: 1px 0 !important; font-size: 11pt;
+      color: #000; text-align: left !important;
+    }
     .surat table.pihak td:first-child { width: 130px; }
     .surat table.pihak td.sep { width: 12px; }
-    .surat .ttd { display: flex; justify-content: space-between; margin-top: 2.2rem; page-break-inside: avoid; }
-    .surat .ttd div { text-align: center; width: 48%; }
-    .surat .ttd .nama { font-weight: 700; text-decoration: underline; margin-top: 4.5rem; white-space: nowrap; }
-    .surat .ttd .jab { font-style: italic; font-size: 10pt; }
+    /* Blok tanda tangan: dua kolom sejajar, diberi jarak dari tepi seperti
+       kontrak aslinya, dan tak boleh terpotong ke halaman berikutnya. */
+    .surat .ttd {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin: 2.4rem 2.2rem 0; page-break-inside: avoid; break-inside: avoid;
+    }
+    .surat .ttd > div { text-align: center; width: 44%; }
+    .surat .ttd .nama {
+      font-weight: 700; text-decoration: underline; margin-top: 4.8rem;
+      white-space: nowrap; display: inline-block;
+    }
+    .surat .ttd .jab { font-style: italic; font-size: 10pt; margin-top: 2px; }
     .surat .hal { page-break-after: always; }
     .surat .hal:last-child { page-break-after: auto; }
 
@@ -411,6 +429,9 @@
           <button class="btn-primary" style="width:100%;margin-top:1rem;justify-content:center;" onclick="openEditPribadi()">
             <svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit Data Pribadi
           </button>
+          <button class="btn-secondary" style="width:100%;margin-top:.6rem;justify-content:center;display:flex;" onclick="openDokumenSaya()">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg> Dokumen Saya
+          </button>
         </div>
         <div class="info-card">
           <h3><svg class="ic" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Data Pekerjaan</h3>
@@ -550,7 +571,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modalSurat')">Tutup</button>
-      <button class="btn-submit" onclick="window.print()"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V2h12v7"/><path d="M6 14h12v8H6z"/></svg> Cetak / Simpan PDF</button>
+      <button class="btn-submit" onclick="cetakSurat()"><svg class="ic" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V2h12v7"/><path d="M6 14h12v8H6z"/></svg> Cetak / Simpan PDF</button>
     </div>
   </div>
 </div>
@@ -1079,6 +1100,13 @@ const LABEL_DOK = { kontrak:'Kontrak Kerja', ktp:'KTP', npwp:'NPWP', ijazah:'Ija
   sertifikat:'Sertifikat', bpjs:'BPJS', surat:'Surat', foto:'Foto', lainnya:'Lainnya' }
 const MAKS_DOK = 5 * 1024 * 1024
 
+// Karyawan biasa tak melewati modal detail, jadi butuh pintu masuk sendiri.
+// RLS `dokumen_select_own` memastikan mereka hanya melihat dokumennya sendiri.
+function openDokumenSaya () {
+  suratKaryw = currentKaryw
+  openDokumen()
+}
+
 function openDokumen () {
   if (!suratKaryw) return
   closeModal('modalDetail')
@@ -1247,8 +1275,9 @@ async function openSurat () {
   closeModal('modalDetail')
 
   document.getElementById('suratTanggal').value = tanggalLokal()
-  document.getElementById('suratNomor').value   = ''
   document.getElementById('suratKeperluan').value = ''
+  nomorOtomatisTerakhir = nomorSuratBerikutnya()
+  document.getElementById('suratNomor').value = nomorOtomatisTerakhir
 
   // Tunjangan tetap: jumlah komponen bertipe 'tunjangan' milik karyawan ini
   const { data: komp } = await sb.from('karyawan_komponen')
@@ -1269,8 +1298,44 @@ async function openSurat () {
   document.addEventListener('input', e => { if (e.target.id === id) buildSurat() })
 })
 
+// ---- Penomoran surat otomatis (tetap bisa diedit manual) ----
+// Pola: 001/HRD-KMA/IN/PKWT/VIII/2026
+//   urut / kode unit / IN(internal) / jenis / bulan romawi / tahun
+// Nomor urut terakhir disimpan di tabel `pengaturan`, dinaikkan saat dicetak.
+function nomorSuratBerikutnya () {
+  const P = pengaturanApp || {}
+  const jenis = (document.getElementById('suratJenis')?.value === 'skk') ? 'SKK' : 'PKWT'
+  const kode  = P.kode_surat || 'HRD-KMA'
+  const urut  = (parseInt(P.nomor_surat_terakhir, 10) || 0) + 1
+  const tgl   = new Date((document.getElementById('suratTanggal')?.value || tanggalLokal()) + 'T00:00:00')
+  return `${String(urut).padStart(3, '0')}/${kode}/IN/${jenis}/${ROMAWI[tgl.getMonth() + 1]}/${tgl.getFullYear()}`
+}
+
+// Dipanggil saat HR menekan Cetak: simpan nomor urut yang benar-benar dipakai
+// supaya surat berikutnya melanjutkan, bukan mengulang.
+async function cetakSurat () {
+  const nomor = document.getElementById('suratNomor').value.trim()
+  const urut = parseInt((nomor.match(/^\s*(\d+)/) || [])[1], 10)
+  if (urut) {
+    const { error } = await sb.from('pengaturan')
+      .upsert({ kunci: 'nomor_surat_terakhir', nilai: String(urut),
+                keterangan: 'Nomor urut surat terakhir yang dipakai' }, { onConflict: 'kunci' })
+    if (!error && pengaturanApp) pengaturanApp.nomor_surat_terakhir = String(urut)
+  }
+  window.print()
+}
+
+let nomorOtomatisTerakhir = ''
+
 function gantiJenisSurat () {
   const jenis = document.getElementById('suratJenis').value
+  // Jenis surat ikut menentukan nomor. Perbarui otomatis HANYA bila HR belum
+  // mengubahnya sendiri — jangan menimpa nomor yang sudah diketik manual.
+  const kolomNomor = document.getElementById('suratNomor')
+  if (!kolomNomor.value.trim() || kolomNomor.value.trim() === nomorOtomatisTerakhir) {
+    nomorOtomatisTerakhir = nomorSuratBerikutnya()
+    kolomNomor.value = nomorOtomatisTerakhir
+  }
   document.getElementById('grpSuratKeperluan').style.display = jenis === 'skk' ? '' : 'none'
   document.getElementById('grpSuratTunjangan').style.display = jenis === 'pkwt' ? '' : 'none'
   document.getElementById('suratJudul').textContent =
