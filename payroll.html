@@ -153,6 +153,17 @@
       * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
       body * { visibility:hidden; }
       #printArea, #printArea *, #printBupot, #printBupot * { visibility:visible; }
+      /* Saat mencetak, lebar A4 < 768px sehingga @media(max-width:768px) di
+         hris.css ikut aktif dan memunculkan kembali menu bawah/sidebar.
+         Selector ber-specificity lebih tinggi dipakai agar tetap tersembunyi,
+         sehingga tampilan cetak = tampilan pratinjau. */
+      body > .bottom-nav, body > .sidebar, body > .sidebar-overlay,
+      body > #toast { display:none !important; }
+      /* Ukuran TTD & stempel dikunci dalam px (satuan absolut) supaya identik
+         di layar maupun di kertas. */
+      .slip-sign-area { height:240px !important; }
+      .slip-ttd   { height:192px !important; }
+      .slip-stamp { height:173px !important; }
       #modalBupot { position:static !important; display:block !important; background:none !important; padding:0 !important; }
       #modalBupot .modal { position:static !important; max-width:none !important; width:auto !important; max-height:none !important; margin:0 !important; box-shadow:none !important; border-radius:0 !important; }
       #modalBupot .modal-head, #modalBupot .modal-foot, #bupotForm { display:none !important; }
@@ -605,7 +616,53 @@ async function buildBupot () {
 // Identitas pemotong diambil dari tabel `pengaturan`; nilai di bawah dipakai
 // sebagai cadangan bila pengaturan belum termuat.
 let BUPOT_PERUSAHAAN = { nama:'-', alamat:'-', kota:'-', penandatangan:'-', jabatan:'-' }
-let TTD_BUPOT = null   // {nama, jabatan, gambar(dataURL)}
+let TTD_BUPOT = null     // {nama, jabatan, gambar(dataURL)} — untuk bukti potong
+let TTD_SLIP = null      // penandatangan slip gaji
+let STEMPEL_SLIP = null  // dataURL stempel perusahaan
+
+// Ambil berkas dari bucket privat 'tanda-tangan' lalu ubah jadi data URL.
+// Data URL dipakai (bukan signed URL langsung) supaya gambar pasti ikut
+// tercetak — tautan bertenggat bisa kedaluwarsa di tengah proses cetak.
+async function ambilGambarPrivat (path) {
+  if (!path) return null
+  try {
+    const { data } = await sb.storage.from('tanda-tangan').createSignedUrl(path, 120)
+    if (!data?.signedUrl) return null
+    const blob = await (await fetch(data.signedUrl)).blob()
+    return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
+  } catch (e) { return null }
+}
+
+// Penandatangan & stempel untuk slip gaji. Dipanggil sekali sebelum slip
+// dirender, jadi tampilan di layar dan hasil cetak memakai data yang sama.
+async function muatTtdSlip () {
+  if (TTD_SLIP) return
+  const { data: P } = await sb.from('pengaturan').select('kunci, nilai')
+  const set = Object.fromEntries((P || []).map(r => [r.kunci, r.nilai]))
+
+  // Slip gaji selama ini ditandatangani Board of Director (bukan penandatangan
+  // kontrak). Nama itu dipakai sebagai default agar perilaku tak berubah
+  // diam-diam; bisa dialihkan lewat pengaturan `penandatangan_slip`.
+  const target = set.penandatangan_slip || 'Moammer Bahreza Baharuddin'
+  let { data: pt } = await sb.from('penandatangan')
+    .select('nama, jabatan, ttd_path').eq('aktif', true).eq('nama', target).limit(1)
+  if (!pt || !pt.length) {   // belum terdaftar -> pakai penandatangan ber-TTD pertama
+    ;({ data: pt } = await sb.from('penandatangan')
+      .select('nama, jabatan, ttd_path').eq('aktif', true)
+      .not('ttd_path', 'is', null).order('urutan').limit(1))
+  }
+  const p = pt && pt[0]
+  if (p) TTD_SLIP = { nama: p.nama, jabatan: p.jabatan, gambar: await ambilGambarPrivat(p.ttd_path) }
+  STEMPEL_SLIP = await ambilGambarPrivat(set.stempel_path)
+
+  // CADANGAN SEMENTARA: selama TTD/stempel belum diunggah ke bucket privat,
+  // pakai berkas lama supaya slip tidak terbit tanpa tanda tangan/stempel.
+  // Setelah keduanya diunggah, hapus ttd-direktur.png & stempel-kma.png dari
+  // repo — selama masih ada, keduanya bisa diunduh publik tanpa login.
+  if (!TTD_SLIP) TTD_SLIP = { nama: 'Moammer Bahreza Baharuddin', jabatan: 'Board of Director', gambar: null }
+  if (!TTD_SLIP.gambar) TTD_SLIP.gambar = 'ttd-direktur.png'
+  if (!STEMPEL_SLIP) STEMPEL_SLIP = 'stempel-kma.png'
+}
 
 async function muatIdentitasPemotong () {
   const { data } = await sb.from('pengaturan').select('kunci, nilai')
@@ -832,6 +889,9 @@ async function lihatSlip(slipId) {
     .select('*, karyawan:karyawan_id(nama_lengkap,nik,jabatan:jabatan_id(nama),divisi:divisi_id(nama)), periode:periode_id(*)')
     .eq('id',slipId).single()
   if (!sl) return
+  // Tanda tangan & stempel disiapkan SEBELUM slip dirender, supaya yang
+  // tampil di layar sama persis dengan yang tercetak.
+  await muatTtdSlip()
 
   document.getElementById('slipTitle').textContent =
     `Slip Gaji — ${sl.karyawan?.nama_lengkap} — ${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}`
@@ -905,11 +965,11 @@ async function lihatSlip(slipId) {
       <div class="slip-sign">
         <p>Mengetahui,</p>
         <div class="slip-sign-area">
-          <img src="ttd-direktur.png" class="slip-ttd" alt="" onerror="this.style.display='none'">
-          <img src="stempel-kma.png" class="slip-stamp" alt="" onerror="this.style.display='none'">
+          ${TTD_SLIP?.gambar ? `<img src="${TTD_SLIP.gambar}" class="slip-ttd" alt="">` : ''}
+          ${STEMPEL_SLIP ? `<img src="${STEMPEL_SLIP}" class="slip-stamp" alt="">` : ''}
         </div>
-        <p class="slip-sign-name">Moammer Bahreza Baharuddin</p>
-        <p class="slip-sign-title">Board of Director</p>
+        <p class="slip-sign-name">${escHtml(TTD_SLIP?.nama || '')}</p>
+        <p class="slip-sign-title">${escHtml(TTD_SLIP?.jabatan || '')}</p>
       </div>
 
       <div class="slip-footer">Slip ini diterbitkan oleh sistem HRIS PT Kawan Menengah Atas</div>
