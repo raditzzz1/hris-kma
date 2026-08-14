@@ -218,11 +218,15 @@
        di layar dan di PDF sama persis, baik penandatangan punya gambar TTD
        maupun belum. */
     .surat .ttd-slot {
-      height: 20mm; display: flex; align-items: flex-end; justify-content: center;
+      height: 26mm; display: flex; align-items: flex-end; justify-content: center;
       overflow: hidden; margin: 2mm 0 1mm;
     }
     .surat .ttd-img {
-      max-height: 20mm; max-width: 100%; object-fit: contain; display: block;
+      /* Tinggi dinaikkan agar tanda tangan lebih terbaca, TAPI lebarnya
+         dibatasi 55mm supaya tak pernah lebih lebar dari nama di bawahnya
+         maupun tulisan "PIHAK PERTAMA" di atasnya. object-fit:contain
+         menjaga proporsi — batas mana pun yang lebih dulu kena, itu yang dipakai. */
+      max-height: 26mm; max-width: 55mm; object-fit: contain; display: block;
       /* Banyak berkas TTD berupa JPG berlatar putih/abu. multiply membuat
          latarnya melebur ke kertas sehingga tak tampak sebagai kotak. */
       mix-blend-mode: multiply;
