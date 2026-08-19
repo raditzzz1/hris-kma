@@ -151,28 +151,48 @@
 
     @media print {
       * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-      body * { visibility:hidden; }
-      #printArea, #printArea *, #printBupot, #printBupot * { visibility:visible; }
+      /* PENTING: pakai display:none, bukan visibility:hidden. visibility hanya
+         menyembunyikan tampilan tapi elemennya TETAP memakan tinggi halaman —
+         itu yang dulu menghasilkan halaman-halaman kosong di akhir cetakan
+         (isi halaman Payroll tetap "ada" walau tak terlihat). Perbaikan yang
+         sama sudah lebih dulu dipakai di karyawan.html. */
+      body > * { display:none !important; }
       /* Saat mencetak, lebar A4 < 768px sehingga @media(max-width:768px) di
-         hris.css ikut aktif dan memunculkan kembali menu bawah/sidebar.
-         Selector ber-specificity lebih tinggi dipakai agar tetap tersembunyi,
-         sehingga tampilan cetak = tampilan pratinjau. */
+         hris.css ikut aktif. Aturan di sana seperti `.bottom-nav{display:flex
+         !important}` mengalahkan `body > *` (specificity lebih tinggi), jadi
+         elemen chrome disebut eksplisit dengan selector yang lebih kuat. */
       body > .bottom-nav, body > .sidebar, body > .sidebar-overlay,
-      body > #toast { display:none !important; }
+      body > .main-wrap, body > #toast, body > #lo { display:none !important; }
+      /* Hanya modal yang SEDANG TERBUKA yang dicetak. Sebelumnya #modalSlip &
+         #modalBupot dua-duanya dipaksa tampil, jadi mencetak slip ikut
+         menyeret kerangka modal bukti potong — sumber halaman kosong lainnya. */
+      body > .modal-overlay.open {
+        display:block !important; position:static !important;
+        background:none !important; padding:0 !important;
+        overflow:visible !important; height:auto !important;
+      }
+      .modal-overlay.open .modal {
+        position:static !important; max-width:none !important; width:auto !important;
+        max-height:none !important; height:auto !important; margin:0 !important;
+        box-shadow:none !important; border-radius:0 !important; overflow:visible !important;
+      }
+      .modal-overlay.open .modal-head, .modal-overlay.open .modal-foot,
+      #bupotForm { display:none !important; }
+      /* hris.css versi HP mematok .modal-body ke max-height:62vh — selector di
+         sini sengaja lebih spesifik supaya isi surat tak terpotong saat dicetak. */
+      .modal-overlay.open .modal-body {
+        max-height:none !important; height:auto !important; overflow:visible !important;
+      }
+      #printArea, #printBupot { padding:1.5rem !important; }
+      /* Latar dibuat putih & tinggi dibebaskan supaya tak ada blok abu-abu
+         sisa panel yang ikut tercetak di halaman terakhir. */
+      body, .modal-overlay.open, .modal-overlay.open .modal,
+      .modal-overlay.open .modal-body { background:#fff !important; min-height:0 !important; }
       /* Ukuran TTD & stempel dikunci dalam px (satuan absolut) supaya identik
          di layar maupun di kertas. */
       .slip-sign-area { height:240px !important; }
       .slip-ttd   { height:192px !important; }
       .slip-stamp { height:173px !important; }
-      #modalBupot { position:static !important; display:block !important; background:none !important; padding:0 !important; }
-      #modalBupot .modal { position:static !important; max-width:none !important; width:auto !important; max-height:none !important; margin:0 !important; box-shadow:none !important; border-radius:0 !important; }
-      #modalBupot .modal-head, #modalBupot .modal-foot, #bupotForm { display:none !important; }
-      #printBupot { position:absolute; left:0; top:0; width:100%; padding:1.5rem; }
-      #modalSlip { position:static !important; display:block !important; background:none !important; padding:0 !important; }
-      #modalSlip .modal { position:static !important; max-width:none !important; width:auto !important; max-height:none !important; margin:0 !important; box-shadow:none !important; border-radius:0 !important; }
-      #modalSlip .modal-head, #modalSlip .modal-foot { display:none !important; }
-      .modal-body, #printArea { max-height:none !important; overflow:visible !important; }
-      #printArea { position:absolute; left:0; top:0; width:100%; padding:1.5rem; }
     }
   </style>
   <link rel="stylesheet" href="hris.css">
