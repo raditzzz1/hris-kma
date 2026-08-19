@@ -597,6 +597,17 @@
         🔒 Berkas tanda tangan disimpan di penyimpanan privat — tidak bisa diunduh tanpa login.
         Gunakan gambar berlatar putih/transparan (PNG/JPG, maks. 1 MB).
       </p>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:1.1rem 0;">
+
+      <p style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.5rem;">Stempel Perusahaan (Slip Gaji)</p>
+      <div id="stempelBox" style="display:flex;align-items:center;gap:.8rem;padding:.7rem 0;">
+        <p style="font-size:.82rem;color:var(--muted);">Memuat…</p>
+      </div>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem;">
+        🔒 Sama seperti TTD — disimpan privat, dipakai otomatis di slip gaji.
+        Selama belum diunggah di sini, slip memakai berkas lama (<code>stempel-kma.png</code>) yang publik.
+      </p>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modalTtd')">Tutup</button>
@@ -1444,7 +1455,7 @@ function blokTtd (p, judul) {
     </div>`
 }
 
-function openKelolaTtd () { openModal('modalTtd'); renderDaftarTtd() }
+function openKelolaTtd () { openModal('modalTtd'); renderDaftarTtd(); muatStempel() }
 
 function renderDaftarTtd () {
   const wadah = document.getElementById('ttdList')
@@ -1511,6 +1522,67 @@ async function hapusPenandatangan (id) {
   if (p?.ttd_path) await sb.storage.from('tanda-tangan').remove([p.ttd_path])
   toast('Penandatangan dihapus')
   await muatPenandatangan(); renderDaftarTtd(); buildSurat()
+}
+
+// Stempel perusahaan untuk slip gaji/bukti potong — sama pola dgn TTD di atas
+// (bucket privat 'tanda-tangan', path disimpan di pengaturan.stempel_path).
+let stempelPath = null, stempelGambar = null
+const MAKS_STEMPEL = 1024 * 1024
+
+async function muatStempel () {
+  const { data } = await sb.from('pengaturan').select('nilai').eq('kunci', 'stempel_path').maybeSingle()
+  stempelPath = data?.nilai || null
+  stempelGambar = null
+  if (stempelPath) {
+    try {
+      const { data: s } = await sb.storage.from('tanda-tangan').createSignedUrl(stempelPath, 120)
+      if (s?.signedUrl) {
+        const blob = await (await fetch(s.signedUrl)).blob()
+        stempelGambar = await new Promise(res => {
+          const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob)
+        })
+      }
+    } catch (e) { /* stempel gagal dimuat -> tampilkan status kosong */ }
+  }
+  renderStempel()
+}
+
+function renderStempel () {
+  const box = document.getElementById('stempelBox')
+  if (!box) return
+  box.innerHTML = `
+    <div style="width:96px;height:44px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;overflow:hidden;background:#fff;flex-shrink:0;">
+      ${stempelGambar ? `<img src="${stempelGambar}" style="max-width:100%;max-height:100%;object-fit:contain;">`
+                 : '<span style="font-size:.68rem;color:var(--muted);">belum ada</span>'}
+    </div>
+    <div style="flex:1;min-width:0;font-size:.78rem;color:var(--muted);">
+      ${stempelPath ? 'Stempel privat aktif — dipakai di slip gaji.' : 'Belum diunggah — slip masih pakai stempel-kma.png (publik).'}
+    </div>
+    <label class="btn-secondary" style="padding:.35rem .7rem;font-size:.75rem;cursor:pointer;margin:0;">
+      ${stempelPath ? 'Ganti' : 'Unggah'} Stempel
+      <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="unggahStempel(this)">
+    </label>`
+}
+
+async function unggahStempel (input) {
+  const file = input.files[0]
+  if (!file) return
+  if (file.size > MAKS_STEMPEL) { toast('Ukuran berkas melebihi 1 MB.', 'error'); return }
+  const aman = file.name.replace(/[^\w.\-]+/g, '_')
+  const path = `stempel/${Date.now()}-${aman}`
+  const { error: up } = await sb.storage.from('tanda-tangan')
+    .upload(path, file, { contentType: file.type || 'image/png' })
+  if (up) { toast('Gagal mengunggah: ' + up.message, 'error'); return }
+
+  const lama = stempelPath
+  const { error } = await sb.from('pengaturan').upsert({ kunci: 'stempel_path', nilai: path }, { onConflict: 'kunci' })
+  if (error) {
+    await sb.storage.from('tanda-tangan').remove([path])   // jangan tinggalkan berkas yatim
+    toast('Gagal menyimpan: ' + error.message, 'error'); return
+  }
+  if (lama) await sb.storage.from('tanda-tangan').remove([lama])
+  toast('Stempel tersimpan')
+  await muatStempel()
 }
 
 // ---- Penomoran surat otomatis (tetap bisa diedit manual) ----
