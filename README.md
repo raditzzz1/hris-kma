@@ -51,6 +51,9 @@ Employee Self-Service (ESS) per akun.
    12. `supabase-fase12.sql` (aktifkan Realtime untuk notifikasi cuti/izin)
    13. `supabase-fase13.sql` (WFH otomatis tiap Sabtu per karyawan)
    14. `supabase-fase16.sql` (statistik foto profil — pengingat & papan skor)
+   15. `supabase-fase17.sql` (masa kontrak, arsip dokumen, koreksi absen + tutup celah RLS gaji/role)
+   16. `supabase-fase18.sql` (penandatangan & tanda tangan digital — bucket privat)
+   17. `supabase-fase19.sql` (BPJS & PPh 21 boleh ditetapkan manual per karyawan)
 
    > Nomor 14 & 15 sengaja dilewati: dulu dipakai modul Marketing/KOL yang
    > akhirnya dibatalkan & dihapus, jadi tidak dipakai ulang agar riwayat
@@ -124,6 +127,13 @@ Lihat **[CHECKLIST-UJI-ROLE.md](CHECKLIST-UJI-ROLE.md)** — uji per role
   bersih tanpa potongan BPJS/PPh.
 - **Lembur** dicatat karyawan untuk pendataan; upah lembur diinput **manual** oleh
   HR (tidak otomatis masuk slip gaji).
+- **BPJS & PPh 21**: dihitung otomatis dari tarif (1%/2%/1% karyawan; 4%/3,7%/2%
+  perusahaan). Bila angka sebenarnya berbeda, HR bisa menetapkannya sendiri di
+  **Payroll → Komponen Gaji → bagian "BPJS & PPh 21"**: baris yang **dibiarkan
+  kosong tetap otomatis**, baris yang **diisi** memakai angka itu (0 berarti
+  "tetapkan nol", bukan kosong). Nilainya tersimpan per karyawan sehingga
+  terpakai terus tiap bulan tanpa diisi ulang, dan **slip yang sudah terbit
+  tidak ikut berubah**.
 - **Hari libur nasional**: dikelola HR di halaman Absensi → panel "Kelola Hari
   Libur" (tambah/hapus tanggal libur tahun berapa pun, tanpa edit kode).
 - **Karyawan resign**: begitu HR ubah status jadi "tidak aktif", akun otomatis

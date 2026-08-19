@@ -40,6 +40,37 @@ CREATE TABLE IF NOT EXISTS karyawan_potongan_manual (
   updated_at           TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ------------------------------------------------------------
+-- Penyelarasan bila tabel sudah ada dari rancangan SEBELUMNYA
+-- ------------------------------------------------------------
+-- Rancangan awal fase19 memakai saklar boolean (bpjs_manual/pph21_manual)
+-- dan kolom angka NOT NULL DEFAULT 0. Itu diganti: sekarang NULL-lah yang
+-- menandai "hitung otomatis", jadi kolom angka HARUS boleh NULL dan saklar
+-- boolean tidak dipakai lagi.
+--
+-- Blok ini membuat berkas ini aman dijalankan berulang: di database baru
+-- tidak ada efeknya, di database yang sudah kena rancangan lama ia
+-- membetulkannya. Tanpa ini, CREATE TABLE IF NOT EXISTS di atas akan
+-- dilewati dan tabel tetap memakai bentuk lama — penyimpanan akan gagal
+-- karena kode menulis NULL ke kolom NOT NULL.
+ALTER TABLE karyawan_potongan_manual
+  DROP COLUMN IF EXISTS bpjs_manual,
+  DROP COLUMN IF EXISTS pph21_manual,
+  ALTER COLUMN bpjs_kes_karyawan   DROP NOT NULL,
+  ALTER COLUMN bpjs_kes_karyawan   DROP DEFAULT,
+  ALTER COLUMN bpjs_jht_karyawan   DROP NOT NULL,
+  ALTER COLUMN bpjs_jht_karyawan   DROP DEFAULT,
+  ALTER COLUMN bpjs_jp_karyawan    DROP NOT NULL,
+  ALTER COLUMN bpjs_jp_karyawan    DROP DEFAULT,
+  ALTER COLUMN pph21               DROP NOT NULL,
+  ALTER COLUMN pph21               DROP DEFAULT,
+  ALTER COLUMN bpjs_kes_perusahaan DROP NOT NULL,
+  ALTER COLUMN bpjs_kes_perusahaan DROP DEFAULT,
+  ALTER COLUMN bpjs_jht_perusahaan DROP NOT NULL,
+  ALTER COLUMN bpjs_jht_perusahaan DROP DEFAULT,
+  ALTER COLUMN bpjs_jp_perusahaan  DROP NOT NULL,
+  ALTER COLUMN bpjs_jp_perusahaan  DROP DEFAULT;
+
 COMMENT ON TABLE karyawan_potongan_manual IS
   'Angka BPJS/PPh21 yang ditetapkan manual HR per karyawan. NULL = dihitung otomatis dari tarif.';
 
