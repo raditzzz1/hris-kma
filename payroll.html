@@ -401,7 +401,7 @@ function hitungPPh21Bulanan(gajiPokok, totalTunjangan, bpjsKesK, bpjsJhtK, bpjsJ
 // ============================================================
 // HITUNG SLIP SATU KARYAWAN
 // ============================================================
-function hitungSlip(karyawan, komponenKaryawan, jamKerja) {
+function hitungSlip(karyawan, komponenKaryawan, jamKerja, manual) {
   // === GAJI PER-JAM (freelance) — dibayar bersih, tanpa potongan BPJS/PPh ===
   if (karyawan.tipe_gaji === 'per_jam') {
     const tarif = parseFloat(karyawan.tarif_per_jam) || 0
@@ -415,7 +415,10 @@ function hitungSlip(karyawan, komponenKaryawan, jamKerja) {
       bpjs_kes_perusahaan: 0, bpjs_jht_perusahaan: 0, bpjs_jp_perusahaan: 0,
       pph21: 0, total_potongan_lain: 0,
       total_pendapatan: total, total_potongan: 0, gaji_bersih: total,
-      status_ptkp: karyawan.status_ptkp || 'TK/0', penghasilan_netto_setahun: 0, ptkp: 0, pkp: 0
+      status_ptkp: karyawan.status_ptkp || 'TK/0', penghasilan_netto_setahun: 0, ptkp: 0, pkp: 0,
+      // Gaji per-jam memang dibayar bersih — angka manual BPJS/PPh21 sengaja
+      // TIDAK diterapkan di sini agar aturan lama tidak berubah diam-diam.
+      potongan_manual: {}
     }
   }
 
@@ -444,22 +447,41 @@ function hitungSlip(karyawan, komponenKaryawan, jamKerja) {
   const totalTunjangan = totalTunjanganKenaPajak + totalTunjanganBebasPajak
   const totalPendapatan = gajiPokok + totalTunjangan
 
-  // BPJS
+  // BPJS & PPh 21 (fase19). Aturannya PER BARIS, bukan per kelompok:
+  // nilai manual KOSONG/NULL -> hitung otomatis dari tarif seperti biasa;
+  // nilai manual TERISI (termasuk 0) -> pakai angka itu. Jadi HR bisa
+  // menetapkan yang sudah diketahui saja, sisanya tetap otomatis.
+  // Angka manual tetap masuk ke kolom yang sama, supaya slip & Bukti Potong
+  // 1721-A1 tidak berubah bentuknya.
+  const m = manual || {}
+  const manualFlags = {}
+  const pakai = (kolom, otomatis) => {
+    const v = m[kolom]
+    if (v === null || v === undefined || v === '') return Math.round(otomatis)
+    manualFlags[kolom] = true
+    return Math.round(parseFloat(v) || 0)
+  }
+
   const gajiCapKes = Math.min(gajiPokok, TARIF.BPJS_KES_MAX_GAJI)
   const gajiCapJp  = Math.min(gajiPokok, TARIF.BPJS_JP_MAX_GAJI)
 
-  const bpjsKesK = Math.round(gajiCapKes * TARIF.BPJS_KES_KARYAWAN)
-  const bpjsJhtK = Math.round(gajiPokok  * TARIF.BPJS_JHT_KARYAWAN)
-  const bpjsJpK  = Math.round(gajiCapJp  * TARIF.BPJS_JP_KARYAWAN)
+  const bpjsKesK = pakai('bpjs_kes_karyawan', gajiCapKes * TARIF.BPJS_KES_KARYAWAN)
+  const bpjsJhtK = pakai('bpjs_jht_karyawan', gajiPokok  * TARIF.BPJS_JHT_KARYAWAN)
+  const bpjsJpK  = pakai('bpjs_jp_karyawan',  gajiCapJp  * TARIF.BPJS_JP_KARYAWAN)
 
-  const bpjsKesP = Math.round(gajiCapKes * TARIF.BPJS_KES_PERUSAHAAN)
-  const bpjsJhtP = Math.round(gajiPokok  * TARIF.BPJS_JHT_PERUSAHAAN)
-  const bpjsJpP  = Math.round(gajiCapJp  * TARIF.BPJS_JP_PERUSAHAAN)
+  const bpjsKesP = pakai('bpjs_kes_perusahaan', gajiCapKes * TARIF.BPJS_KES_PERUSAHAAN)
+  const bpjsJhtP = pakai('bpjs_jht_perusahaan', gajiPokok  * TARIF.BPJS_JHT_PERUSAHAAN)
+  const bpjsJpP  = pakai('bpjs_jp_perusahaan',  gajiCapJp  * TARIF.BPJS_JP_PERUSAHAAN)
 
-  // PPh 21
-  const { pphBulanan, nettoSetahun, ptkp, pkp } = hitungPPh21Bulanan(
+  // PPh 21. Perhitungan otomatis tetap dijalankan walau nilainya nanti
+  // ditimpa manual, karena netto setahun/PTKP/PKP masih dipakai sebagai
+  // catatan di slip. Perhatikan: BPJS yang dipakai sebagai pengurang adalah
+  // yang BERLAKU — jadi bila BPJS ditetapkan manual, PPh21 otomatis ikut
+  // menyesuaikan dengan angka itu.
+  const { pphBulanan: pphOtomatis, nettoSetahun, ptkp, pkp } = hitungPPh21Bulanan(
     gajiPokok, totalTunjanganKenaPajak, bpjsKesK, bpjsJhtK, bpjsJpK, statusPtkp
   )
+  const pphBulanan = pakai('pph21', pphOtomatis)
 
   const totalPotongan = bpjsKesK + bpjsJhtK + bpjsJpK + pphBulanan + totalPotonganLain
   const gajiBersih    = totalPendapatan - totalPotongan
@@ -471,7 +493,10 @@ function hitungSlip(karyawan, komponenKaryawan, jamKerja) {
     bpjs_kes_perusahaan: bpjsKesP, bpjs_jht_perusahaan: bpjsJhtP, bpjs_jp_perusahaan: bpjsJpP,
     pph21: pphBulanan, total_potongan_lain: totalPotonganLain,
     total_pendapatan: totalPendapatan, total_potongan: totalPotongan, gaji_bersih: gajiBersih,
-    status_ptkp: statusPtkp, penghasilan_netto_setahun: nettoSetahun, ptkp, pkp
+    status_ptkp: statusPtkp, penghasilan_netto_setahun: nettoSetahun, ptkp, pkp,
+    // Dicatat DI SLIP supaya slip lama tetap tampil apa adanya walau
+    // angka manual karyawan ini nanti diisi/diubah.
+    potongan_manual: manualFlags
   }
 }
 
@@ -862,6 +887,12 @@ async function buatPeriode() {
   const { data: semuaKomp } = await sb.from('karyawan_komponen')
     .select('*').in('karyawan_id', karyawans.map(k=>k.id))
 
+  // Angka BPJS/PPh21 manual per karyawan (fase19). Karyawan yang tak punya
+  // baris di sini otomatis memakai perhitungan tarif seperti biasa.
+  const { data: semuaManual } = await sb.from('karyawan_potongan_manual')
+    .select('*').in('karyawan_id', karyawans.map(k=>k.id))
+  const manualMap = Object.fromEntries((semuaManual||[]).map(r => [r.karyawan_id, r]))
+
   // Jam kerja (dari absensi) untuk karyawan bergaji per-jam
   const jamMap = {}
   const perJamIds = karyawans.filter(k=>k.tipe_gaji==='per_jam').map(k=>k.id)
@@ -876,7 +907,7 @@ async function buatPeriode() {
 
   const slips = karyawans.map(k => {
     const kompK = (semuaKomp||[]).filter(kk=>kk.karyawan_id===k.id)
-    const slip = hitungSlip(k, kompK, jamMap[k.id]||0)
+    const slip = hitungSlip(k, kompK, jamMap[k.id]||0, manualMap[k.id])
     return { periode_id: periode.id, karyawan_id: k.id, ...slip }
   })
 
@@ -938,6 +969,38 @@ async function lihatSlip(slipId) {
   const potonganLainRows = (sl.detail_potongan||[]).map(p =>
     `<div class="slip-row"><span>${p.nama}</span><span style="color:#dc2626">- ${IDR(p.nilai)}</span></div>`).join('')
 
+  // Label persentase hanya benar bila angkanya memang dihitung dari tarif.
+  // Dicek PER BARIS: baris yang ditetapkan manual tidak diberi persentase,
+  // supaya slip tidak menyatakan sesuatu yang tidak sesuai dengan angka di
+  // sebelahnya. Baris lain yang masih otomatis tetap menampilkan tarifnya.
+  const mf  = sl.potongan_manual || {}
+  const pct = (kolom, teks) => mf[kolom] ? '' : ` (${teks})`
+  const pctKes  = pct('bpjs_kes_karyawan', '1%')
+  const pctJht  = pct('bpjs_jht_karyawan', '2%')
+  const pctJp   = pct('bpjs_jp_karyawan', '1%')
+  const pctKesP = pct('bpjs_kes_perusahaan', '4%')
+  const pctJhtP = pct('bpjs_jht_perusahaan', '3.7%')
+  const pctJpP  = pct('bpjs_jp_perusahaan', '2%')
+
+  // Rincian netto/PTKP/PKP itu jalan perhitungan otomatis. Bila PPh 21
+  // ditetapkan manual, rincian itu TIDAK menghasilkan angka yang tertera —
+  // jadi diganti keterangan singkat, bukan dipaksa tampil dan membingungkan.
+  const detailPPh = mf.pph21
+    ? `<div class="slip-section">
+        <div class="slip-section-title">Detail PPh 21</div>
+        <div class="slip-row"><span>PPh 21 Bulanan (ditetapkan)</span><span>${IDR(sl.pph21)}</span></div>
+        <div class="slip-row" style="font-size:.72rem;color:var(--muted);">
+          <span>Nilai ditetapkan oleh HR, bukan dari perhitungan otomatis sistem.</span>
+        </div>
+      </div>`
+    : `<div class="slip-section">
+        <div class="slip-section-title">Detail PPh 21</div>
+        <div class="slip-row"><span>Penghasilan Netto Setahun</span><span>${IDR(sl.penghasilan_netto_setahun)}</span></div>
+        <div class="slip-row"><span>PTKP (${sl.status_ptkp})</span><span>- ${IDR(sl.ptkp)}</span></div>
+        <div class="slip-row"><span>PKP (Penghasilan Kena Pajak)</span><span>${IDR(sl.pkp)}</span></div>
+        <div class="slip-row total"><span>PPh 21 Bulanan</span><span>${IDR(sl.pph21)}</span></div>
+      </div>`
+
   document.getElementById('slipContent').innerHTML = `
     <div class="slip-wrap">
       <div class="slip-watermark" aria-hidden="true"><img src="logo-KMA.png" alt="" onerror="this.style.display='none'"></div>
@@ -971,9 +1034,9 @@ async function lihatSlip(slipId) {
 
       <div class="slip-section">
         <div class="slip-section-title">Potongan</div>
-        <div class="slip-row"><span>BPJS Kesehatan (1%)</span><span style="color:#dc2626">- ${IDR(sl.bpjs_kes_karyawan)}</span></div>
-        <div class="slip-row"><span>BPJS JHT (2%)</span><span style="color:#dc2626">- ${IDR(sl.bpjs_jht_karyawan)}</span></div>
-        <div class="slip-row"><span>BPJS JP (1%)</span><span style="color:#dc2626">- ${IDR(sl.bpjs_jp_karyawan)}</span></div>
+        <div class="slip-row"><span>BPJS Kesehatan${pctKes}</span><span style="color:#dc2626">- ${IDR(sl.bpjs_kes_karyawan)}</span></div>
+        <div class="slip-row"><span>BPJS JHT${pctJht}</span><span style="color:#dc2626">- ${IDR(sl.bpjs_jht_karyawan)}</span></div>
+        <div class="slip-row"><span>BPJS JP${pctJp}</span><span style="color:#dc2626">- ${IDR(sl.bpjs_jp_karyawan)}</span></div>
         <div class="slip-row"><span>PPh 21</span><span style="color:#dc2626">- ${IDR(sl.pph21)}</span></div>
         ${potonganLainRows}
         <div class="slip-row total"><span>Total Potongan</span><span style="color:#dc2626">- ${IDR(sl.total_potongan)}</span></div>
@@ -981,18 +1044,12 @@ async function lihatSlip(slipId) {
 
       <div class="slip-section">
         <div class="slip-section-title">Kontribusi Perusahaan (Informasi)</div>
-        <div class="slip-row"><span>BPJS Kesehatan Perusahaan (4%)</span><span>${IDR(sl.bpjs_kes_perusahaan)}</span></div>
-        <div class="slip-row"><span>BPJS JHT Perusahaan (3.7%)</span><span>${IDR(sl.bpjs_jht_perusahaan)}</span></div>
-        <div class="slip-row"><span>BPJS JP Perusahaan (2%)</span><span>${IDR(sl.bpjs_jp_perusahaan)}</span></div>
+        <div class="slip-row"><span>BPJS Kesehatan Perusahaan${pctKesP}</span><span>${IDR(sl.bpjs_kes_perusahaan)}</span></div>
+        <div class="slip-row"><span>BPJS JHT Perusahaan${pctJhtP}</span><span>${IDR(sl.bpjs_jht_perusahaan)}</span></div>
+        <div class="slip-row"><span>BPJS JP Perusahaan${pctJpP}</span><span>${IDR(sl.bpjs_jp_perusahaan)}</span></div>
       </div>
 
-      <div class="slip-section">
-        <div class="slip-section-title">Detail PPh 21</div>
-        <div class="slip-row"><span>Penghasilan Netto Setahun</span><span>${IDR(sl.penghasilan_netto_setahun)}</span></div>
-        <div class="slip-row"><span>PTKP (${sl.status_ptkp})</span><span>- ${IDR(sl.ptkp)}</span></div>
-        <div class="slip-row"><span>PKP (Penghasilan Kena Pajak)</span><span>${IDR(sl.pkp)}</span></div>
-        <div class="slip-row total"><span>PPh 21 Bulanan</span><span>${IDR(sl.pph21)}</span></div>
-      </div>
+      ${detailPPh}
 
       <div class="slip-takehome">
         <span class="slip-takehome-lbl">GAJI BERSIH (Take-Home Pay)</span>
@@ -1038,6 +1095,10 @@ async function loadKompModal(karyawanId=null) {
     ? await sb.from('karyawan_komponen').select('*').eq('karyawan_id',kid)
     : { data: [] }
 
+  const { data: manual } = kid
+    ? await sb.from('karyawan_potongan_manual').select('*').eq('karyawan_id',kid).maybeSingle()
+    : { data: null }
+
   const selHtml = kid
     ? `<div class="fg" style="margin-bottom:1rem;">
         <label>Karyawan</label>
@@ -1064,7 +1125,58 @@ async function loadKompModal(karyawanId=null) {
       </div>`
   }).join('')
 
-  document.getElementById('kompBody').innerHTML = selHtml + kompHtml
+  document.getElementById('kompBody').innerHTML = selHtml + kompHtml + blokPotonganManual(kid, manual)
+}
+
+// ------------------------------------------------------------
+// BPJS & PPh 21 — boleh ditetapkan manual (fase19)
+// ------------------------------------------------------------
+// Aturannya per baris: DIBIARKAN KOSONG = dihitung otomatis dari tarif;
+// DIISI = pakai angka itu. Dengan begitu HR bisa menetapkan yang sudah
+// diketahui nominalnya saja, sisanya tetap otomatis dan bisa diisi nanti.
+// Nilainya disimpan per karyawan, jadi cukup diisi sekali dan terpakai terus
+// di periode-periode berikutnya sampai diubah.
+function blokPotonganManual (kid, m) {
+  if (!kid) return ''
+  const v = m || {}
+  // null/undefined tetap dibiarkan kosong — JANGAN diubah jadi 0, karena 0
+  // di sini berarti "tetapkan nol", bukan "otomatis".
+  const isi = x => (x === null || x === undefined || x === '') ? '' : Math.round(parseFloat(x) || 0)
+  const baris = (label, id, nilai, tarif) => `
+    <div class="komp-item">
+      <span class="komp-name" style="padding-left:.25rem;">${label}
+        <span style="font-size:.7rem;color:var(--muted)">(otomatis: ${tarif})</span></span>
+      <input type="number" class="inp inp-sm" style="width:140px;text-align:right"
+        data-manual="${id}" value="${isi(nilai)}" min="0" placeholder="otomatis">
+    </div>`
+
+  return `
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:2px solid var(--border);">
+      <p style="font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:.2rem;">BPJS &amp; PPh 21</p>
+      <p style="font-size:.72rem;color:var(--muted);margin-bottom:.8rem;">
+        <b>Biarkan kosong</b> = sistem menghitung sendiri dari tarif (perilaku sekarang).
+        <b>Diisi</b> = angka Anda yang dipakai, dan tersimpan untuk bulan-bulan berikutnya
+        tanpa perlu diisi ulang. Boleh sebagian saja — baris yang masih kosong tetap otomatis.
+        <b>Slip yang sudah terbit tidak ikut berubah.</b>
+      </p>
+
+      <p style="font-size:.72rem;color:var(--muted);margin:.3rem 0 .2rem;">Potongan karyawan</p>
+      ${baris('BPJS Kesehatan', 'bpjs_kes_karyawan', v.bpjs_kes_karyawan, '1%')}
+      ${baris('BPJS JHT', 'bpjs_jht_karyawan', v.bpjs_jht_karyawan, '2%')}
+      ${baris('BPJS JP', 'bpjs_jp_karyawan', v.bpjs_jp_karyawan, '1%')}
+      ${baris('PPh 21 per bulan', 'pph21', v.pph21, 'hitung pajak')}
+
+      <p style="font-size:.72rem;color:var(--muted);margin:.6rem 0 .2rem;">Kontribusi perusahaan (informasi di slip, tidak memotong gaji)</p>
+      ${baris('BPJS Kesehatan Perusahaan', 'bpjs_kes_perusahaan', v.bpjs_kes_perusahaan, '4%')}
+      ${baris('BPJS JHT Perusahaan', 'bpjs_jht_perusahaan', v.bpjs_jht_perusahaan, '3.7%')}
+      ${baris('BPJS JP Perusahaan', 'bpjs_jp_perusahaan', v.bpjs_jp_perusahaan, '2%')}
+
+      <p style="font-size:.72rem;color:var(--muted);margin-top:.7rem;">
+        Catatan: baris yang Anda isi tampil di slip tanpa label persentase, karena
+        angkanya tidak lagi berasal dari tarif itu. Bila PPh 21 diisi, rincian
+        Netto/PTKP/PKP di slip diganti keterangan singkat.
+      </p>
+    </div>`
 }
 
 async function saveKomp() {
@@ -1081,6 +1193,21 @@ async function saveKomp() {
   const { error } = await sb.from('karyawan_komponen')
     .upsert(upserts, { onConflict:'karyawan_id,komponen_id' })
   if (error) { toast('Gagal simpan: '+error.message,'error'); return }
+
+  // BPJS & PPh 21 (fase19). Isian kosong disimpan sebagai NULL — itulah
+  // penanda "hitung otomatis". Angka 0 BUKAN kosong: 0 berarti HR sengaja
+  // menetapkan nol, jadi keduanya tidak boleh disamakan.
+  const manualInputs = document.querySelectorAll('#kompBody input[data-manual]')
+  if (manualInputs.length) {
+    const baris = { karyawan_id: kid, updated_at: new Date().toISOString() }
+    manualInputs.forEach(inp => {
+      const teks = inp.value.trim()
+      baris[inp.dataset.manual] = teks === '' ? null : Math.round(parseFloat(teks) || 0)
+    })
+    const { error: eM } = await sb.from('karyawan_potongan_manual')
+      .upsert(baris, { onConflict: 'karyawan_id' })
+    if (eM) { toast('Gagal simpan BPJS/PPh21: '+eM.message,'error'); return }
+  }
 
   // Jika dipanggil dari detail periode (edit slip), regenerate slip karyawan ini
   const periodeId = document.getElementById('modalKomp')._periodeId
@@ -1111,12 +1238,14 @@ async function regenerateSlip(karyawanId, periodeId) {
   if (!k) return
 
   const { data: kompK } = await sb.from('karyawan_komponen').select('*').eq('karyawan_id', karyawanId)
+  const { data: man } = await sb.from('karyawan_potongan_manual')
+    .select('*').eq('karyawan_id', karyawanId).maybeSingle()
   let jam = 0
   if (k.tipe_gaji === 'per_jam') {
     const { data: per } = await sb.from('payroll_periode').select('bulan,tahun').eq('id', periodeId).single()
     if (per) jam = await jamKerjaPeriode(karyawanId, per.bulan, per.tahun)
   }
-  const slip = hitungSlip(k, kompK || [], jam)
+  const slip = hitungSlip(k, kompK || [], jam, man)
 
   const { error } = await sb.from('slip_gaji')
     .update(slip)
