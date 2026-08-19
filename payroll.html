@@ -1141,14 +1141,24 @@ function blokPotonganManual (kid, m) {
   const v = m || {}
   // null/undefined tetap dibiarkan kosong — JANGAN diubah jadi 0, karena 0
   // di sini berarti "tetapkan nol", bukan "otomatis".
-  const isi = x => (x === null || x === undefined || x === '') ? '' : Math.round(parseFloat(x) || 0)
-  const baris = (label, id, nilai, tarif) => `
+  const kosong = x => (x === null || x === undefined || x === '')
+  const isi = x => kosong(x) ? '' : Math.round(parseFloat(x) || 0)
+  const baris = (label, id, nilai, tarif) => {
+    const ditetapkan = !kosong(nilai)
+    // Baris yang ditetapkan diberi penanda + bingkai beda, supaya HR langsung
+    // lihat mana yang tidak lagi mengikuti tarif. Penting untuk nilai 0, yang
+    // artinya "nol-kan" (BPJS/pajak jadi nol) dan mudah disalahsangka kosong.
+    return `
     <div class="komp-item">
       <span class="komp-name" style="padding-left:.25rem;">${label}
-        <span style="font-size:.7rem;color:var(--muted)">(otomatis: ${tarif})</span></span>
-      <input type="number" class="inp inp-sm" style="width:140px;text-align:right"
-        data-manual="${id}" value="${isi(nilai)}" min="0" placeholder="otomatis">
+        ${ditetapkan
+          ? '<span style="font-size:.68rem;font-weight:700;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:5px;">ditetapkan</span>'
+          : `<span style="font-size:.7rem;color:var(--muted)">(otomatis: ${tarif})</span>`}</span>
+      <input type="number" class="inp inp-sm" min="0" placeholder="otomatis"
+        style="width:140px;text-align:right;${ditetapkan ? 'border-color:#f59e0b;font-weight:600;' : ''}"
+        data-manual="${id}" value="${isi(nilai)}">
     </div>`
+  }
 
   return `
     <div style="margin-top:1.25rem;padding-top:1rem;border-top:2px solid var(--border);">
@@ -1158,6 +1168,8 @@ function blokPotonganManual (kid, m) {
         <b>Diisi</b> = angka Anda yang dipakai, dan tersimpan untuk bulan-bulan berikutnya
         tanpa perlu diisi ulang. Boleh sebagian saja — baris yang masih kosong tetap otomatis.
         <b>Slip yang sudah terbit tidak ikut berubah.</b>
+        Perhatikan: mengisi <b>0</b> berarti menetapkan nol (potongan jadi nol), bukan
+        otomatis — untuk kembali otomatis, <b>kosongkan</b> isiannya.
       </p>
 
       <p style="font-size:.72rem;color:var(--muted);margin:.3rem 0 .2rem;">Potongan karyawan</p>
@@ -1194,18 +1206,28 @@ async function saveKomp() {
     .upsert(upserts, { onConflict:'karyawan_id,komponen_id' })
   if (error) { toast('Gagal simpan: '+error.message,'error'); return }
 
-  // BPJS & PPh 21 (fase19). Isian kosong disimpan sebagai NULL — itulah
-  // penanda "hitung otomatis". Angka 0 BUKAN kosong: 0 berarti HR sengaja
-  // menetapkan nol, jadi keduanya tidak boleh disamakan.
+  // BPJS & PPh 21 (fase19). Isian kosong berarti "hitung otomatis". Angka 0
+  // BUKAN kosong: 0 berarti HR sengaja menetapkan nol, jadi keduanya tidak
+  // boleh disamakan.
   const manualInputs = document.querySelectorAll('#kompBody input[data-manual]')
   if (manualInputs.length) {
-    const baris = { karyawan_id: kid, updated_at: new Date().toISOString() }
+    const nilai = {}
     manualInputs.forEach(inp => {
       const teks = inp.value.trim()
-      baris[inp.dataset.manual] = teks === '' ? null : Math.round(parseFloat(teks) || 0)
+      nilai[inp.dataset.manual] = teks === '' ? null : Math.round(parseFloat(teks) || 0)
     })
-    const { error: eM } = await sb.from('karyawan_potongan_manual')
-      .upsert(baris, { onConflict: 'karyawan_id' })
+
+    // Kalau SEMUA isian kosong, barisnya dihapus saja — bukan disimpan penuh
+    // NULL. Alasannya: "tidak ada baris" = sepenuhnya otomatis, satu keadaan
+    // saja, sehingga tak ada baris sisa yang bisa salah tafsir. Ini juga
+    // menutup kemungkinan baris tersimpan penuh 0 (yang berarti "tetapkan
+    // nol" — BPJS & pajak jadi nol) padahal HR tak pernah mengisi apa pun.
+    const adaIsian = Object.values(nilai).some(v => v !== null)
+    const { error: eM } = adaIsian
+      ? await sb.from('karyawan_potongan_manual')
+          .upsert({ karyawan_id: kid, ...nilai, updated_at: new Date().toISOString() },
+                  { onConflict: 'karyawan_id' })
+      : await sb.from('karyawan_potongan_manual').delete().eq('karyawan_id', kid)
     if (eM) { toast('Gagal simpan BPJS/PPh21: '+eM.message,'error'); return }
   }
 
