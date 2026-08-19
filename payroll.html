@@ -100,7 +100,15 @@
 
     /* SLIP GAJI LAYOUT */
     .slip-wrap { font-size:.875rem; position:relative; }
-    .slip-watermark { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:62%; max-width:330px; opacity:.05; pointer-events:none; z-index:0; }
+    /* Watermark logo. Pola disamakan dengan .surat-wm di karyawan.html: yang
+       diposisikan adalah WADAH-nya (inset:0 + place-items:center), bukan
+       gambarnya. Dengan begitu saat dicetak wadah tinggal dijadikan
+       position:fixed supaya terulang & selalu di tengah TIAP halaman.
+       Versi lama memposisikan <img> sendiri dengan top/left:50% terhadap
+       .slip-wrap — itu titik tengah seluruh isi slip, bukan tengah kertas,
+       jadi watermark meleset dan cuma tergambar sekali. */
+    .slip-watermark { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; z-index:0; }
+    .slip-watermark img { width:62%; max-width:330px; opacity:.05; }
     .slip-wrap > *:not(.slip-watermark) { position:relative; z-index:1; }
     .slip-header { display:flex; flex-direction:column; align-items:center; text-align:center; gap:.45rem; padding-bottom:.85rem; border-bottom:2px solid var(--primary-dk); margin-bottom:.25rem; }
     .slip-logo { width:64px; height:64px; object-fit:contain; }
@@ -188,6 +196,11 @@
          sisa panel yang ikut tercetak di halaman terakhir. */
       body, .modal-overlay.open, .modal-overlay.open .modal,
       .modal-overlay.open .modal-body { background:#fff !important; min-height:0 !important; }
+      /* position:fixed membuat elemen ini digambar ulang di SETIAP halaman
+         cetak, jadi watermark muncul di semua lembar — dan karena patokannya
+         jadi kotak halaman (bukan tinggi isi slip), letaknya selalu pas di
+         tengah kertas. Sama seperti .surat-wm di karyawan.html. */
+      .slip-watermark { position:fixed !important; inset:0 !important; }
       /* Ukuran TTD & stempel dikunci dalam px (satuan absolut) supaya identik
          di layar maupun di kertas. */
       .slip-sign-area { height:240px !important; }
@@ -927,7 +940,7 @@ async function lihatSlip(slipId) {
 
   document.getElementById('slipContent').innerHTML = `
     <div class="slip-wrap">
-      <img src="logo-KMA.png" alt="" class="slip-watermark">
+      <div class="slip-watermark" aria-hidden="true"><img src="logo-KMA.png" alt="" onerror="this.style.display='none'"></div>
       <div class="slip-header">
         <img src="logo-KMA.png" alt="Logo PT Kawan Menengah Atas" class="slip-logo">
         <div class="slip-kop">
