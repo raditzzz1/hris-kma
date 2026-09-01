@@ -126,6 +126,11 @@ INSERT INTO komponen_gaji (nama, tipe, kena_pajak) VALUES
   ('Tunjangan Jabatan',     'tunjangan', TRUE),
   ('Tunjangan Kehadiran',   'tunjangan', FALSE),
   ('Bonus',                 'tunjangan', TRUE),
+  -- Upah lembur diinput MANUAL oleh HR di sini (lembur yang dicatat karyawan
+  -- di halaman Absensi hanya untuk pendataan, tidak otomatis masuk slip).
+  -- Kena pajak: upah lembur termasuk objek PPh 21. Bisa diubah HR lewat
+  -- saklar "kena pajak" di halaman Komponen Gaji bila memang perlu.
+  ('Lemburan',              'tunjangan', TRUE),
   ('Potongan Keterlambatan','potongan',  FALSE),
   ('Potongan Tidak Hadir',  'potongan',  FALSE),
   ('Pinjaman Karyawan',     'potongan',  FALSE)

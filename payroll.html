@@ -377,6 +377,49 @@ const IDR = v => 'Rp ' + Math.round(v).toLocaleString('id-ID')
 const BULAN_NAMA = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
 
 // ============================================================
+// ISIAN RUPIAH — angka bertitik ribuan supaya tak salah hitung nol
+// ============================================================
+// Isian uang memakai type="text" (bukan number) karena input number tidak
+// bisa menampilkan pemisah ribuan. Nilai selalu dibaca ulang dengan
+// bacaRupiah() sebelum disimpan.
+
+// 5000000 -> "5.000.000". Kosong TETAP kosong — jangan dijadikan "0", karena
+// pada isian BPJS/PPh21 kosong berarti "hitung otomatis" sedangkan 0 berarti
+// "tetapkan nol". Keduanya tidak boleh tertukar.
+const fmtRupiah = v =>
+  (v === null || v === undefined || v === '') ? '' : (Math.round(parseFloat(v) || 0)).toLocaleString('id-ID')
+
+// "5.000.000" -> 5000000. Mengembalikan null bila benar-benar kosong.
+const bacaRupiah = s => {
+  const digit = String(s ?? '').replace(/\D/g, '')
+  return digit === '' ? null : parseInt(digit, 10)
+}
+
+// Dipasang di oninput. Memformat ulang sambil MENJAGA posisi kursor —
+// kalau kursor selalu dilempar ke akhir, mengedit angka di tengah jadi susah.
+function formatUang (inp) {
+  const digitSebelumKursor = inp.value.slice(0, inp.selectionStart).replace(/\D/g, '').length
+  const angka = bacaRupiah(inp.value)
+  inp.value = angka === null ? '' : angka.toLocaleString('id-ID')
+  let hitung = 0, pos = 0
+  while (pos < inp.value.length && hitung < digitSebelumKursor) {
+    if (/\d/.test(inp.value[pos])) hitung++
+    pos++
+  }
+  inp.setSelectionRange(pos, pos)
+}
+
+// Bungkus isian uang dengan awalan "Rp" biar jelas satuannya.
+function inputRupiah (atribut, nilai, placeholder = '0', gayaExtra = '') {
+  return `<span style="display:inline-flex;align-items:center;gap:.35rem;flex-shrink:0;">
+      <span style="font-size:.75rem;color:var(--muted);">Rp</span>
+      <input type="text" inputmode="numeric" autocomplete="off" class="inp inp-sm"
+        style="width:130px;text-align:right;${gayaExtra}"
+        ${atribut} value="${fmtRupiah(nilai)}" placeholder="${placeholder}" oninput="formatUang(this)">
+    </span>`
+}
+
+// ============================================================
 // KALKULASI PPh 21 (Metode Progresif Tahunan)
 // ============================================================
 function hitungPPh21Bulanan(gajiPokok, totalTunjangan, bpjsKesK, bpjsJhtK, bpjsJpK, statusPtkp) {
@@ -1128,8 +1171,7 @@ async function loadKompModal(karyawanId=null) {
       <div class="komp-item">
         <span class="komp-tipe ${komp.tipe==='tunjangan'?'tipe-t':'tipe-p'}">${komp.tipe==='tunjangan'?'↑':'↓'}</span>
         <span class="komp-name">${komp.nama} ${saklarPajak}</span>
-        <input type="number" class="inp inp-sm" style="width:140px;text-align:right"
-          data-komp="${komp.id}" value="${ex?.nilai||0}" min="0" placeholder="0">
+        ${inputRupiah(`data-komp="${komp.id}"`, ex?.nilai || 0)}
       </div>`
   }).join('')
 
@@ -1195,7 +1237,6 @@ function blokPotonganManual (kid, m) {
   // null/undefined tetap dibiarkan kosong — JANGAN diubah jadi 0, karena 0
   // di sini berarti "tetapkan nol", bukan "otomatis".
   const kosong = x => (x === null || x === undefined || x === '')
-  const isi = x => kosong(x) ? '' : Math.round(parseFloat(x) || 0)
   const baris = (label, id, nilai, tarif) => {
     const ditetapkan = !kosong(nilai)
     // Baris yang ditetapkan diberi penanda + bingkai beda, supaya HR langsung
@@ -1207,9 +1248,8 @@ function blokPotonganManual (kid, m) {
         ${ditetapkan
           ? '<span style="font-size:.68rem;font-weight:700;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:5px;">ditetapkan</span>'
           : `<span style="font-size:.7rem;color:var(--muted)">(otomatis: ${tarif})</span>`}</span>
-      <input type="number" class="inp inp-sm" min="0" placeholder="otomatis"
-        style="width:140px;text-align:right;${ditetapkan ? 'border-color:#f59e0b;font-weight:600;' : ''}"
-        data-manual="${id}" value="${isi(nilai)}">
+      ${inputRupiah(`data-manual="${id}"`, nilai, 'otomatis',
+                    ditetapkan ? 'border-color:#f59e0b;font-weight:600;' : '')}
     </div>`
   }
 
@@ -1251,7 +1291,8 @@ async function saveKomp() {
   const inputs = document.querySelectorAll('#kompBody input[data-komp]')
   const upserts = []
   inputs.forEach(inp => {
-    const nilai = parseFloat(inp.value)||0
+    // Isian bertitik ribuan ("5.000.000") — dibaca ulang jadi angka murni.
+    const nilai = bacaRupiah(inp.value) || 0
     upserts.push({ karyawan_id:kid, komponen_id:inp.dataset.komp, nilai })
   })
 
@@ -1266,8 +1307,9 @@ async function saveKomp() {
   if (manualInputs.length) {
     const nilai = {}
     manualInputs.forEach(inp => {
-      const teks = inp.value.trim()
-      nilai[inp.dataset.manual] = teks === '' ? null : Math.round(parseFloat(teks) || 0)
+      // bacaRupiah() sudah mengembalikan null untuk isian kosong dan 0 untuk
+      // "0" — persis pembedaan yang dibutuhkan di sini.
+      nilai[inp.dataset.manual] = bacaRupiah(inp.value)
     })
 
     // Kalau SEMUA isian kosong, barisnya dihapus saja — bukan disimpan penuh
