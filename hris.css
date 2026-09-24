@@ -192,10 +192,31 @@
   .tabs::-webkit-scrollbar { display: none; }
   .tabs .tab { white-space: nowrap; flex: 0 0 auto; }
 
-  /* Stats grid: 2 columns */
+  /* Stats grid: 2 columns.
+     grid-auto-rows:1fr menyamakan tinggi SEMUA kartu dalam satu grid. Tanpa
+     ini, label yang membungkus 2-3 baris ("Total Karyawan Aktif") membuat
+     barisnya lebih tinggi daripada baris di bawahnya ("Izin / Cuti"), dan
+     petak kartu terlihat ompong. Dulu penyamaan ini hanya diberikan pada
+     grid ber-.stat-value.txt (lihat aturan di bawah), sehingga kartu ANGKA
+     milik HR Admin terlewat. */
   .stats-grid {
     grid-template-columns: repeat(2, 1fr) !important;
+    grid-auto-rows: 1fr !important;
   }
+
+  /* Kartu statistik di HP: ikon DI ATAS teks, bukan di sampingnya.
+     Dengan ikon di samping, kolom teks hanya kebagian ~80px sehingga label
+     seperti "Total Karyawan Aktif" pecah jadi TIGA baris. Ditumpuk, teks
+     dapat ~133px -> label muat satu baris, dan nilai teks (divisi/jabatan)
+     tak perlu dikecilkan sejauh sebelumnya oleh fitStatValues(). */
+  .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem !important;
+  }
+  .stat-card .stat-icon { width: 34px !important; height: 34px !important; }
+  .stat-card .stat-icon .ic { width: 1.1rem; height: 1.1rem; }
+  .stat-card .stat-info { width: 100%; min-width: 0; }
 
   /* Content/layout grids: single column */
   .content-grid,
