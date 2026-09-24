@@ -181,7 +181,13 @@
     <div><h1><svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Pelatihan & Pengembangan</h1><div class="bc" id="topBc">—</div></div>
     <div id="topActions"></div>
   </header>
-  <main class="main" id="mainContent"></main>
+  <main class="main">
+    <!-- Tab "Kelola (HR)" / "Pelatihan Saya" — hanya terisi untuk HR Admin.
+         Tab program/sertifikasi milik view HR ada DI DALAM #mainContent,
+         jadi keduanya tidak bertumpuk. -->
+    <div id="roleTabs"></div>
+    <div id="mainContent"></div>
+  </main>
 </div>
 
 <!-- MODAL: Tambah/Edit Program -->
@@ -328,8 +334,15 @@ const STATUS_LABEL = { terdaftar:'Terdaftar', sedang_berlangsung:'Berlangsung', 
 // RENDER HALAMAN
 // ============================================================
 async function renderPage() {
-  if (myProfile.role === 'hr_admin') renderHR()
-  else renderKaryawan()
+  // HR Admin juga ikut pelatihan & punya sertifikat sendiri.
+  if (myProfile.role === 'hr_admin') {
+    pasangTabPeran('roleTabs', function (tab) {
+      if (tab === 'kelola') renderHR()
+      else renderKaryawan()
+    }, { labelSaya: 'Pelatihan Saya' })
+  } else {
+    renderKaryawan()
+  }
 }
 
 // ============================================================

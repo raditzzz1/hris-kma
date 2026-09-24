@@ -114,3 +114,83 @@ function hitungStatusMasuk (karyw, waktu = new Date()) {
   const [sh, sm] = (karyw?.jam_masuk_standar || '09:00').slice(0, 5).split(':').map(Number)
   return (waktu.getHours() * 60 + waktu.getMinutes()) > (sh * 60 + sm) ? 'terlambat' : 'hadir'
 }
+
+// ============================================================
+// TAB PERAN — "Kelola (HR)" vs "Milik Saya"
+// ============================================================
+// HR Admin juga seorang karyawan: ikut absen, mengambil cuti, punya slip gaji
+// & sertifikat sendiri. Dulu tiap halaman bercabang SALAH SATU
+// (renderHR ATAU renderKaryawan), sehingga HR tak pernah bisa membuka
+// miliknya sendiri walau kodenya sudah ada.
+//
+// Tab ini membuka keduanya tanpa "mode" global yang tersembunyi — HR selalu
+// melihat di tab mana ia berada. Karyawan biasa tidak pernah melihat tab ini.
+//
+// Pemakaian:
+//   pasangTabPeran('roleTabs', function (tab) {
+//     if (tab === 'kelola') renderHR(); else renderKaryawan()
+//   })
+//
+// Catatan sengaja: pilihan TIDAK diingat antar-halaman/antar-kunjungan.
+// Setiap halaman selalu terbuka di "Kelola (HR)" supaya perilakunya sama
+// dengan sebelumnya dan HR tak pernah kaget menu HR-nya seolah hilang.
+function pasangTabPeran (wadahId, onGanti, opsi) {
+  const wadah = document.getElementById(wadahId)
+  if (!wadah) return
+
+  const o = opsi || {}
+  const labelKelola = o.labelKelola || 'Kelola (HR)'
+  const labelSaya   = o.labelSaya   || 'Milik Saya'
+  let aktif = o.aktif || 'kelola'
+
+  suntikGayaTabPeran()
+
+  function gambar () {
+    wadah.innerHTML =
+      '<div class="peran-tabs" role="tablist">' +
+        tombol('kelola', labelKelola, IKON_KELOLA) +
+        tombol('saya',   labelSaya,   IKON_SAYA) +
+      '</div>'
+    wadah.querySelectorAll('.peran-tab').forEach(function (b) {
+      b.onclick = function () {
+        if (b.dataset.tab === aktif) return   // klik tab yang sama: jangan render ulang
+        aktif = b.dataset.tab
+        gambar()
+        onGanti(aktif)
+      }
+    })
+  }
+
+  function tombol (id, label, ikon) {
+    return '<button type="button" class="peran-tab' + (aktif === id ? ' active' : '') +
+      '" data-tab="' + id + '" role="tab" aria-selected="' + (aktif === id) + '">' +
+      ikon + ' ' + escHtml(label) + '</button>'
+  }
+
+  gambar()
+  onGanti(aktif)
+}
+
+var IKON_KELOLA = '<svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+var IKON_SAYA   = '<svg class="ic" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+
+// Gaya disuntik dari sini (bukan ditulis ulang di 5 halaman) supaya tab-nya
+// pasti seragam. Nama kelas diberi awalan "peran-" agar tidak bentrok dengan
+// .tabs/.tab-btn milik Pelatihan yang sudah ada lebih dulu.
+function suntikGayaTabPeran () {
+  if (document.getElementById('gayaTabPeran')) return
+  var s = document.createElement('style')
+  s.id = 'gayaTabPeran'
+  s.textContent =
+    '.peran-tabs{display:flex;gap:.25rem;margin-bottom:1.1rem;background:#fff;border:1px solid var(--border);' +
+    'border-radius:10px;padding:.35rem;width:fit-content;max-width:100%;}' +
+    '.peran-tab{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;border-radius:7px;border:none;' +
+    'cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;background:none;color:var(--muted);' +
+    'white-space:nowrap;transition:all .15s;}' +
+    '.peran-tab:hover{color:var(--navy);}' +
+    '.peran-tab.active{background:var(--primary);color:#fff;}' +
+    '.peran-tab .ic{width:15px;height:15px;}' +
+    '@media(max-width:768px){.peran-tabs{width:100%;}.peran-tab{flex:1;justify-content:center;}}' +
+    '@media print{.peran-tabs{display:none !important;}}'
+  document.head.appendChild(s)
+}

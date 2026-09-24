@@ -192,8 +192,12 @@
     <div id="topActions"></div>
   </header>
 
-  <main class="main" id="mainContent">
-    <!-- Diisi oleh JS berdasarkan role -->
+  <main class="main">
+    <!-- Tab "Kelola (HR)" / "Cuti Saya" — hanya terisi untuk HR Admin -->
+    <div id="roleTabs"></div>
+    <div id="mainContent">
+      <!-- Diisi oleh JS berdasarkan role -->
+    </div>
   </main>
 </div>
 
@@ -354,8 +358,13 @@ function hitungHariKerja (mulai, selesai) {
 // RENDER BERDASARKAN ROLE
 // ====================================================
 async function renderPage () {
+  // HR Admin juga mengambil cuti — dulu tak bisa, karena percabangan ini
+  // salah-satu sehingga tampilan "cuti saya" tak pernah terjangkau.
   if (myProfile.role === 'hr_admin') {
-    renderHR()
+    pasangTabPeran('roleTabs', function (tab) {
+      if (tab === 'kelola') renderHR()
+      else renderKaryawan()
+    }, { labelSaya: 'Cuti Saya' })
   } else {
     renderKaryawan()
   }

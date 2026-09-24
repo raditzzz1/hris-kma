@@ -252,7 +252,11 @@
     <div><h1><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Payroll</h1><div class="bc" id="topBc">—</div></div>
     <div id="topActions"></div>
   </header>
-  <main class="main" id="mainContent"></main>
+  <main class="main">
+    <!-- Tab "Kelola (HR)" / "Milik Saya" — hanya terisi untuk HR Admin -->
+    <div id="roleTabs"></div>
+    <div id="mainContent"></div>
+  </main>
 </div>
 
 <!-- MODAL: Buat Periode Baru -->
@@ -547,8 +551,16 @@ function hitungSlip(karyawan, komponenKaryawan, jamKerja, manual) {
 // RENDER KONTEN UTAMA
 // ============================================================
 async function renderPage() {
-  if (myProfile.role === 'hr_admin') renderHR()
-  else renderKaryawan()
+  // HR Admin juga punya slip gaji sendiri — dulu tak pernah bisa dibuka
+  // karena percabangan ini salah-satu. Sekarang lewat tab.
+  if (myProfile.role === 'hr_admin') {
+    pasangTabPeran('roleTabs', function (tab) {
+      if (tab === 'kelola') renderHR()
+      else renderKaryawan()
+    }, { labelSaya: 'Slip Gaji Saya' })
+  } else {
+    renderKaryawan()
+  }
 }
 
 // ============================================================

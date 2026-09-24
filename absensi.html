@@ -261,6 +261,10 @@
 
   <main class="main">
 
+    <!-- Tab "Kelola (HR)" / "Absensi Saya" — hanya terisi untuk HR Admin.
+         Ditaruh DI ATAS bar GPS, karena bar GPS hanya relevan di tab pribadi. -->
+    <div id="roleTabs"></div>
+
     <!-- GPS STATUS BAR -->
     <div class="gps-bar checking" id="gpsBar">
       <div class="gps-dot"></div>
@@ -598,6 +602,9 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 // STATE
 let currentUser = null, currentKaryw = null, isAdmin = false
+// Tab yang sedang dibuka HR Admin: 'kelola' (semua karyawan) atau 'saya'.
+// Untuk karyawan biasa nilainya selalu 'saya'.
+let tabAbsensi = 'saya'
 let absensiHariIni = null, lokasiList = []
 let currentLat = null, currentLng = null, dalamRadius = false
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth()
@@ -1194,7 +1201,10 @@ async function deleteLembur (id) {
   if (!confirm('Hapus catatan lembur ini?')) return
   const { error } = await sb.from('lembur').delete().eq('id', id)
   if (error) { toast('Gagal hapus: '+error.message,'error'); return }
-  toast('Lembur dihapus'); isAdmin ? loadLemburAdmin() : loadLemburMy()
+  // Menyegarkan daftar yang SEDANG dibuka. Dulu memakai isAdmin, tapi kini HR
+  // bisa berada di tab "Absensi Saya" — memakai role akan menyegarkan daftar
+  // yang salah sehingga baris terhapus seolah masih ada.
+  toast('Lembur dihapus'); tabAbsensi === 'kelola' ? loadLemburAdmin() : loadLemburMy()
 }
 
 // --- HR: persetujuan izin absen luar ---
@@ -1440,43 +1450,70 @@ async function init () {
 
   // Mulai GPS
   if (isAdmin) {
-    // Admin: sembunyikan GPS bar (tidak perlu radius)
-    document.getElementById('gpsBar').style.display = 'none'
-    document.getElementById('viewAdmin').style.display = ''
-    document.getElementById('filterTgl').value = tanggalLokal()
-    await loadAdminAbsensi()
-    await loadIzinAdmin()
-    await loadLemburAdmin()
-    await loadKoreksiAdmin()
-    renderHariLiburAdmin()
+    // HR Admin juga ikut absen, ajukan izin luar/lembur/koreksi untuk dirinya.
+    // Dulu bar GPS disembunyikan & view karyawan tak pernah tampil, jadi HR
+    // hanya bisa absen lewat Dashboard. Sekarang keduanya tersedia lewat tab.
+    // Tiap view dimuat SEKALI saja — berpindah tab tidak menarik ulang data.
+    let kelolaSiap = false, sayaSiap = false
+    pasangTabPeran('roleTabs', async function (tab) {
+      tabAbsensi = tab
+      const kelola = tab === 'kelola'
+      document.getElementById('viewAdmin').style.display    = kelola ? '' : 'none'
+      document.getElementById('viewKaryawan').style.display = kelola ? 'none' : ''
+      // Bar GPS hanya relevan saat HR mengabsen dirinya sendiri.
+      document.getElementById('gpsBar').style.display       = kelola ? 'none' : ''
+
+      if (kelola) {
+        if (kelolaSiap) return
+        kelolaSiap = true
+        document.getElementById('filterTgl').value = tanggalLokal()
+        await loadAdminAbsensi()
+        await loadIzinAdmin()
+        await loadLemburAdmin()
+        await loadKoreksiAdmin()
+        renderHariLiburAdmin()
+      } else {
+        if (sayaSiap) return
+        sayaSiap = true
+        startGPS()
+        await muatAbsensiSaya()
+      }
+    }, { labelSaya: 'Absensi Saya' })
   } else {
     startGPS()
     document.getElementById('viewKaryawan').style.display = ''
-
-    // Cek hari libur / Minggu — tampilkan banner
-    const today = tanggalLokal()
-    if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
-      const banner = document.getElementById('hariLiburBanner')
-      document.getElementById('hariLiburNama').textContent = getNamaLibur(today)
-      banner.style.display = 'flex'
-    }
-
-    // Absensi hari ini
-    const { data: ab } = await sb.from('absensi').select('*').eq('karyawan_id',currentUser.id).eq('tanggal',today).single()
-    absensiHariIni = ab || null
-    // Muat izin absen luar (set izinLuarAktif utk hari ini) + daftar pengajuan & lembur
-    await loadIzinLuar()
-    await loadLemburMy()
-    document.getElementById('korTanggal').value = today
-    await loadKoreksiSaya()
-    renderAbsenCard(absensiHariIni)
-    updateAbsenButton()
-    await renderKalender()
-    await loadRiwayat()
-    await loadRekap()
+    await muatAbsensiSaya()
   }
 
   document.getElementById('lo').style.display = 'none'
+}
+
+// Pemuatan view "absensi saya". Dipisah jadi fungsi sendiri supaya dipakai
+// bersama oleh karyawan biasa DAN tab "Absensi Saya" milik HR Admin —
+// tidak ada dua salinan yang bisa melenceng satu sama lain.
+async function muatAbsensiSaya () {
+  const today = tanggalLokal()
+
+  // Cek hari libur / Minggu — tampilkan banner
+  if (isHariLibur(today) || new Date(today+'T00:00:00').getDay() === 0) {
+    const banner = document.getElementById('hariLiburBanner')
+    document.getElementById('hariLiburNama').textContent = getNamaLibur(today)
+    banner.style.display = 'flex'
+  }
+
+  // Absensi hari ini
+  const { data: ab } = await sb.from('absensi').select('*').eq('karyawan_id',currentUser.id).eq('tanggal',today).single()
+  absensiHariIni = ab || null
+  // Muat izin absen luar (set izinLuarAktif utk hari ini) + daftar pengajuan & lembur
+  await loadIzinLuar()
+  await loadLemburMy()
+  document.getElementById('korTanggal').value = today
+  await loadKoreksiSaya()
+  renderAbsenCard(absensiHariIni)
+  updateAbsenButton()
+  await renderKalender()
+  await loadRiwayat()
+  await loadRekap()
 }
 
 init()

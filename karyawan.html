@@ -399,6 +399,9 @@
 
   <main class="main-content">
 
+    <!-- Tab "Kelola (HR)" / "Profil Saya" — hanya terisi untuk HR Admin -->
+    <div id="roleTabs"></div>
+
     <!-- ===== VIEW HR ADMIN ===== -->
     <div id="adminView" style="display:none;">
       <div class="stats-grid" id="statsGrid"></div>
@@ -2217,9 +2220,22 @@ async function init () {
   }
 
   if (isAdmin) {
-    document.getElementById('adminView').style.display = ''
-    await loadDivisi()
-    await loadKaryawan()
+    // HR Admin juga punya profil sendiri (foto, data pribadi, dokumen).
+    // Data tiap view dimuat SEKALI saja — berpindah tab tidak menarik ulang.
+    let kelolaSiap = false, sayaSiap = false
+    pasangTabPeran('roleTabs', async function (tab) {
+      const kelola = tab === 'kelola'
+      document.getElementById('adminView').style.display   = kelola ? '' : 'none'
+      document.getElementById('profileView').style.display = kelola ? 'none' : 'block'
+      if (kelola && !kelolaSiap) {
+        kelolaSiap = true
+        await loadDivisi()
+        await loadKaryawan()
+      } else if (!kelola && !sayaSiap) {
+        sayaSiap = true
+        await loadProfileKaryawan()
+      }
+    }, { labelSaya: 'Profil Saya' })
   } else {
     document.getElementById('profileView').style.display = 'block'
     await loadProfileKaryawan()
