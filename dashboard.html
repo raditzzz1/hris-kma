@@ -456,6 +456,12 @@
     <!-- Stats Grid -->
     <div class="stats-grid" id="statsGrid"></div>
 
+    <!-- Ringkasan pribadi HR Admin (HR juga karyawan). SENGAJA dibiarkan
+         kosong & diisi lewat JS hanya untuk HR: kalau kartunya ditulis statis
+         di sini, id #hariKerja/#saldoCuti akan berganda dengan kartu milik
+         karyawan biasa dan getElementById akan mengisi kartu yang salah. -->
+    <div id="statsSaya" style="display:none;"></div>
+
     <!-- Perlu Perhatian (HR Admin) — muncul hanya bila ada yang perlu ditindak -->
     <div class="card" id="cardPengingat" style="display:none; margin-bottom:1.6rem;">
       <div class="card-header">
@@ -659,6 +665,22 @@ function fitStatValues () {
 // Sesuaikan lagi saat ukuran layar berubah (rotasi/resize) & saat font siap.
 window.addEventListener('resize', () => { clearTimeout(window.__fitStatT); window.__fitStatT = setTimeout(fitStatValues, 150) })
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitStatValues)
+
+// Kartu ringkasan PRIBADI milik HR Admin, ditaruh di bawah statistik
+// perusahaan. Diberi judul "Milik Saya" supaya tak tertukar dengan angka
+// se-perusahaan di atasnya — HR gampang salah baca kalau keduanya menyatu.
+function renderStatsSayaHR () {
+  const wadah = document.getElementById('statsSaya')
+  if (!wadah) return
+  wadah.innerHTML = `
+    <p style="font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;
+              letter-spacing:.5px;margin:0 0 .6rem;">Milik Saya</p>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon yellow">${ic('calendar')}</div><div class="stat-info"><div class="stat-value" id="hariKerja">—</div><div class="stat-label">Hari Kerja Bulan Ini</div></div></div>
+      <div class="stat-card"><div class="stat-icon blue">${ic('umbrella')}</div><div class="stat-info"><div class="stat-value" id="saldoCuti">—</div><div class="stat-label">Sisa Cuti</div></div></div>
+    </div>`
+  wadah.style.display = ''
+}
 
 async function renderStatsHRAdmin () {
   document.getElementById('statsGrid').innerHTML = `
@@ -930,7 +952,10 @@ async function loadRekap () {
   const terlambat = data.filter(a => a.status === 'terlambat').length
   const izin = data.filter(a => ['izin','cuti'].includes(a.status)).length
   const alpha = data.filter(a => a.status === 'tidak_hadir').length
-  document.getElementById('hariKerja').textContent = hadir
+  // Kartu "Hari Kerja" tidak selalu ada (mis. bila susunan kartu berubah) —
+  // jangan sampai ketiadaannya menggagalkan seluruh rekap di bawahnya.
+  const elHariKerja = document.getElementById('hariKerja')
+  if (elHariKerja) elHariKerja.textContent = hadir
   document.getElementById('rekapContent').innerHTML = `
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
       <div class="time-box"><div class="time-val" style="color:#16a34a;">${hadir}</div><div class="time-lbl">Hadir</div></div>
@@ -1000,6 +1025,8 @@ async function init () {
     document.getElementById('navLokasi').style.display = ''
     document.getElementById('navLaporan').style.display = ''
     await renderStatsHRAdmin()
+    renderStatsSayaHR()   // HR juga karyawan: hari kerja & sisa cutinya sendiri
+    loadSaldoCuti()
   } else {
     renderStatsKaryawan(karyw)
     loadSaldoCuti()
@@ -1017,7 +1044,10 @@ async function init () {
 
   renderAbsensi(absensiHariIni)
 
-  if (!isAdmin) { document.getElementById('cardRekap').style.display = ''; loadRekap() }
+  // Rekap kehadiran pribadi: kini untuk SEMUA orang, termasuk HR Admin.
+  // loadRekap() juga yang mengisi kartu "Hari Kerja Bulan Ini".
+  document.getElementById('cardRekap').style.display = ''
+  loadRekap()
   loadActivityList()
 
   document.getElementById('loadingOverlay').style.display = 'none'
