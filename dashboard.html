@@ -340,7 +340,8 @@
   <div class="nag-box">
     <div class="nag-top">
       <svg class="ic" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>
-      <h3 id="fotoNagJudul">Fotonya mana nih? 📸</h3>
+      <!-- Tanpa emoji: ikon kamera SVG sudah ada tepat di sebelah kiri judul ini. -->
+      <h3 id="fotoNagJudul">Fotonya mana nih?</h3>
     </div>
     <div class="nag-body">
       <p id="fotoNagPesan">Profilmu masih pakai inisial. Pasang foto biar rekan-rekan gampang mengenali kamu di absensi & laporan.</p>
@@ -423,7 +424,7 @@
 <!-- ===== MAIN ===== -->
 <div class="main-wrapper">
   <header class="top-header">
-    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
     <div class="header-left">
       <h1>Dashboard</h1>
       <div class="breadcrumb">PT Kawan Menengah Atas · HRIS</div>
@@ -748,7 +749,8 @@ async function loadPengingat () {
     if (ke !== null && ke <= 7) {
       item.push({ urut: 5, tingkat: 'info', ikon: 'cake',
         judul: k.nama_lengkap,
-        sub: ke === 0 ? 'Berulang tahun hari ini 🎉' : `Berulang tahun ${ke} hari lagi`,
+        // Tanpa emoji: baris ini sudah punya ikon sendiri (ikon: 'cake').
+        sub: ke === 0 ? 'Berulang tahun hari ini' : `Berulang tahun ${ke} hari lagi`,
         aksi: null })
     }
   })
@@ -1088,7 +1090,7 @@ async function cekFotoProfil () {
     const sisa = total - sudah
     if (sisa === 1) {
       document.getElementById('fotoNagPesan').textContent =
-        'Tinggal kamu satu-satunya yang belum pasang foto. Ayo lengkapi, tanggung! 😄'
+        'Tinggal kamu satu-satunya yang belum pasang foto. Ayo lengkapi, tanggung!'
     } else if (sisa <= 3) {
       document.getElementById('fotoNagPesan').textContent =
         `Tinggal ${sisa} orang lagi yang belum pasang foto — salah satunya kamu. Yuk lengkapi!`

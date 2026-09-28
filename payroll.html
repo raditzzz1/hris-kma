@@ -248,7 +248,7 @@
 
 <div class="main-wrap">
   <header class="top-bar">
-    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
     <div><h1><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Payroll</h1><div class="bc" id="topBc">—</div></div>
     <div id="topActions"></div>
   </header>
@@ -262,7 +262,7 @@
 <!-- MODAL: Buat Periode Baru -->
 <div class="modal-overlay" id="modalPeriode">
   <div class="modal">
-    <div class="modal-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Buat Periode Payroll</h3><button class="modal-close" onclick="cm('modalPeriode')">×</button></div>
+    <div class="modal-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Buat Periode Payroll</h3><button class="modal-close" onclick="cm('modalPeriode')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="modal-body">
       <div class="inp-row">
         <div class="fg"><label>Bulan *</label>
@@ -289,7 +289,7 @@
 <!-- MODAL: Slip Gaji Detail -->
 <div class="modal-overlay" id="modalSlip">
   <div class="modal modal-lg">
-    <div class="modal-head"><h3 id="slipTitle">Slip Gaji</h3><button class="modal-close" onclick="cm('modalSlip')">×</button></div>
+    <div class="modal-head"><h3 id="slipTitle">Slip Gaji</h3><button class="modal-close" onclick="cm('modalSlip')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="modal-body" id="printArea"><div id="slipContent"></div></div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalSlip')">Tutup</button>
@@ -301,7 +301,7 @@
 <!-- MODAL: Bukti Potong PPh 21 Tahunan (1721-A1) -->
 <div class="modal-overlay" id="modalBupot">
   <div class="modal modal-lg">
-    <div class="modal-head"><h3>Bukti Potong PPh 21 Tahunan</h3><button class="modal-close" onclick="cm('modalBupot')">×</button></div>
+    <div class="modal-head"><h3>Bukti Potong PPh 21 Tahunan</h3><button class="modal-close" onclick="cm('modalBupot')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="modal-body">
       <div id="bupotForm" style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;">
         <div style="flex:1;min-width:130px;">
@@ -325,7 +325,7 @@
 <!-- MODAL: Edit Komponen Karyawan -->
 <div class="modal-overlay" id="modalKomp">
   <div class="modal modal-lg">
-    <div class="modal-head"><h3 id="kompTitle">Komponen Gaji Karyawan</h3><button class="modal-close" onclick="cm('modalKomp')">×</button></div>
+    <div class="modal-head"><h3 id="kompTitle">Komponen Gaji Karyawan</h3><button class="modal-close" onclick="cm('modalKomp')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="modal-body" id="kompBody"></div>
     <div class="modal-foot">
       <button class="btn-secondary" onclick="cm('modalKomp')">Tutup</button>
@@ -890,7 +890,7 @@ async function bukaDetailPeriode(periodeId) {
 
   document.getElementById('mainContent').innerHTML = `
     <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;">
-      <button class="btn-secondary" onclick="renderHR()">← Kembali</button>
+      <button class="btn-secondary" onclick="renderHR()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Kembali</button>
       <h2 style="font-size:1rem;font-weight:700;"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> ${BULAN_NAMA[periode.bulan]} ${periode.tahun}</h2>
       <span class="badge ${periode.status}">${periode.status==='final'?'Final':'Draft'}</span>
     </div>
@@ -1181,7 +1181,9 @@ async function loadKompModal(karyawanId=null) {
       : ''
     return `
       <div class="komp-item">
-        <span class="komp-tipe ${komp.tipe==='tunjangan'?'tipe-t':'tipe-p'}">${komp.tipe==='tunjangan'?'↑':'↓'}</span>
+        <span class="komp-tipe ${komp.tipe==='tunjangan'?'tipe-t':'tipe-p'}" title="${komp.tipe==='tunjangan'?'Menambah':'Mengurangi'} gaji">${komp.tipe==='tunjangan'
+          ? '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
+          : '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>'}</span>
         <span class="komp-name">${komp.nama} ${saklarPajak}</span>
         ${inputRupiah(`data-komp="${komp.id}"`, ex?.nilai || 0)}
       </div>`

@@ -4,6 +4,20 @@
    Load this AFTER per-page <style> in each <head>
    ================================================================ */
 
+/* ===== UKURAN IKON DI TOMBOL IKON =====
+   .ic memakai satuan em, jadi ikon ikut membesar mengikuti font-size tombol
+   (.modal-close 1.25-1.3rem -> ikon jadi ~25px, kebesaran untuk tombol tutup).
+   Ukurannya dikunci di sini supaya seragam di semua halaman. Tombol dibuat
+   inline-flex agar ikon benar-benar di tengah, bukan mengandalkan
+   vertical-align seperti saat isinya masih berupa karakter "x". */
+.modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close .ic { width: 1.05rem; height: 1.05rem; }
+.menu-btn   .ic { width: 1.3rem;  height: 1.3rem; }
+
 /* ===== HAMBURGER BUTTON (hidden on desktop) ===== */
 
 .menu-btn {

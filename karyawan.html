@@ -389,7 +389,7 @@
 <!-- ===== MAIN ===== -->
 <div class="main-wrapper">
   <header class="top-header">
-    <button class="menu-btn" onclick="toggleSidebar()" title="Menu">&#9776;</button>
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
     <div class="header-left">
       <h1>Data Karyawan</h1>
       <div class="breadcrumb">PT Kawan Menengah Atas · HRIS</div>
@@ -521,7 +521,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 id="dokJudul">Arsip Dokumen</h3>
-      <button class="modal-close" onclick="closeModal('modalDokumen')">&times;</button>
+      <button class="modal-close" onclick="closeModal('modalDokumen')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem;">
@@ -562,7 +562,8 @@
       <p style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.5rem;">Dokumen Tersimpan</p>
       <div id="dokList"><p style="font-size:.82rem;color:var(--muted);">Memuat…</p></div>
       <p style="font-size:.72rem;color:var(--muted);margin-top:.8rem;">
-        🔒 Berkas disimpan di penyimpanan privat. Tautan unduhan berlaku 60 detik dan tak bisa dibuka tanpa login.
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Berkas disimpan di penyimpanan privat. Tautan unduhan berlaku 60 detik dan tak bisa dibuka tanpa login.
       </p>
     </div>
     <div class="modal-footer">
@@ -576,7 +577,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Kelola Penandatangan</h3>
-      <button class="modal-close" onclick="closeModal('modalTtd')">&times;</button>
+      <button class="modal-close" onclick="closeModal('modalTtd')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem;">
@@ -597,7 +598,8 @@
       <p style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:.5rem;">Daftar Penandatangan</p>
       <div id="ttdList"><p style="font-size:.82rem;color:var(--muted);">Memuat…</p></div>
       <p style="font-size:.72rem;color:var(--muted);margin-top:.8rem;">
-        🔒 Berkas tanda tangan disimpan di penyimpanan privat — tidak bisa diunduh tanpa login.
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Berkas tanda tangan disimpan di penyimpanan privat — tidak bisa diunduh tanpa login.
         Gunakan gambar berlatar putih/transparan (PNG/JPG, maks. 1 MB).
       </p>
 
@@ -608,7 +610,8 @@
         <p style="font-size:.82rem;color:var(--muted);">Memuat…</p>
       </div>
       <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem;">
-        🔒 Sama seperti TTD — disimpan privat, dipakai otomatis di slip gaji.
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Sama seperti TTD — disimpan privat, dipakai otomatis di slip gaji.
         Selama belum diunggah di sini, slip memakai berkas lama (<code>stempel-kma.png</code>) yang publik.
       </p>
     </div>
@@ -623,7 +626,7 @@
   <div class="modal modal-lg">
     <div class="modal-header">
       <h3 id="suratJudul">Buat Surat</h3>
-      <button class="modal-close" onclick="closeModal('modalSurat')">&times;</button>
+      <button class="modal-close" onclick="closeModal('modalSurat')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-grid" id="suratForm">
@@ -2001,6 +2004,11 @@ function toggleFieldKontrak () {
   if (perluKontrak) hitungSisaKontrak()
 }
 
+// Ikon peringatan (segitiga seru). Dipakai lewat innerHTML, bukan emoji —
+// selain lebih rapi, ikon ini memberi penanda NON-WARNA: peringatan tak boleh
+// hanya mengandalkan teks merah, karena tak semua orang membedakan warna.
+const IKON_PERINGATAN = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>'
+
 // Tampilkan sisa masa kontrak begitu tanggal diisi, supaya HR langsung sadar
 // kalau kontraknya sudah dekat/lewat (risiko PKWT berubah jadi PKWTT).
 function hitungSisaKontrak () {
@@ -2014,10 +2022,10 @@ function hitungSisaKontrak () {
   }
   const hari = Math.round((new Date(nilai + 'T00:00:00') - new Date(tanggalLokal() + 'T00:00:00')) / 86400000)
   if (hari < 0) {
-    info.textContent = `⚠ Sudah lewat ${Math.abs(hari)} hari. Segera perpanjang atau akhiri secara resmi.`
+    info.innerHTML = `${IKON_PERINGATAN} Sudah lewat ${Math.abs(hari)} hari. Segera perpanjang atau akhiri secara resmi.`
     info.style.color = '#dc2626'
   } else if (hari <= 30) {
-    info.textContent = `⚠ Berakhir dalam ${hari} hari. Beri tahu karyawan paling lambat 14 hari sebelumnya.`
+    info.innerHTML = `${IKON_PERINGATAN} Berakhir dalam ${hari} hari. Beri tahu karyawan paling lambat 14 hari sebelumnya.`
     info.style.color = '#dc2626'
   } else if (hari <= 60) {
     info.textContent = `Berakhir dalam ${hari} hari — siapkan keputusan perpanjangan.`
