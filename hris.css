@@ -173,6 +173,17 @@
   .top-bar #topActions .btn-primary,
   .top-bar #topActions .btn-secondary { white-space: nowrap; }      /* label tombol tetap 1 baris */
 
+  /* Tombol aksi sering dibungkus lagi dalam <div style="display:flex">.
+     flex-wrap yang dipasang pada #topActions TIDAK menurun ke pembungkus itu,
+     jadi tombolnya tetap sebaris dan MELUBER keluar layar (tombol terakhir
+     terpotong). Pembungkusnya ikut dibuat wrap + rata kanan. */
+  #topActions > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
   /* .top-header header (dashboard/karyawan/laporan): sama seperti .top-bar.
      Tanpa ini, justify-content:space-between + 3 item (hamburger|judul|kanan)
      mendorong judul ke tengah (jauh dari hamburger), dan tinggi yang dikunci
@@ -239,6 +250,16 @@
   .page-grid,
   .profile-info-grid {          /* profil karyawan: kartu Data Pribadi | Data Pekerjaan */
     grid-template-columns: 1fr !important;
+  }
+
+  /* PENGECUALIAN dari aturan 1 kolom di atas: grid yang isinya KARTU ANGKA
+     ringkas (.stat-mini — Hadir/Terlambat/Izin/Belum Absen di Absensi).
+     Kartunya pendek, jadi 1 kolom membuatnya memanjang 4 baris ke bawah dan
+     boros layar. Dibuat 2x2 seperti kartu statistik di Cuti & Payroll. */
+  .grid-2:has(.stat-mini),
+  .grid-3:has(.stat-mini) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-auto-rows: 1fr !important;
   }
 
   /* Form input rows: single column */

@@ -71,9 +71,15 @@ body {
 .stat-icon.purple { color: #7c3aed; }
 .search-icon .ic { width: 1rem; height: 1rem; }
 
-/* ---- Foto profil di avatar sidebar ---- */
-.s-av, .s-avatar, .avatar { overflow: hidden; }
-.s-av img, .s-avatar img, .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+/* ---- Foto profil di avatar sidebar ----
+   Bentuknya KOTAK membulat (radius 10px), seragam dengan kotak logo
+   perusahaan tepat di atasnya (.logo-icon juga radius 10px) — bukan
+   lingkaran, supaya kedua elemen di sidebar terlihat satu keluarga.
+   Nama kelasnya berbeda-beda antar halaman (.s-av / .s-avatar / .avatar /
+   .avatar-sm), tapi masing-masing hanya dipakai SEKALI yaitu di sidebar,
+   jadi aman disamakan di sini. */
+.s-av, .s-avatar, .avatar, .avatar-sm { overflow: hidden; border-radius: 10px !important; }
+.s-av img, .s-avatar img, .avatar img, .avatar-sm img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; display: block; }
 
 /* ---- Sidebar: rapatkan jarak menu + scrollbar tipis (muat lebih banyak tanpa scrollbar tebal) ---- */
 .sidebar-brand { padding-top: 1.1rem !important; padding-bottom: 0.85rem !important; }

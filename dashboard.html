@@ -1012,7 +1012,7 @@ async function init () {
   document.getElementById('sidebarName').textContent   = karyw.nama_lengkap
   document.getElementById('sidebarRole').textContent   = roleLabel(karyw.role)
   document.getElementById('sidebarAvatar').innerHTML = karyw.foto_url
-    ? `<img src="${karyw.foto_url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;">`
+    ? `<img src="${karyw.foto_url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block;">`
     : getInitial(karyw.nama_lengkap)
 
   const now = new Date()
