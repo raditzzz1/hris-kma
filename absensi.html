@@ -410,7 +410,10 @@
     <div id="viewAdmin" style="display:none;">
       <div class="grid-3" id="adminStats"></div>
 
-      <div class="card">
+      <!-- Tab panel admin: Rekap / Izin / Koreksi / Lembur / Hari Libur -->
+      <div id="absTabs"></div>
+
+      <div class="card" id="panelRekap">
         <div class="card-head">
           <h3><svg class="ic" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Rekap Kehadiran Karyawan</h3>
           <button class="btn-primary" onclick="openManualAbsen()"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Input Manual</button>
@@ -441,25 +444,25 @@
       </div>
 
       <!-- Izin Absen Luar — Persetujuan (HR) -->
-      <div class="card" style="margin-top:1rem;">
+      <div class="card" id="panelIzin" style="margin-top:1rem;">
         <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Izin Absen Luar — Persetujuan</h3></div>
         <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Tipe</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="izinAdminBody"></tbody></table></div>
       </div>
 
       <!-- Koreksi Absen — Persetujuan (HR) -->
-      <div class="card" style="margin-top:1rem;">
+      <div class="card" id="panelKoreksi" style="margin-top:1rem;">
         <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Koreksi Absen — Persetujuan</h3></div>
         <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Usulan Masuk</th><th>Usulan Keluar</th><th>Alasan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="korAdminBody"></tbody></table></div>
       </div>
 
       <!-- Lembur Karyawan (HR) -->
-      <div class="card" style="margin-top:1rem;">
+      <div class="card" id="panelLembur" style="margin-top:1rem;">
         <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Lembur Karyawan</h3></div>
         <div class="tbl-wrap"><table><thead><tr><th>Karyawan</th><th>Tanggal</th><th>Mulai</th><th>Selesai</th><th>Durasi</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody id="lemburAdminBody"></tbody></table></div>
       </div>
 
       <!-- Kelola Hari Libur (HR) -->
-      <div class="card" style="margin-top:1rem;">
+      <div class="card" id="panelLibur" style="margin-top:1rem;">
         <div class="card-head"><h3><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> Kelola Hari Libur</h3></div>
         <div class="card-body" style="padding:.9rem 1.25rem;">
           <div style="display:grid;grid-template-columns:150px 1fr auto;gap:.6rem;align-items:end;">
@@ -605,6 +608,9 @@ let currentUser = null, currentKaryw = null, isAdmin = false
 // Tab yang sedang dibuka HR Admin: 'kelola' (semua karyawan) atau 'saya'.
 // Untuk karyawan biasa nilainya selalu 'saya'.
 let tabAbsensi = 'saya'
+// Pengendali tab panel admin (Rekap/Izin/Koreksi/Lembur/Hari Libur).
+// Dipakai untuk memasang angka "menunggu persetujuan" di tabnya.
+let tabPanelAdmin = null
 let absensiHariIni = null, lokasiList = []
 let currentLat = null, currentLng = null, dalamRadius = false
 let calYear = new Date().getFullYear(), calMonth = new Date().getMonth()
@@ -1025,6 +1031,7 @@ function renderAdminTable (list) {
         : `<button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="editAbsen('${a.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>`}</td>
     </tr>
   `).join('')
+  batasiBaris('adminTableBody', 10)
 }
 
 // ====== MODAL INPUT MANUAL ======
@@ -1210,7 +1217,11 @@ async function deleteLembur (id) {
 // --- HR: persetujuan izin absen luar ---
 async function loadIzinAdmin () {
   const { data } = await sb.from('izin_absen_luar').select('*, karyawan:karyawan_id(nama_lengkap,nik)').order('created_at', { ascending:false }).limit(100)
-  const list = data || []
+  // Yang MENUNGGU selalu didahulukan. Daftar ini dipotong 10 baris, jadi
+  // pengajuan yang belum diputus tak boleh sampai terdorong keluar tampilan.
+  // (sort JS bersifat stabil, jadi urutan tanggal di dalam tiap kelompok utuh)
+  const list = (data || []).slice()
+    .sort((a, b) => (b.status === 'pending') - (a.status === 'pending'))
   const body = document.getElementById('izinAdminBody')
   if (!body) return
   body.innerHTML = list.length ? list.map(i => `
@@ -1221,6 +1232,12 @@ async function loadIzinAdmin () {
     <td>${izinBadge(i.status)}</td>
     <td>${i.status==='pending' ? `<button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#16a34a;border-color:#bbf7d0;" onclick="approveIzin('${i.id}')">Setujui</button> <button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#dc2626;border-color:#fecaca;" onclick="rejectIzin('${i.id}')">Tolak</button>` : '—'}</td></tr>`).join('')
     : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan</td></tr>`
+
+  // Angka "menunggu" ditempel di tabnya. Tanpa ini, pengajuan yang tersembunyi
+  // di tab lain bisa terlewat sama sekali — dan itu berdampak ke kehadiran
+  // serta gaji orang.
+  if (tabPanelAdmin) tabPanelAdmin.tandai('izin', list.filter(i => i.status === 'pending').length)
+  batasiBaris('izinAdminBody', 10)
 }
 async function approveIzin (id) {
   const { error } = await sb.from('izin_absen_luar').update({ status:'disetujui', approved_by: currentUser.id, approved_at: new Date().toISOString() }).eq('id', id)
@@ -1291,8 +1308,13 @@ async function loadKoreksiAdmin () {
   if (!body) return
   const { data } = await sb.from('koreksi_absen')
     .select('*, karyawan:karyawan_id(nama_lengkap, nik)')
-    .order('status', { ascending: true }).order('created_at', { ascending: false }).limit(100)
-  const list = data || []
+    .order('created_at', { ascending: false }).limit(100)
+  // Yang MENUNGGU didahulukan. Sebelumnya diurutkan .order('status') menaik,
+  // padahal secara alfabet "disetujui" < "ditolak" < "menunggu" — jadi yang
+  // belum diputus justru terlempar ke BAWAH. Dengan daftar dipotong 10 baris
+  // itu berbahaya: pengajuan bisa tak terlihat sama sekali.
+  const list = (data || []).slice()
+    .sort((a, b) => (b.status === 'menunggu') - (a.status === 'menunggu'))
   body.innerHTML = list.length ? list.map(k => `
     <tr><td><div class="k-cell"><div class="k-av">${getInit(k.karyawan?.nama_lengkap)}</div><div><div class="k-name">${escHtml(k.karyawan?.nama_lengkap || '—')}</div><div class="k-nik">${escHtml(k.karyawan?.nik || '')}</div></div></div></td>
     <td>${fmtTgl(k.tanggal)}</td>
@@ -1305,6 +1327,9 @@ async function loadKoreksiAdmin () {
          <button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#dc2626;border-color:#fecaca;" onclick="putusKoreksi('${k.id}', false)">Tolak</button>`
       : '—'}</td></tr>`).join('')
     : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan koreksi</td></tr>`
+
+  if (tabPanelAdmin) tabPanelAdmin.tandai('koreksi', list.filter(k => k.status === 'menunggu').length)
+  batasiBaris('korAdminBody', 10)
 }
 
 // Gabungkan tanggal + jam jadi timestamp waktu LOKAL, lalu simpan sebagai ISO
@@ -1373,6 +1398,7 @@ async function loadLemburAdmin () {
     <td style="color:var(--muted);font-size:.8rem;">${l.alasan||'—'}</td>
     <td><button class="btn-sec" style="font-size:.72rem;padding:.25rem .55rem;" onclick="deleteLembur('${l.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')
     : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada data lembur</td></tr>`
+  batasiBaris('lemburAdminBody', 10)
 }
 
 // ====== HR: KELOLA HARI LIBUR ======
@@ -1466,6 +1492,15 @@ async function init () {
       if (kelola) {
         if (kelolaSiap) return
         kelolaSiap = true
+        // Lima panel admin dijadikan tab menyamping — kalau ditumpuk semua,
+        // halamannya sangat panjang di HP.
+        tabPanelAdmin = pasangTabPanel('absTabs', [
+          { id: 'rekap',   label: 'Rekap Kehadiran', panel: 'panelRekap' },
+          { id: 'izin',    label: 'Izin Absen Luar', panel: 'panelIzin' },
+          { id: 'koreksi', label: 'Koreksi Absen',   panel: 'panelKoreksi' },
+          { id: 'lembur',  label: 'Lembur Karyawan', panel: 'panelLembur' },
+          { id: 'libur',   label: 'Hari Libur',      panel: 'panelLibur' }
+        ])
         document.getElementById('filterTgl').value = tanggalLokal()
         await loadAdminAbsensi()
         await loadIzinAdmin()

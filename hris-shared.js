@@ -194,3 +194,132 @@ function suntikGayaTabPeran () {
     '@media print{.peran-tabs{display:none !important;}}'
   document.head.appendChild(s)
 }
+
+// ============================================================
+// TAB PANEL — beberapa panel jadi tab menyamping
+// ============================================================
+// Halaman admin gampang menumpuk banyak panel besar berturut-turut
+// (Absensi: Rekap, Izin, Koreksi, Lembur, Hari Libur). Di HP itu berarti
+// menggulir sangat jauh. Tab membuat hanya satu panel tampil.
+//
+// PENTING — kenapa ada angka penanda: kalau panel PERSETUJUAN disembunyikan
+// di balik tab, pengajuan yang menunggu bisa tak terlihat sama sekali dan
+// terlewat. Angka di tab membuatnya tetap kelihatan tanpa membuka tabnya.
+//
+// Pemakaian:
+//   pasangTabPanel('absTabs', [
+//     { id: 'rekap', label: 'Rekap Kehadiran', panel: 'panelRekap' },
+//     { id: 'izin',  label: 'Izin Absen Luar', panel: 'panelIzin' },
+//   ], function (id) { /* opsional: dipanggil tiap ganti tab */ })
+//
+// Mengembalikan objek { tandai(idTab, jumlah), aktif() }.
+function pasangTabPanel (wadahId, daftar, onGanti) {
+  const wadah = document.getElementById(wadahId)
+  if (!wadah || !daftar || !daftar.length) return null
+  suntikGayaTabPanel()
+
+  let aktif = daftar[0].id
+  const jumlah = {}
+
+  function gambar () {
+    wadah.innerHTML = '<div class="panel-tabs" role="tablist">' + daftar.map(function (t) {
+      const n = jumlah[t.id]
+      return '<button type="button" class="panel-tab' + (t.id === aktif ? ' active' : '') +
+        '" data-tab="' + t.id + '" role="tab" aria-selected="' + (t.id === aktif) + '">' +
+        escHtml(t.label) +
+        (n ? '<span class="panel-tab-n">' + n + '</span>' : '') +
+        '</button>'
+    }).join('') + '</div>'
+
+    wadah.querySelectorAll('.panel-tab').forEach(function (b) {
+      b.onclick = function () { pilih(b.dataset.tab) }
+    })
+    // Panel yang tak aktif disembunyikan (bukan dihapus) supaya isinya yang
+    // sudah dimuat tidak hilang saat berpindah-pindah tab.
+    daftar.forEach(function (t) {
+      const p = document.getElementById(t.panel)
+      if (p) p.style.display = (t.id === aktif) ? '' : 'none'
+    })
+  }
+
+  function pilih (id) {
+    if (id === aktif) return
+    aktif = id
+    gambar()
+    // Tab yang baru dipilih digeser ke area pandang di HP (bar tab bisa
+    // lebih lebar dari layar dan digeser mendatar).
+    const btn = wadah.querySelector('.panel-tab.active')
+    if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    if (onGanti) onGanti(id)
+  }
+
+  gambar()
+  if (onGanti) onGanti(aktif)
+
+  return {
+    // tandai('izin', 3) -> muncul angka 3 di tab itu; 0/null menghapusnya.
+    tandai: function (id, n) { jumlah[id] = n; gambar() },
+    aktif: function () { return aktif }
+  }
+}
+
+function suntikGayaTabPanel () {
+  if (document.getElementById('gayaTabPanel')) return
+  var s = document.createElement('style')
+  s.id = 'gayaTabPanel'
+  s.textContent =
+    '.panel-tabs{display:flex;gap:.25rem;margin-bottom:1rem;background:#fff;border:1px solid var(--border);' +
+    'border-radius:10px;padding:.35rem;overflow-x:auto;scrollbar-width:thin;}' +
+    '.panel-tabs::-webkit-scrollbar{height:4px;}' +
+    '.panel-tab{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .85rem;border-radius:7px;' +
+    'border:none;cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:600;background:none;' +
+    'color:var(--muted);white-space:nowrap;flex:0 0 auto;transition:all .15s;}' +
+    '.panel-tab:hover{color:var(--navy);}' +
+    '.panel-tab.active{background:var(--primary);color:#fff;}' +
+    // Angka penanda: merah supaya "ada yang menunggu" benar-benar menarik mata.
+    '.panel-tab-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;' +
+    'border-radius:9px;background:#dc2626;color:#fff;font-size:.68rem;font-weight:700;}' +
+    '.panel-tab.active .panel-tab-n{background:#fff;color:var(--primary);}' +
+    '@media print{.panel-tabs{display:none !important;}}'
+  document.head.appendChild(s)
+}
+
+// ============================================================
+// BATASI BARIS TABEL — tampil 10 dulu, sisanya "Muat lebih banyak"
+// ============================================================
+// Tabel admin bisa memuat puluhan baris sekaligus; di HP itu berarti
+// menggulir sangat jauh. Baris dibatasi, TAPI sisanya tidak dibuang —
+// selalu ada tombol untuk menampilkan berikutnya, supaya tidak ada data
+// yang hilang diam-diam (penting untuk daftar persetujuan).
+//
+// Dipanggil SESUDAH tbody diisi: batasiBaris('izinAdminBody', 10)
+function batasiBaris (tbodyId, batas) {
+  const tb = document.getElementById(tbodyId)
+  if (!tb) return
+  batas = batas || 10
+
+  // Bersihkan penanda dari pemanggilan sebelumnya, lalu ambil baris data saja.
+  tb.querySelectorAll('tr[data-lebih]').forEach(function (tr) { tr.remove() })
+  const baris = Array.prototype.slice.call(tb.querySelectorAll('tr'))
+  // Baris "belum ada data" (satu sel colspan) tidak perlu dibatasi.
+  if (baris.length === 1 && baris[0].children.length === 1) return
+  baris.forEach(function (tr) { tr.style.display = '' })
+  if (baris.length <= batas) return
+
+  let tampil = batas
+  const kolom = (baris[0].children.length) || 1
+  const tr = document.createElement('tr')
+  tr.setAttribute('data-lebih', '1')
+  tb.appendChild(tr)
+
+  function terapkan () {
+    baris.forEach(function (b, i) { b.style.display = i < tampil ? '' : 'none' })
+    const sisa = baris.length - tampil
+    if (sisa <= 0) { tr.remove(); return }
+    tr.innerHTML = '<td colspan="' + kolom + '" style="text-align:center;padding:.75rem;">' +
+      '<button type="button" class="btn-sec btn-secondary" style="font-size:.78rem;padding:.35rem .9rem;">' +
+      'Muat lebih banyak (' + sisa + ' lagi)</button></td>'
+    tr.querySelector('button').onclick = function () { tampil += batas; terapkan() }
+  }
+  terapkan()
+}
