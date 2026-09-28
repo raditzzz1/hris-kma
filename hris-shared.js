@@ -293,17 +293,23 @@ function suntikGayaTabPanel () {
 // yang hilang diam-diam (penting untuk daftar persetujuan).
 //
 // Dipanggil SESUDAH tbody diisi: batasiBaris('izinAdminBody', 10)
+//
+// AMAN-CETAK: baris disembunyikan lewat KELAS, bukan style.display inline.
+// Kalau memakai inline style, baris yang tersembunyi juga tak ikut tercetak
+// dan hasil cetak jadi tidak lengkap tanpa disadari. Dengan kelas, aturan
+// @media print bisa menampilkannya kembali.
 function batasiBaris (tbodyId, batas) {
   const tb = document.getElementById(tbodyId)
   if (!tb) return
   batas = batas || 10
+  suntikGayaBatasBaris()
 
   // Bersihkan penanda dari pemanggilan sebelumnya, lalu ambil baris data saja.
   tb.querySelectorAll('tr[data-lebih]').forEach(function (tr) { tr.remove() })
   const baris = Array.prototype.slice.call(tb.querySelectorAll('tr'))
   // Baris "belum ada data" (satu sel colspan) tidak perlu dibatasi.
   if (baris.length === 1 && baris[0].children.length === 1) return
-  baris.forEach(function (tr) { tr.style.display = '' })
+  baris.forEach(function (tr) { tr.classList.remove('baris-lewat-batas') })
   if (baris.length <= batas) return
 
   let tampil = batas
@@ -313,7 +319,7 @@ function batasiBaris (tbodyId, batas) {
   tb.appendChild(tr)
 
   function terapkan () {
-    baris.forEach(function (b, i) { b.style.display = i < tampil ? '' : 'none' })
+    baris.forEach(function (b, i) { b.classList.toggle('baris-lewat-batas', i >= tampil) })
     const sisa = baris.length - tampil
     if (sisa <= 0) { tr.remove(); return }
     tr.innerHTML = '<td colspan="' + kolom + '" style="text-align:center;padding:.75rem;">' +
@@ -322,4 +328,17 @@ function batasiBaris (tbodyId, batas) {
     tr.querySelector('button').onclick = function () { tampil += batas; terapkan() }
   }
   terapkan()
+}
+
+function suntikGayaBatasBaris () {
+  if (document.getElementById('gayaBatasBaris')) return
+  var s = document.createElement('style')
+  s.id = 'gayaBatasBaris'
+  s.textContent =
+    '.baris-lewat-batas{display:none;}' +
+    // Saat DICETAK semua baris ditampilkan kembali (hasil cetak harus utuh),
+    // dan tombol "Muat lebih banyak" disembunyikan.
+    '@media print{.baris-lewat-batas{display:table-row !important;}' +
+    'tr[data-lebih]{display:none !important;}}'
+  document.head.appendChild(s)
 }

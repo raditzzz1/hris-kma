@@ -441,7 +441,7 @@ async function renderKaryawan () {
               <th>Status</th><th>Catatan HR</th><th>Aksi</th>
             </tr>
           </thead>
-          <tbody>${tblHtml}</tbody>
+          <tbody id="myCutiBody">${tblHtml}</tbody>
         </table>
       </div>
     </div>`
@@ -477,6 +477,11 @@ async function renderHR (filter = {status:'', search:''}) {
     const q2 = filter.search.toLowerCase()
     filtered = filtered.filter(p => p.karyawan?.nama_lengkap?.toLowerCase().includes(q2))
   }
+
+  // Yang MENUNGGU didahulukan — daftar ini dipotong 10 baris, jadi pengajuan
+  // yang belum diputus tak boleh sampai terdorong keluar tampilan.
+  // (sort JS stabil, urutan tanggal di dalam tiap kelompok tetap utuh)
+  filtered = filtered.slice().sort((a, b) => (b.status === 'pending') - (a.status === 'pending'))
 
   const tblHtml = filtered.length
     ? filtered.map(p => `
@@ -530,10 +535,12 @@ async function renderHR (filter = {status:'', search:''}) {
           <thead>
             <tr><th>Karyawan</th><th>Jenis</th><th>Mulai</th><th>Selesai</th><th style="text-align:center;">Hari</th><th>Status</th><th>Aksi</th></tr>
           </thead>
-          <tbody>${tblHtml}</tbody>
+          <tbody id="hrCutiBody">${tblHtml}</tbody>
         </table>
       </div>
     </div>`
+
+  batasiBaris('hrCutiBody', 10)
 }
 
 // ====================================================

@@ -905,10 +905,12 @@ async function bukaDetailPeriode(periodeId) {
       <div class="tbl-wrap">
         <table>
           <thead><tr><th>Karyawan</th><th style="text-align:right">Gaji Pokok</th><th style="text-align:right">Tunjangan</th><th style="text-align:right">Potongan</th><th style="text-align:right">Gaji Bersih</th><th>Aksi</th></tr></thead>
-          <tbody>${tblHtml}</tbody>
+          <tbody id="periodeSlipBody">${tblHtml}</tbody>
         </table>
       </div>
     </div>`
+
+  batasiBaris('periodeSlipBody', 10)
 }
 
 // ============================================================
@@ -1419,10 +1421,12 @@ async function renderKaryawan() {
       <div class="tbl-wrap">
         <table>
           <thead><tr><th>Periode</th><th style="text-align:right">Gaji Pokok</th><th style="text-align:right">Tunjangan</th><th style="text-align:right">Potongan</th><th style="text-align:right">Take-Home</th><th>Aksi</th></tr></thead>
-          <tbody>${tblHtml}</tbody>
+          <tbody id="mySlipBody">${tblHtml}</tbody>
         </table>
       </div>
     </div>`
+
+  batasiBaris('mySlipBody', 10)
 }
 
 // ============================================================

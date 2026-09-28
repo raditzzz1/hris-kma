@@ -1131,6 +1131,11 @@ function renderTable (list) {
       </td>
     </tr>
   `).join('')
+
+  // Daftar karyawan bisa panjang (dan akan makin panjang). Ditampilkan 10 dulu
+  // dengan tombol "Muat lebih banyak" — pencarian & filter di atas tetap
+  // bekerja pada SELURUH data, bukan hanya 10 yang terlihat.
+  batasiBaris('tableBody', 10)
 }
 
 // ---- Render stats ----
