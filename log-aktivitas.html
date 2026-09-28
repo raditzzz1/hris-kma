@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#004499">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <title>Log Aktivitas — HRIS PT KMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth-guard.js"></script>
+  <script src="hris-shared.js"></script>
+  <script src="notify.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary:    #1d4ed8;
+      --primary-dk: #1e3a8a;
+      --sidebar-w:  240px;
+      --header-h:   64px;
+      --bg:         #f1f5f9;
+      --card-bg:    #ffffff;
+      --text:       #0f172a;
+      --muted:      #64748b;
+      --border:     #e2e8f0;
+      --radius:     12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--primary-dk);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      overflow: hidden;
+    }
+    .sidebar-brand {
+      padding: 1.25rem 1.25rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-shrink: 0;
+    }
+    .sidebar-brand .logo-row { display: flex; align-items: center; gap: 0.6rem; }
+    .sidebar-brand .logo-icon {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .sidebar-brand .logo-text { font-size: 0.82rem; font-weight: 700; line-height: 1.3; }
+    .sidebar-brand .logo-sub { font-size: 0.68rem; opacity: 0.5; font-weight: 400; letter-spacing: 0.5px; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 0.75rem 0; }
+    .nav-section-label {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; opacity: 0.4; padding: 0.75rem 1.25rem 0.4rem;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.65rem 1.25rem; font-size: 0.875rem; font-weight: 500;
+      color: rgba(255,255,255,0.7); text-decoration: none;
+      cursor: pointer; transition: background 0.15s, color 0.15s; position: relative;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+    .nav-item.active { background: rgba(255,255,255,0.12); color: white; }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: #60a5fa; border-radius: 0 2px 2px 0;
+    }
+    .nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+    .sidebar-user { display: flex; align-items: center; gap: 0.7rem; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,0.15); display: grid; place-items: center;
+      font-size: 1rem; flex-shrink: 0; font-weight: 600;
+    }
+    .sidebar-user .user-info { flex: 1; min-width: 0; }
+    .sidebar-user .user-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-user .user-role { font-size: 0.7rem; opacity: 0.5; }
+    .btn-logout { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1rem; padding: 4px; transition: color 0.15s; }
+    .btn-logout:hover { color: #f87171; }
+
+    /* ===== MAIN LAYOUT ===== */
+    .main-wrapper { margin-left: var(--sidebar-w); min-height: 100vh; display: flex; flex-direction: column; }
+    .top-header {
+      height: var(--header-h); background: white; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.75rem; position: sticky; top: 0; z-index: 50;
+    }
+    .header-left h1 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .header-left .breadcrumb { font-size: 0.75rem; color: var(--muted); }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .date-chip { background: #eff6ff; color: var(--primary); font-size: 0.78rem; font-weight: 600; padding: 0.35rem 0.8rem; border-radius: 20px; }
+    .main-content { flex: 1; padding: 1.75rem; }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+      display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;
+    }
+    .filter-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .filter-field label { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .filter-field select, .filter-field input {
+      padding: 0.5rem 0.75rem; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.875rem; color: var(--text); background: white; outline: none; font-family: inherit;
+    }
+    .filter-field select:focus, .filter-field input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .filter-spacer { flex: 1; }
+    .btn {
+      padding: 0.55rem 1rem; border: none; border-radius: 8px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s, transform 0.1s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-outline { background: white; color: var(--primary); border: 1.5px solid #bfdbfe; }
+    .btn-outline:hover { background: #eff6ff; }
+
+    /* ===== TABS ===== */
+    .tabs { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border); }
+    .tab {
+      padding: 0.7rem 1.1rem; font-size: 0.875rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; border: none; background: none; font-family: inherit;
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.15s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* ===== STATS ===== */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 1.1rem 1.25rem; border: 1px solid var(--border); }
+    .stat-card .stat-value { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .stat-card .stat-label { font-size: 0.76rem; color: var(--muted); margin-top: 5px; }
+
+    /* ===== TABLE ===== */
+    .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .card-header h3 { font-size: 0.9rem; font-weight: 700; }
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+      text-align: left; padding: 0.7rem 1rem; font-size: 0.72rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px;
+      background: #f8fafc; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    tbody td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tfoot td { padding: 0.7rem 1rem; font-weight: 700; background: #f8fafc; border-top: 2px solid var(--border); white-space: nowrap; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-yellow { background: #fef9c3; color: #a16207; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-gray   { background: #f1f5f9; color: #64748b; }
+
+    .empty-state { padding: 3rem 1.5rem; text-align: center; color: var(--muted); }
+    .empty-state .es-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+    /* Loading overlay */
+    #loadingOverlay { position: fixed; inset: 0; background: white; display: grid; place-items: center; z-index: 9999; }
+    .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem;
+      border-radius: 10px; font-size: 0.875rem; font-weight: 500; color: white;
+      z-index: 9999; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.12); max-width: 320px;
+    }
+    #toast.success { background: #16a34a; }
+    #toast.error   { background: #dc2626; }
+
+    /* Access denied */
+    #denied { display: none; place-items: center; min-height: 70vh; text-align: center; padding: 2rem; }
+    #denied .es-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ===== PRINT ===== */
+    @media print {
+      .sidebar, .sidebar-overlay, .top-header, .filter-bar, .tabs,
+      .bottom-nav, .menu-btn, #toast, .card-header .btn { display: none !important; }
+      .main-wrapper { margin-left: 0 !important; }
+      .main-content { padding: 0 !important; }
+      .card, .stat-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+      body { background: white !important; }
+    }
+  </style>
+  <link rel="stylesheet" href="hris.css">
+  <link rel="stylesheet" href="theme.css">
+  <script src="seasonal-theme.js"></script>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay">
+  <div>
+    <div class="spinner" style="margin: 0 auto 1rem;"></div>
+    <p style="color:#64748b; font-size:0.875rem; text-align:center;">Memuat log...</p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo-row">
+      <div class="logo-icon"><img src="logo-KMA.png" alt="Logo KMA"></div>
+      <div>
+        <div class="logo-text">PT Kawan Menengah Atas</div>
+        <div class="logo-sub">HRIS v1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Menu Utama</div>
+    <a class="nav-item" href="dashboard.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></span> Dashboard</a>
+    <a class="nav-item" href="karyawan.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Data Karyawan</a>
+    <a class="nav-item" href="absensi.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span> Absensi</a>
+
+    <div class="nav-section-label" style="margin-top:0.5rem;">Manajemen SDM</div>
+    <a class="nav-item" href="cuti.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg></span> Cuti &amp; Izin</a>
+    <a class="nav-item" href="payroll.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span> Payroll</a>
+    <a class="nav-item" href="pelatihan.html"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span> Pelatihan</a>
+
+    <div class="nav-section-label" id="adminNavLabel" style="margin-top:0.5rem; display:none;">Administrasi</div>
+    <a class="nav-item" href="lokasi.html" id="navLokasi" style="display:none;"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M14.1 5.6a2 2 0 0 0 1.8 0l3.6-1.8A1 1 0 0 1 21 4.6v12.8a1 1 0 0 1-.5.9l-4.6 2.3a2 2 0 0 1-1.8 0l-4.2-2.1a2 2 0 0 0-1.8 0l-3.6 1.8A1 1 0 0 1 3 19.4V6.6a1 1 0 0 1 .5-.9l4.6-2.3a2 2 0 0 1 1.8 0Z"/><path d="M15 5.8v15M9 3.2v15"/></svg></span> Lokasi Kantor</a>
+    <a class="nav-item" href="laporan.html" id="navLaporan" style="display:none;"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg></span> Laporan</a>
+    <a class="nav-item active" href="log-aktivitas.html" id="navLog" style="display:none;"><span class="nav-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg></span> Log Aktivitas</a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="avatar" id="sidebarAvatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebarName">Memuat...</div>
+        <div class="user-role" id="sidebarRole">—</div>
+      </div>
+      <button class="btn-logout" title="Keluar" id="btnLogout"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></button>
+    </div>
+  </div>
+</aside>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ===== MAIN ===== -->
+<div class="main-wrapper">
+  <header class="top-header">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Menu"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+    <div class="header-left">
+      <h1>Log Aktivitas</h1>
+      <div class="breadcrumb">PT Kawan Menengah Atas · HRIS</div>
+    </div>
+    <div class="header-right">
+      <div class="date-chip" id="headerDate">—</div>
+    </div>
+  </header>
+
+
+  <main class="main-content">
+
+    <!-- Hanya HR Admin -->
+    <div id="denied">
+      <div>
+        <div class="es-icon"><svg class="ic" viewBox="0 0 24 24" style="width:2.4rem;height:2.4rem"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h2 style="margin-bottom:0.4rem;">Akses Terbatas</h2>
+        <p style="color:var(--muted); max-width:380px; margin:0 auto 1.25rem;">
+          Log Aktivitas hanya dapat diakses oleh HR Admin. Silakan kembali ke dashboard.
+        </p>
+        <a href="dashboard.html" class="btn btn-primary" style="text-decoration:none;"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Kembali ke Dashboard</a>
+      </div>
+    </div>
+
+    <div id="logArea" style="display:none;">
+
+      <div class="card" style="margin-bottom:1.1rem;">
+        <div class="card-body" style="padding:1rem 1.15rem;">
+          <p style="font-size:.78rem;color:var(--muted);line-height:1.55;margin:0;">
+            Catatan perubahan penting: gaji &amp; komponen, periode payroll, persetujuan cuti/izin/koreksi,
+            saldo cuti, absensi yang diubah orang lain, data karyawan, serta pengaturan.
+            Log <b>tidak bisa diubah atau dihapus</b> dari aplikasi — termasuk oleh HR Admin.
+          </p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.1rem;">
+        <div class="card-body" style="padding:1rem 1.15rem;">
+          <div class="inp-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;">
+            <div>
+              <label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.3rem;">Cari nama / ringkasan</label>
+              <input class="inp inp-full" type="text" id="fCari" placeholder="mis. Adilia" oninput="terapkanFilter()">
+            </div>
+            <div>
+              <label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.3rem;">Jenis data</label>
+              <select class="inp inp-full" id="fTabel" onchange="terapkanFilter()"><option value="">Semua</option></select>
+            </div>
+            <div>
+              <label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.3rem;">Aksi</label>
+              <select class="inp inp-full" id="fAksi" onchange="terapkanFilter()">
+                <option value="">Semua</option><option value="tambah">Tambah</option>
+                <option value="ubah">Ubah</option><option value="hapus">Hapus</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:.75rem;font-weight:600;margin-bottom:.3rem;">Sejak tanggal</label>
+              <input class="inp inp-full" type="date" id="fSejak" onchange="muatLog()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3><svg class="ic" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg> Riwayat Perubahan</h3>
+          <span class="badge" id="logHitung">—</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Waktu</th><th>Pelaku</th><th>Aksi</th><th>Ringkasan</th><th>Rincian</th></tr></thead>
+              <tbody id="logBody"><tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--muted);">Memuat…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="hris-shared.js"></script>
+<script>
+// ============================================================
+// KONFIGURASI SUPABASE — samakan dengan index.html
+// ============================================================
+const SUPABASE_URL      = 'https://lguhgtzqcacqjkckcbth.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndWhndHpxY2FjcWprY2tjYnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTIxNTIsImV4cCI6MjA5NzkyODE1Mn0.hJI-gtGnZvKdIeApSrszdXR9zJI70con4jUVfbuNDHk'
+// ============================================================
+
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+let currentUser = null
+let semuaLog    = []   // hasil muat terakhir; filter bekerja di sini
+
+function roleLabel (r) { return ({ hr_admin:'HR Admin', karyawan:'Karyawan' })[r] || r }
+function getInitial (n) { return (n||'?').trim().split(/\s+/).slice(0,2).map(s=>s[0]).join('').toUpperCase() }
+
+// Nama tabel database -> istilah yang dimengerti HR.
+const NAMA_TABEL = {
+  karyawan: 'Data Karyawan', karyawan_komponen: 'Komponen Gaji Karyawan',
+  komponen_gaji: 'Master Komponen Gaji', karyawan_potongan_manual: 'BPJS & PPh 21 Manual',
+  payroll_periode: 'Periode Payroll', pengajuan_cuti: 'Pengajuan Cuti',
+  saldo_cuti: 'Saldo Cuti', izin_absen_luar: 'Izin Absen Luar',
+  koreksi_absen: 'Koreksi Absen', absensi: 'Absensi', pengaturan: 'Pengaturan',
+  penandatangan: 'Penandatangan', hari_libur: 'Hari Libur'
+}
+const LABEL_AKSI = { tambah: 'Tambah', ubah: 'Ubah', hapus: 'Hapus' }
+const WARNA_AKSI = { tambah: '#16a34a', ubah: '#a16207', hapus: '#dc2626' }
+
+function fmtWaktu (iso) {
+  const d = new Date(iso)
+  return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) +
+         ' ' + d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })
+}
+
+// Nilai JSON -> teks pendek yang enak dibaca.
+function nilaiTeks (v) {
+  if (v === null || v === undefined) return '(kosong)'
+  if (typeof v === 'boolean') return v ? 'ya' : 'tidak'
+  const s = String(v)
+  return s.length > 60 ? s.slice(0, 60) + '…' : s
+}
+
+function rincianHtml (perubahan) {
+  if (!perubahan || !Object.keys(perubahan).length) return '<span style="color:var(--muted);">—</span>'
+  return Object.keys(perubahan).map(function (k) {
+    const p = perubahan[k]
+    return '<div style="font-size:.72rem;line-height:1.5;"><b>' + escHtml(k) + '</b>: ' +
+      '<span style="color:#dc2626;">' + escHtml(nilaiTeks(p.lama)) + '</span> ' +
+      '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:.8rem;height:.8rem;"><path d="M5 12h14M12 5l7 7-7 7"/></svg> ' +
+      '<span style="color:#16a34a;">' + escHtml(nilaiTeks(p.baru)) + '</span></div>'
+  }).join('')
+}
+
+async function muatLog () {
+  const body = document.getElementById('logBody')
+  body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--muted);">Memuat…</td></tr>'
+
+  let q = sb.from('log_aktivitas').select('*').order('waktu', { ascending: false }).limit(500)
+  const sejak = document.getElementById('fSejak').value
+  if (sejak) q = q.gte('waktu', sejak + 'T00:00:00')
+
+  const { data, error } = await q
+  if (error) {
+    // Paling sering: supabase-fase20.sql belum dijalankan.
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#dc2626;">' +
+      'Gagal memuat log: ' + escHtml(error.message) + '<br>' +
+      '<span style="color:var(--muted);font-size:.78rem;">Pastikan <b>supabase-fase20.sql</b> sudah dijalankan di Supabase.</span></td></tr>'
+    document.getElementById('logHitung').textContent = '—'
+    return
+  }
+
+  semuaLog = data || []
+  // Isi pilihan "Jenis data" dari yang benar-benar ada di log.
+  const sel = document.getElementById('fTabel')
+  const adaTabel = Array.from(new Set(semuaLog.map(function (r) { return r.tabel }))).sort()
+  const dipilih = sel.value
+  sel.innerHTML = '<option value="">Semua</option>' + adaTabel.map(function (t) {
+    return '<option value="' + escHtml(t) + '">' + escHtml(NAMA_TABEL[t] || t) + '</option>'
+  }).join('')
+  if (dipilih) sel.value = dipilih
+
+  terapkanFilter()
+}
+
+function terapkanFilter () {
+  const cari  = (document.getElementById('fCari').value || '').toLowerCase().trim()
+  const tabel = document.getElementById('fTabel').value
+  const aksi  = document.getElementById('fAksi').value
+
+  const hasil = semuaLog.filter(function (r) {
+    if (tabel && r.tabel !== tabel) return false
+    if (aksi && r.aksi !== aksi) return false
+    if (cari) {
+      const gabung = [r.aktor_nama, r.subjek_nama, r.ringkasan].join(' ').toLowerCase()
+      if (gabung.indexOf(cari) === -1) return false
+    }
+    return true
+  })
+
+  document.getElementById('logHitung').textContent = hasil.length + ' catatan'
+  const body = document.getElementById('logBody')
+  body.innerHTML = hasil.length ? hasil.map(function (r) {
+    return '<tr>' +
+      '<td style="white-space:nowrap;font-size:.78rem;">' + fmtWaktu(r.waktu) + '</td>' +
+      '<td><div style="font-weight:600;font-size:.82rem;">' + escHtml(r.aktor_nama || '—') + '</div>' +
+      '<div style="font-size:.72rem;color:var(--muted);">' + escHtml(r.aktor_nik || '') + '</div></td>' +
+      '<td><span style="font-size:.72rem;font-weight:700;color:' + (WARNA_AKSI[r.aksi] || 'var(--muted)') + ';">' +
+        escHtml(LABEL_AKSI[r.aksi] || r.aksi) + '</span></td>' +
+      '<td><div style="font-size:.82rem;">' + escHtml(NAMA_TABEL[r.tabel] || r.tabel) + '</div>' +
+      '<div style="font-size:.72rem;color:var(--muted);">' + escHtml(r.subjek_nama || '') + '</div></td>' +
+      '<td>' + rincianHtml(r.perubahan) + '</td></tr>'
+  }).join('')
+    : '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--muted);">Tidak ada catatan yang cocok</td></tr>'
+
+  batasiBaris('logBody', 20)
+}
+
+async function init () {
+  const sesi = await sb.auth.getSession()
+  const session = sesi.data.session
+  if (!session) { window.location.href = 'index.html'; return }
+  currentUser = session.user
+
+  const { data: karyw } = await sb.from('karyawan')
+    .select('nama_lengkap, role, foto_url, status').eq('id', currentUser.id).single()
+
+  if (!(await guardKaryawanAktif(sb, karyw && karyw.status))) return
+
+  document.getElementById('headerDate').textContent =
+    new Date().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+
+  if (karyw) {
+    document.getElementById('sidebarName').textContent = karyw.nama_lengkap
+    document.getElementById('sidebarRole').textContent = roleLabel(karyw.role)
+    document.getElementById('sidebarAvatar').innerHTML = karyw.foto_url
+      ? '<img src="' + karyw.foto_url + '" alt="">' : getInitial(karyw.nama_lengkap)
+  }
+
+  document.getElementById('loadingOverlay').style.display = 'none'
+
+  // Hanya HR Admin. Ini lapisan TAMPILAN; penjagaan sebenarnya ada di RLS
+  // (policy log_aktivitas_baca_hr), jadi karyawan biasa tetap tak bisa
+  // membaca datanya walau membuka halaman ini secara paksa.
+  if (!karyw || karyw.role !== 'hr_admin') {
+    document.getElementById('denied').style.display = 'grid'
+    return
+  }
+
+  document.getElementById('adminNavLabel').style.display = ''
+  document.getElementById('navLokasi').style.display = ''
+  document.getElementById('navLaporan').style.display = ''
+  const navLog = document.getElementById('navLog')
+  if (navLog) navLog.style.display = ''
+
+  document.getElementById('logArea').style.display = ''
+  await muatLog()
+}
+
+init()
+
+document.getElementById('btnLogout').addEventListener('click', async function () {
+  await sb.auth.signOut(); window.location.href = 'index.html'
+})
+
+function toggleSidebar () { document.body.classList.toggle('nav-open') }
+function closeSidebar ()  { document.body.classList.remove('nav-open') }
+;(function(){ const p = location.pathname.split('/').pop() || 'dashboard.html'; document.querySelectorAll('.bottom-nav .bn-item[href]').forEach(function(el){ if(el.getAttribute('href')===p) el.classList.add('active') }) })()
+</script>
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item" href="dashboard.html"><span class="bn-icon"><svg class="ic" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></span><span class="bn-label">Home</span></a>
+  <a class="bn-item" href="absensi.html"><span class="bn-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="bn-label">Absensi</span></a>
+  <a class="bn-item" href="cuti.html"><span class="bn-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v8a2 2 0 0 0 4 0"/><path d="M12 2v1"/></svg></span><span class="bn-label">Cuti</span></a>
+  <a class="bn-item" href="payroll.html"><span class="bn-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="bn-label">Payroll</span></a>
+  <button class="bn-item" onclick="toggleSidebar()"><span class="bn-icon"><svg class="ic" viewBox="0 0 24 24"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></span><span class="bn-label">Menu</span></button>
+</nav>
+<script src="responsive-tables.js"></script>
+<script src="pwa-register.js"></script>
+</body>
+</html>

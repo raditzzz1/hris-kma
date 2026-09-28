@@ -404,6 +404,7 @@
     <a class="nav-item" href="laporan.html" id="navLaporan" style="display:none;">
       <svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg> Laporan
     </a>
+<a class="nav-item" href="log-aktivitas.html" id="navLog" style="display:none;">      <svg class="ic" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg> Log Aktivitas    </a>
   </nav>
 
   <div class="sidebar-footer">
@@ -1026,6 +1027,7 @@ async function init () {
     document.getElementById('adminNavLabel').style.display = ''
     document.getElementById('navLokasi').style.display = ''
     document.getElementById('navLaporan').style.display = ''
+    document.getElementById('navLog').style.display = ''
     await renderStatsHRAdmin()
     renderStatsSayaHR()   // HR juga karyawan: hari kerja & sisa cutinya sendiri
     loadSaldoCuti()
