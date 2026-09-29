@@ -959,11 +959,17 @@ async function loadRekap () {
   const now = new Date()
   const awal = awalBulanLokal(now)
   const akhir = tanggalLokal(now)
-  const { data } = await sb.from('absensi').select('status').eq('karyawan_id', currentUser.id).gte('tanggal', awal).lte('tanggal', akhir)
+  const { data } = await sb.from('absensi').select('tanggal,status').eq('karyawan_id', currentUser.id).gte('tanggal', awal).lte('tanggal', akhir)
   if (!data) return
+  // Cuti yang disetujui tidak meninggalkan baris di tabel absensi — harus
+  // dihitung terpisah, kalau tidak angka "Izin / Cuti" di rekap bulanan
+  // selamanya 0. Tanggal yang sudah punya baris absensi dikecualikan supaya
+  // tidak terhitung dua kali.
+  const sudahAda = new Set(data.map(a => a.tanggal))
+  const hariCuti = await hitungHariCuti(sb, currentUser.id, awal, akhir, sudahAda)
   const hadir = data.filter(a => ['hadir','terlambat','pulang_awal'].includes(a.status)).length
   const terlambat = data.filter(a => a.status === 'terlambat').length
-  const izin = data.filter(a => ['izin','cuti'].includes(a.status)).length
+  const izin = data.filter(a => ['izin','cuti'].includes(a.status)).length + hariCuti
   const alpha = data.filter(a => a.status === 'tidak_hadir').length
   // Kartu "Hari Kerja" tidak selalu ada (mis. bila susunan kartu berubah) —
   // jangan sampai ketiadaannya menggagalkan seluruh rekap di bawahnya.

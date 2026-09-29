@@ -954,14 +954,22 @@ async function loadRiwayat () {
 // ====== REKAP BULAN INI ======
 async function loadRekap () {
   const now = new Date()
-  const { data } = await sb.from('absensi').select('status')
+  const awal = awalBulanLokal(now)
+  const akhir = tanggalLokal(now)
+  const { data } = await sb.from('absensi').select('tanggal,status')
     .eq('karyawan_id', currentUser.id)
-    .gte('tanggal', awalBulanLokal(now))
-    .lte('tanggal', tanggalLokal(now))
+    .gte('tanggal', awal)
+    .lte('tanggal', akhir)
   if (!data) return
+  // Cuti yang disetujui tidak meninggalkan baris di tabel absensi, jadi harus
+  // dihitung terpisah lalu ditambahkan — kalau tidak, angka "Izin/Cuti" di
+  // rekap bulanan selamanya 0. Tanggal yang sudah punya baris absensi
+  // dikecualikan supaya tidak terhitung dua kali.
+  const sudahAda = new Set(data.map(a => a.tanggal))
+  const hariCuti = await hitungHariCuti(sb, currentUser.id, awal, akhir, sudahAda)
   document.getElementById('rHadir').textContent     = data.filter(a=>['hadir','terlambat','pulang_awal'].includes(a.status)).length
   document.getElementById('rTerlambat').textContent = data.filter(a=>a.status==='terlambat').length
-  document.getElementById('rIzin').textContent      = data.filter(a=>['izin','cuti'].includes(a.status)).length
+  document.getElementById('rIzin').textContent      = data.filter(a=>['izin','cuti'].includes(a.status)).length + hariCuti
   document.getElementById('rAlpha').textContent     = data.filter(a=>a.status==='tidak_hadir').length
 }
 

@@ -148,6 +148,47 @@ async function ambilCutiTanggal (sb, tanggal) {
   return hasil
 }
 
+// Berapa HARI KERJA cuti/izin yang sudah disetujui milik satu orang, di dalam
+// rentang tanggal [dari, sampai]. Dipakai untuk rekap bulanan "Izin/Cuti" —
+// yang juga buta terhadap cuti karena alasan yang sama seperti di atas.
+//
+// Aturan hari kerja MENGIKUTI hitungHariKerja() di cuti.html supaya angkanya
+// tidak berbeda antar halaman: Senin–Sabtu masuk hitungan (Sabtu WFH), yang
+// tidak dihitung hanya MINGGU dan tanggal di tabel `hari_libur`.
+//
+// `tanggalTerpakai` (opsional, Set berisi "YYYY-MM-DD"): tanggal yang SUDAH
+// punya baris absensi. Tanggal itu dilewati supaya orang yang ternyata tetap
+// masuk saat cutinya disetujui tidak terhitung dua kali — sekali sebagai
+// hadir, sekali lagi sebagai cuti.
+async function hitungHariCuti (sb, karyawanId, dari, sampai, tanggalTerpakai) {
+  if (!karyawanId || !dari || !sampai) return 0
+  const [ajuRes, liburRes] = await Promise.all([
+    sb.from('pengajuan_cuti')
+      .select('tanggal_mulai, tanggal_selesai')
+      .eq('karyawan_id', karyawanId)
+      .eq('status', 'disetujui')
+      .lte('tanggal_mulai', sampai)
+      .gte('tanggal_selesai', dari),
+    sb.from('hari_libur').select('tanggal').gte('tanggal', dari).lte('tanggal', sampai)
+  ])
+  if (ajuRes.error || !ajuRes.data) return 0
+  const libur = new Set((liburRes.data || []).map(function (h) { return h.tanggal }))
+  // Set, bukan penghitung: dua pengajuan yang tanggalnya tumpang tindih tetap
+  // dihitung satu hari.
+  const hari = new Set()
+  ajuRes.data.forEach(function (p) {
+    let cur = p.tanggal_mulai < dari ? dari : p.tanggal_mulai
+    const akhir = p.tanggal_selesai > sampai ? sampai : p.tanggal_selesai
+    let jaga = 0
+    while (cur <= akhir && jaga++ < 400) {
+      const d = new Date(cur + 'T00:00:00')
+      if (d.getDay() !== 0 && !libur.has(cur) && !(tanggalTerpakai && tanggalTerpakai.has(cur))) hari.add(cur)
+      cur = tambahHari(cur, 1)
+    }
+  })
+  return hari.size
+}
+
 // ============================================================
 // TAB PERAN — "Kelola (HR)" vs "Milik Saya"
 // ============================================================
