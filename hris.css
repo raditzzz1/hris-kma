@@ -4,6 +4,33 @@
    Load this AFTER per-page <style> in each <head>
    ================================================================ */
 
+/* ===== TRANSISI ANTAR HALAMAN =====
+   HRIS ini terdiri dari banyak halaman terpisah, jadi tiap klik menu berarti
+   memuat ulang halaman penuh — layar sempat berkedip putih. View Transitions
+   membuat perpindahannya memudar lembut.
+
+   Aman: hanya berlaku untuk navigasi SESAMA situs ini, dan browser yang belum
+   mendukung mengabaikannya begitu saja (tampilannya kembali seperti sekarang,
+   tidak ada yang rusak). */
+@view-transition { navigation: auto; }
+
+/* Sidebar & menu bawah ADA DI SEMUA HALAMAN dengan isi yang sama. Diberi nama
+   transisi supaya browser memperlakukannya sebagai elemen yang SAMA lalu
+   mempertahankannya, bukan ikut memudar bersama isi halaman — hasilnya kerangka
+   aplikasi terasa diam di tempat dan hanya kontennya yang berganti.
+   Nama transisi harus unik per halaman; sudah dipastikan sidebar & bottom-nav
+   masing-masing hanya ada satu di tiap halaman. */
+.sidebar    { view-transition-name: sidebar; }
+.bottom-nav { view-transition-name: bottom-nav; }
+
+/* Hormati setelan "kurangi animasi" di perangkat pengguna (aksesibilitas:
+   gerakan bisa memicu pusing/mual bagi sebagian orang). */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
+
 /* ===== UKURAN IKON DI TOMBOL IKON =====
    .ic memakai satuan em, jadi ikon ikut membesar mengikuti font-size tombol
    (.modal-close 1.25-1.3rem -> ikon jadi ~25px, kebesaran untuk tombol tutup).
