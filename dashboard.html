@@ -695,10 +695,20 @@ async function renderStatsHRAdmin () {
   const { count: totalK } = await sb.from('karyawan').select('*', { count: 'exact', head: true }).eq('status', 'aktif')
   document.getElementById('totalKaryw').textContent = totalK ?? '—'
 
-  const { data: absensiData } = await sb.from('absensi').select('status').eq('tanggal', today)
+  // Cuti/izin yang disetujui TIDAK membuat baris di tabel absensi, jadi kalau
+  // hanya absensi yang dibaca, kartu "Izin / Cuti" selamanya 0. Keduanya
+  // digabung di sini — lihat catatan ambilCutiTanggal di hris-shared.js.
+  const [{ data: absensiData }, cutiMap] = await Promise.all([
+    sb.from('absensi').select('karyawan_id,status').eq('tanggal', today),
+    ambilCutiTanggal(sb, today)
+  ])
   if (absensiData) {
+    const sudahAbsen = new Set(absensiData.map(a => a.karyawan_id))
     const hadir = absensiData.filter(a => ['hadir','terlambat','pulang_awal'].includes(a.status)).length
+    // Yang tercatat cuti di absensi + yang cutinya disetujui tapi belum ada
+    // barisnya. Kalau orangnya ternyata tetap masuk, barisnya yang menang.
     const izin  = absensiData.filter(a => ['izin','cuti'].includes(a.status)).length
+                + [...cutiMap.keys()].filter(id => !sudahAbsen.has(id)).length
     const alpha = absensiData.filter(a => a.status === 'tidak_hadir').length
     document.getElementById('hadirToday').textContent = hadir
     document.getElementById('izinToday').textContent  = izin

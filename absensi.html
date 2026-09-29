@@ -968,32 +968,45 @@ async function loadRekap () {
 // ====== ADMIN: LOAD ABSENSI ======
 async function loadAdminAbsensi () {
   const tgl = document.getElementById('filterTgl').value
-  // Ambil absensi hari itu + SEMUA karyawan aktif, lalu gabungkan: karyawan
-  // yang belum punya catatan hari itu ditandai baris "Belum Absen".
-  const [absRes, karRes] = await Promise.all([
+  // Tiga sumber digabung: absensi hari itu, SEMUA karyawan aktif, dan cuti/izin
+  // yang sudah DISETUJUI mencakup tanggal itu. Tanpa yang ketiga, orang yang
+  // sedang cuti tampil sebagai "Belum Absen" dan HR malah diminta
+  // menginputkan absennya — lihat catatan ambilCutiTanggal di hris-shared.js.
+  const [absRes, karRes, cutiMap] = await Promise.all([
     sb.from('absensi')
       .select('*, karyawan(id,nama_lengkap,nik,jabatan(nama),divisi(nama))')
       .eq('tanggal', tgl)
       .order('waktu_masuk', { ascending: true }),
-    sb.from('karyawan').select('id,nama_lengkap,nik').eq('status','aktif').order('nama_lengkap')
+    sb.from('karyawan').select('id,nama_lengkap,nik').eq('status','aktif').order('nama_lengkap'),
+    ambilCutiTanggal(sb, tgl)
   ])
   const absen = absRes.data || []
-  const hadirIds = new Set(absen.map(a => a.karyawan_id))
-  const belum = (karRes.data || [])
-    .filter(k => !hadirIds.has(k.id))
-    .map(k => ({ id: null, karyawan_id: k.id, karyawan: k, waktu_masuk: null, waktu_keluar: null, durasi_kerja_menit: null, status: 'belum_absen', mode_kerja: null, __belum: true }))
-  allAdminAbsensi = [...absen, ...belum]
+  const sudahAbsen = new Set(absen.map(a => a.karyawan_id))
+  // Absensi tetap yang paling menentukan: kalau orangnya ternyata masuk padahal
+  // cutinya sudah disetujui, baris absensinya yang dipakai, bukan cutinya.
+  const tanpaCatatan = (karRes.data || [])
+    .filter(k => !sudahAbsen.has(k.id))
+    .map(k => {
+      const kosong = { id: null, karyawan_id: k.id, karyawan: k, waktu_masuk: null, waktu_keluar: null, durasi_kerja_menit: null, mode_kerja: null }
+      const c = cutiMap.get(k.id)
+      return c ? Object.assign(kosong, { status: 'cuti', __cuti: c.jenis })
+               : Object.assign(kosong, { status: 'belum_absen', __belum: true })
+    })
+  allAdminAbsensi = [...absen, ...tanpaCatatan]
   renderAdminTable(allAdminAbsensi)
-  updateAdminStats(tgl)
+  updateAdminStats(allAdminAbsensi)
 }
 
-async function updateAdminStats (tgl) {
-  const { data: ab } = await sb.from('absensi').select('status').eq('tanggal', tgl)
-  const { count: total } = await sb.from('karyawan').select('*',{count:'exact',head:true}).eq('status','aktif')
-  const hadir     = ab?.filter(a=>['hadir','terlambat','pulang_awal'].includes(a.status)).length || 0
-  const terlambat = ab?.filter(a=>a.status==='terlambat').length || 0
-  const izin      = ab?.filter(a=>['izin','cuti'].includes(a.status)).length || 0
-  const belum     = Math.max(0, (total||0) - (ab?.length||0))
+// Dihitung dari daftar yang SUDAH disusun loadAdminAbsensi, bukan query sendiri.
+// Sebelumnya fungsi ini menjalankan dua query terpisah yang hanya menyentuh
+// tabel absensi — itulah sebabnya "Izin/Cuti" selalu 0 dan "Belum Absen"
+// ikut menghitung orang yang sedang cuti. Sekarang angka di kartu dijamin
+// sama dengan isi tabel di bawahnya, karena sumbernya satu.
+function updateAdminStats (list) {
+  const hadir     = list.filter(a=>['hadir','terlambat','pulang_awal'].includes(a.status)).length
+  const terlambat = list.filter(a=>a.status==='terlambat').length
+  const izin      = list.filter(a=>['izin','cuti'].includes(a.status)).length
+  const belum     = list.filter(a=>a.status==='belum_absen').length
   document.getElementById('adminStats').innerHTML = `
     <div class="stat-mini"><div class="stat-icon si-green"><svg class="ic" viewBox="0 0 24 24" style="color:#15803d"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div><div><div class="stat-val">${hadir}</div><div class="stat-lbl">Hadir</div></div></div>
     <div class="stat-mini"><div class="stat-icon si-yellow"><svg class="ic" viewBox="0 0 24 24" style="color:#a16207"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="stat-val">${terlambat}</div><div class="stat-lbl">Terlambat</div></div></div>
@@ -1030,8 +1043,10 @@ function renderAdminTable (list) {
       <td>${fmt(a.waktu_masuk)}</td>
       <td>${fmt(a.waktu_keluar)}</td>
       <td>${durasi(a.durasi_kerja_menit)}</td>
-      <td>${statusBadge(a.status, a.mode_kerja)}</td>
-      <td>${a.__belum
+      <td>${a.__cuti ? `<span class="badge bg-purple">${escHtml(a.__cuti)}</span>` : statusBadge(a.status, a.mode_kerja)}</td>
+      <td>${a.__cuti
+        ? `<span style="color:var(--muted);font-size:.8rem;">—</span>`
+        : a.__belum
         ? `<button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="inputManualFor('${a.karyawan_id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Input</button>`
         : `<button class="btn-sec" style="font-size:.75rem;padding:.25rem .6rem;" onclick="editAbsen('${a.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>`}</td>
     </tr>

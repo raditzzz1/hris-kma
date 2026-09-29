@@ -116,6 +116,39 @@ function hitungStatusMasuk (karyw, waktu = new Date()) {
 }
 
 // ============================================================
+// CUTI/IZIN YANG DISETUJUI PADA SATU TANGGAL
+// ============================================================
+// Persetujuan cuti hanya menulis ke `pengajuan_cuti` + `saldo_cuti`; TIDAK
+// ada baris yang dibuat di tabel `absensi`. Jadi halaman yang cuma membaca
+// `absensi` akan mengira orang yang sedang cuti itu "Belum Absen", dan
+// penghitung "Izin/Cuti"-nya selalu 0.
+//
+// Helper ini menjembatani keduanya saat DIBACA, bukan dengan menulis baris
+// absensi palsu saat cuti disetujui. Alasannya: (1) berlaku surut, cuti yang
+// sudah terlanjur disetujui ikut benar tanpa perlu backfill; (2) sumber
+// kebenarannya tetap satu, yaitu `pengajuan_cuti` — kalau cutinya dibatalkan
+// setelah disetujui, tak ada baris absensi yang tertinggal; (3) tidak ada
+// data turunan yang bisa menyimpang diam-diam.
+//
+// Mengembalikan Map: karyawan_id -> { jenis } (nama jenis cutinya).
+// Karyawan biasa hanya akan melihat barisnya sendiri (dibatasi RLS), jadi
+// pakai ini di konteks HR untuk angka satu perusahaan.
+async function ambilCutiTanggal (sb, tanggal) {
+  const hasil = new Map()
+  if (!tanggal) return hasil
+  const { data, error } = await sb.from('pengajuan_cuti')
+    .select('karyawan_id, jenis_cuti(nama)')
+    .eq('status', 'disetujui')
+    .lte('tanggal_mulai', tanggal)
+    .gte('tanggal_selesai', tanggal)
+  if (error || !data) return hasil
+  data.forEach(function (p) {
+    if (!hasil.has(p.karyawan_id)) hasil.set(p.karyawan_id, { jenis: (p.jenis_cuti && p.jenis_cuti.nama) || 'Cuti' })
+  })
+  return hasil
+}
+
+// ============================================================
 // TAB PERAN — "Kelola (HR)" vs "Milik Saya"
 // ============================================================
 // HR Admin juga seorang karyawan: ikut absen, mengambil cuti, punya slip gaji
