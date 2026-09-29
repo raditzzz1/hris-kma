@@ -77,7 +77,25 @@ DECLARE
   v_subjek     TEXT;
   v_id         TEXT;
   v_ringkas    TEXT;
+  v_pemilik    UUID;
 BEGIN
+  -- ABSENSI: absen masuk/keluar oleh karyawan sendiri itu rutin dan akan
+  -- membanjiri log. Yang dicatat HANYA bila absensi seseorang disentuh oleh
+  -- ORANG LAIN (input manual / koreksi oleh HR) — itu yang berkonsekuensi.
+  --
+  -- Aturan ini DI DALAM fungsi ini, bukan di fungsi pembungkus terpisah:
+  -- fungsi ber-RETURNS TRIGGER tidak boleh dipanggil seperti fungsi biasa
+  -- (PostgreSQL menolak dengan "trigger functions can only be called as
+  -- triggers"), dan itu membuat SELURUH penulisan ke tabel absensi gagal —
+  -- termasuk absen masuk karyawan biasa.
+  IF TG_TABLE_NAME = 'absensi' THEN
+    v_pemilik := COALESCE((to_jsonb(NEW) ->> 'karyawan_id')::UUID,
+                          (to_jsonb(OLD) ->> 'karyawan_id')::UUID);
+    IF v_aktor IS NOT NULL AND v_aktor = v_pemilik THEN
+      RETURN NULL;   -- diubah pemiliknya sendiri: tidak dicatat
+    END IF;
+  END IF;
+
   IF (TG_OP = 'INSERT') THEN
     v_aksi := 'tambah'; v_baris := to_jsonb(NEW);
   ELSIF (TG_OP = 'UPDATE') THEN
@@ -125,21 +143,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
--- Khusus absensi: absen masuk/keluar oleh karyawan sendiri itu rutin dan
--- akan membanjiri log. Yang dicatat HANYA bila absensi seseorang disentuh
--- oleh ORANG LAIN (input manual / koreksi oleh HR) — itu yang berkonsekuensi.
-CREATE OR REPLACE FUNCTION public.catat_absensi_oleh_orang_lain()
-RETURNS TRIGGER AS $$
-DECLARE v_pemilik UUID;
-BEGIN
-  v_pemilik := COALESCE((to_jsonb(NEW) ->> 'karyawan_id')::UUID,
-                        (to_jsonb(OLD) ->> 'karyawan_id')::UUID);
-  IF auth.uid() IS NOT NULL AND auth.uid() = v_pemilik THEN
-    RETURN NULL;   -- perubahan oleh pemiliknya sendiri: lewati
-  END IF;
-  RETURN public.catat_aktivitas();
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+-- Fungsi pembungkus khusus absensi DIHAPUS: aturannya sudah pindah ke dalam
+-- catat_aktivitas() di atas. Baris ini membersihkan sisa pemasangan lama.
+DROP FUNCTION IF EXISTS public.catat_absensi_oleh_orang_lain() CASCADE;
 
 -- ============================================================
 -- Pasang trigger
@@ -171,9 +177,10 @@ CREATE TRIGGER trg_log_izin_absen_luar   AFTER UPDATE OR DELETE ON izin_absen_lu
 CREATE TRIGGER trg_log_pengaturan        AFTER INSERT OR UPDATE OR DELETE ON pengaturan
   FOR EACH ROW EXECUTE FUNCTION public.catat_aktivitas();
 
--- absensi memakai penyaring "hanya bila disentuh orang lain"
+-- absensi memakai fungsi yang sama; penyaring "hanya bila disentuh orang
+-- lain" ada di dalam catat_aktivitas()
 CREATE TRIGGER trg_log_absensi           AFTER INSERT OR UPDATE OR DELETE ON absensi
-  FOR EACH ROW EXECUTE FUNCTION public.catat_absensi_oleh_orang_lain();
+  FOR EACH ROW EXECUTE FUNCTION public.catat_aktivitas();
 
 -- Tabel berikut baru ada sejak fase17/18/19 — dipasang hanya bila tabelnya
 -- memang ada, supaya berkas ini tetap bisa dijalankan di pemasangan lama.
