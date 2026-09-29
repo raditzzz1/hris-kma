@@ -299,11 +299,15 @@ function suntikGayaTabPanel () {
 // dan hasil cetak jadi tidak lengkap tanpa disadari. Dengan kelas, aturan
 // @media print bisa menampilkannya kembali.
 //
-// JANGAN dipakai di halaman Absensi. Tabel absensi diedit berkali-kali dalam
-// satu sesi (mengisi jam keluar yang terlewat), dan setiap simpan memuat ulang
-// tabelnya — batasnya ikut kembali ke 10, jadi baris yang tadi sudah dibuka
+// JANGAN dipakai di tabel yang isinya DIKERJAKAN satu per satu — daftar
+// absensi (mengisi jam keluar yang terlewat) dan daftar persetujuan cuti/izin
+// HR. Tabel-tabel itu dimuat ulang setiap kali satu baris disimpan atau
+// disetujui, jadi batasnya ikut kembali ke 10: baris yang tadi sudah dibuka
 // tersembunyi lagi DAN halaman melompat ke atas karena isinya menciut.
 // Dicoba, lalu dicabut lagi 2026-09-29 atas permintaan user.
+//
+// Sisanya tetap pakai: Payroll, Data Karyawan, Log Aktivitas — tabel yang
+// dibaca, bukan dikerjakan baris demi baris.
 function batasiBaris (tbodyId, batas) {
   const tb = document.getElementById(tbodyId)
   if (!tb) return
