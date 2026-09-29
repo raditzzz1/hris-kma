@@ -298,6 +298,12 @@ function suntikGayaTabPanel () {
 // Kalau memakai inline style, baris yang tersembunyi juga tak ikut tercetak
 // dan hasil cetak jadi tidak lengkap tanpa disadari. Dengan kelas, aturan
 // @media print bisa menampilkannya kembali.
+//
+// JANGAN dipakai di halaman Absensi. Tabel absensi diedit berkali-kali dalam
+// satu sesi (mengisi jam keluar yang terlewat), dan setiap simpan memuat ulang
+// tabelnya — batasnya ikut kembali ke 10, jadi baris yang tadi sudah dibuka
+// tersembunyi lagi DAN halaman melompat ke atas karena isinya menciut.
+// Dicoba, lalu dicabut lagi 2026-09-29 atas permintaan user.
 function batasiBaris (tbodyId, batas) {
   const tb = document.getElementById(tbodyId)
   if (!tb) return
