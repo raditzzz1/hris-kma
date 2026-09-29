@@ -473,6 +473,9 @@ async function init () {
   const session = sesi.data.session
   if (!session) { window.location.href = 'index.html'; return }
   currentUser = session.user
+  // Isi sidebar SEKETIKA dari simpanan sesi (kalau ada), supaya tak kosong
+  // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
+  isiSidebarProfil(ambilProfilSidebar(currentUser.id))
 
   const { data: karyw } = await sb.from('karyawan')
     .select('nama_lengkap, role, foto_url, status').eq('id', currentUser.id).single()
@@ -484,6 +487,7 @@ async function init () {
 
   if (karyw) {
     document.getElementById('sidebarName').textContent = karyw.nama_lengkap
+  simpanProfilSidebar(currentUser.id, karyw)   // untuk pemuatan berikutnya
     document.getElementById('sidebarRole').textContent = roleLabel(karyw.role)
     document.getElementById('sidebarAvatar').innerHTML = karyw.foto_url
       ? '<img src="' + karyw.foto_url + '" alt="">' : getInitial(karyw.nama_lengkap)
@@ -512,7 +516,7 @@ async function init () {
 init()
 
 document.getElementById('btnLogout').addEventListener('click', async function () {
-  await sb.auth.signOut(); window.location.href = 'index.html'
+  hapusProfilSidebar(); await sb.auth.signOut(); window.location.href = 'index.html'
 })
 
 function toggleSidebar () { document.body.classList.toggle('nav-open') }

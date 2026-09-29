@@ -975,7 +975,7 @@ function toast (msg, type = 'success') {
 }
 
 function comingSoon () { toast('Modul ini sedang dalam pengembangan', 'error'); return false; }
-async function logout () { await sb.auth.signOut(); window.location.href = 'index.html'; }
+async function logout () { hapusProfilSidebar(); await sb.auth.signOut(); window.location.href = 'index.html'; }
 
 function getInitial (name) { return name ? name.charAt(0).toUpperCase() : '?' }
 
@@ -2215,6 +2215,9 @@ async function init () {
   const { data: { session } } = await sb.auth.getSession()
   if (!session) { window.location.href = 'index.html'; return }
   currentUser = session.user
+  // Isi sidebar SEKETIKA dari simpanan sesi (kalau ada), supaya tak kosong
+  // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
+  isiSidebarProfil(ambilProfilSidebar(currentUser.id))
 
   const { data: karyw } = await sb.from('karyawan').select('*, jabatan(nama), divisi(nama)').eq('id', currentUser.id).single()
   currentKaryw = karyw
@@ -2224,6 +2227,7 @@ async function init () {
 
   // Sidebar
   document.getElementById('sidebarName').textContent   = karyw?.nama_lengkap || currentUser.email
+  simpanProfilSidebar(currentUser.id, karyw)   // untuk pemuatan berikutnya
   document.getElementById('sidebarRole').textContent   = roleLabel(karyw?.role)
   setAvatar('sidebarAvatar', karyw?.nama_lengkap, karyw?.foto_url)
 

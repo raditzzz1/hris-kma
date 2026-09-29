@@ -260,7 +260,7 @@ function toast (msg, t='success') {
   el.textContent = msg; el.className = t; el.style.display = 'block'
   setTimeout(() => el.style.display = 'none', 4000)
 }
-async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
+async function logout () { hapusProfilSidebar(); await sb.auth.signOut(); window.location.href='index.html' }
 
 // ====== INISIALISASI PETA ======
 function initMap (lat=-6.2, lng=106.816) {
@@ -480,6 +480,9 @@ async function deleteLokasi (id) {
 async function init () {
   const { data: { session } } = await sb.auth.getSession()
   if (!session) { window.location.href='index.html'; return }
+  // Isi sidebar SEKETIKA dari simpanan sesi (kalau ada), supaya tak kosong
+  // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
+  isiSidebarProfil(ambilProfilSidebar(session.user.id))
 
   const { data: k } = await sb.from('karyawan').select('*').eq('id', session.user.id).single()
   if (k?.role !== 'hr_admin') { window.location.href='dashboard.html'; return }
@@ -487,6 +490,7 @@ async function init () {
   if (typeof notifPermissionGranted === 'function' && notifPermissionGranted()) startNotifListener(sb, k?.id)
 
   document.getElementById('sbName').textContent  = k.nama_lengkap
+  simpanProfilSidebar(session.user.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent  = 'HR Admin'
   document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase() || '?')
 

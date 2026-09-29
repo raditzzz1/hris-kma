@@ -342,3 +342,72 @@ function suntikGayaBatasBaris () {
     'tr[data-lebih]{display:none !important;}}'
   document.head.appendChild(s)
 }
+
+// ============================================================
+// PROFIL SIDEBAR — tampil seketika, tanpa menunggu server
+// ============================================================
+// Tiap halaman menanyakan nama/jabatan/foto pengguna ke server hanya untuk
+// mengisi sidebar. Akibatnya sidebar kosong dulu ("Memuat…") setiap kali
+// berpindah halaman. Nilainya disimpan sebentar di browser supaya bisa
+// langsung terisi, lalu DITIMPA oleh data asli begitu jawabannya datang.
+//
+// SIFAT PENTING — ini hanya mempercepat TAMPILAN, bukan menggantikan data:
+// pengisian dari hasil query tetap berjalan seperti semula. Jadi kalau isi
+// simpanan salah/basi sekalipun, hasil akhir yang terlihat tetap yang benar.
+//
+// TIDAK BOLEH dipakai untuk menentukan hak akses (mis. memunculkan menu HR).
+// Hak akses tetap ditentukan hasil query segar + RLS di database, supaya
+// orang yang baru dicabut haknya tak bisa melihat apa pun yang bukan haknya.
+//
+// Memakai sessionStorage: hilang saat tab ditutup, dan tidak terbawa ke tab
+// atau perangkat lain.
+var KUNCI_PROFIL_SIDEBAR = 'hris.profil.sidebar'
+
+function simpanProfilSidebar (userId, p) {
+  if (!userId || !p) return
+  try {
+    sessionStorage.setItem(KUNCI_PROFIL_SIDEBAR, JSON.stringify({
+      id: userId, nama: p.nama_lengkap || '', role: p.role || '', foto: p.foto_url || ''
+    }))
+  } catch (e) { /* penyimpanan penuh/diblokir — bukan hal wajib, abaikan */ }
+}
+
+function ambilProfilSidebar (userId) {
+  try {
+    const s = sessionStorage.getItem(KUNCI_PROFIL_SIDEBAR)
+    if (!s) return null
+    const p = JSON.parse(s)
+    // DIIKAT ke ID pengguna: kalau tab ini sempat dipakai akun lain,
+    // simpanannya diabaikan supaya tidak muncul nama orang lain.
+    return (p && p.id === userId) ? p : null
+  } catch (e) { return null }
+}
+
+function hapusProfilSidebar () {
+  try { sessionStorage.removeItem(KUNCI_PROFIL_SIDEBAR) } catch (e) {}
+}
+
+// Mengisi nama/jabatan/foto di sidebar. Nama elemennya berbeda-beda antar
+// halaman (sidebarName/sbName, sidebarAvatar/sbAvatar/sbAv), jadi dicari
+// yang tersedia — dengan begitu satu fungsi ini bisa dipakai semua halaman.
+function isiSidebarProfil (p) {
+  if (!p) return
+  const pilih = function (ids) {
+    for (let i = 0; i < ids.length; i++) {
+      const el = document.getElementById(ids[i])
+      if (el) return el
+    }
+    return null
+  }
+  const elNama = pilih(['sidebarName', 'sbName'])
+  const elRole = pilih(['sidebarRole', 'sbRole'])
+  const elAv   = pilih(['sidebarAvatar', 'sbAvatar', 'sbAv'])
+
+  if (elNama && p.nama) elNama.textContent = p.nama
+  if (elRole && p.role) elRole.textContent = ({ hr_admin: 'HR Admin', karyawan: 'Karyawan' })[p.role] || p.role
+  if (elAv) {
+    elAv.innerHTML = p.foto
+      ? '<img src="' + p.foto + '" alt="">'
+      : escHtml((p.nama || '?').trim().split(/\s+/).slice(0, 2).map(function (s) { return s[0] }).join('').toUpperCase())
+  }
+}

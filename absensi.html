@@ -663,7 +663,7 @@ function toast (msg, t='success') {
   setTimeout(() => el.style.display = 'none', 4000)
 }
 function cs () { toast('Modul ini sedang dalam pengembangan','error'); return false }
-async function logout () { await sb.auth.signOut(); window.location.href='index.html' }
+async function logout () { hapusProfilSidebar(); await sb.auth.signOut(); window.location.href='index.html' }
 function fmt (ts) {
   if (!ts) return '--:--'
   const d = new Date(ts)
@@ -1452,6 +1452,9 @@ async function init () {
   const { data: { session } } = await sb.auth.getSession()
   if (!session) { window.location.href='index.html'; return }
   currentUser = session.user
+  // Isi sidebar SEKETIKA dari simpanan sesi (kalau ada), supaya tak kosong
+  // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
+  isiSidebarProfil(ambilProfilSidebar(currentUser.id))
 
   const { data: k } = await sb.from('karyawan').select('*,jabatan(nama),divisi(nama)').eq('id',currentUser.id).single()
   currentKaryw = k; isAdmin = k?.role === 'hr_admin'
@@ -1460,6 +1463,7 @@ async function init () {
 
   // Sidebar
   document.getElementById('sbName').textContent   = k?.nama_lengkap || currentUser.email
+  simpanProfilSidebar(currentUser.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent   = ({hr_admin:'HR Admin',karyawan:'Karyawan'})[k?.role]||'—'
   document.getElementById('sbAvatar').innerHTML = k?.foto_url ? `<img src="${k.foto_url}" alt="">` : getInit(k?.nama_lengkap)
 

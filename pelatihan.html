@@ -322,7 +322,7 @@ function toast(msg, t='success') {
   el.textContent=msg; el.className=t; el.style.display='block'
   setTimeout(()=>el.style.display='none', 4000)
 }
-async function logout() { await sb.auth.signOut(); window.location.href='index.html' }
+async function logout() { hapusProfilSidebar(); await sb.auth.signOut(); window.location.href='index.html' }
 function om(id) { document.getElementById(id).classList.add('open') }
 function cm(id) { document.getElementById(id).classList.remove('open') }
 function fmtDate(d) { return d ? new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '—' }
@@ -724,6 +724,9 @@ async function hapusSertif(id) {
 async function init() {
   const { data:{ session } } = await sb.auth.getSession()
   if (!session) { window.location.href='index.html'; return }
+  // Isi sidebar SEKETIKA dari simpanan sesi (kalau ada), supaya tak kosong
+  // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
+  isiSidebarProfil(ambilProfilSidebar(session.user.id))
 
   const [{ data:k },{ data:karys },{ data:divis }] = await Promise.all([
     sb.from('karyawan').select('*').eq('id',session.user.id).single(),
@@ -738,6 +741,7 @@ async function init() {
   allDivisi   = divis||[]
 
   document.getElementById('sbName').textContent = k.nama_lengkap
+  simpanProfilSidebar(session.user.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent = k.role==='hr_admin'?'HR Admin':'Karyawan'
   if (k.role === 'hr_admin') ['adminNavLbl','navLokasi','navLaporan','navLog'].forEach(function(id){var el=document.getElementById(id); if(el) el.style.display=''})
   document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase()||'?')

@@ -762,7 +762,7 @@ function exportExcel () {
 
 // ---- Events ----
 document.getElementById('btnLogout').addEventListener('click', async () => {
-  await sb.auth.signOut(); window.location.href = 'index.html'
+  hapusProfilSidebar(); await sb.auth.signOut(); window.location.href = 'index.html'
 })
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)))
 document.getElementById('btnTerapkan').addEventListener('click', () => switchTab(activeTab))
@@ -777,6 +777,9 @@ async function init () {
   const { data: { session } } = await sb.auth.getSession()
   if (!session) { window.location.href = 'index.html'; return }
   currentUser = session.user
+  // Isi sidebar SEKETIKA dari simpanan sesi (kalau ada), supaya tak kosong
+  // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
+  isiSidebarProfil(ambilProfilSidebar(currentUser.id))
 
   const { data: karyw } = await sb
     .from('karyawan').select('nama_lengkap, role, foto_url, status').eq('id', currentUser.id).single()
@@ -790,6 +793,7 @@ async function init () {
   if (karyw) {
     currentKaryw = karyw
     document.getElementById('sidebarName').textContent   = karyw.nama_lengkap
+  simpanProfilSidebar(currentUser.id, karyw)   // untuk pemuatan berikutnya
     document.getElementById('sidebarRole').textContent   = roleLabel(karyw.role)
     document.getElementById('sidebarAvatar').innerHTML = karyw.foto_url ? `<img src="${karyw.foto_url}" alt="">` : getInitial(karyw.nama_lengkap)
   }

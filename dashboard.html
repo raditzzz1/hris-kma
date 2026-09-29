@@ -970,7 +970,7 @@ async function loadRekap () {
 
 // ---- Logout ----
 document.getElementById('btnLogout').addEventListener('click', async () => {
-  await sb.auth.signOut(); window.location.href = 'index.html'
+  hapusProfilSidebar(); await sb.auth.signOut(); window.location.href = 'index.html'
 })
 
 // ---- Notifikasi browser ----
@@ -992,6 +992,9 @@ async function init () {
   const { data: { session } } = await sb.auth.getSession()
   if (!session) { window.location.href = 'index.html'; return }
   currentUser = session.user
+  // Isi sidebar SEKETIKA dari simpanan sesi (kalau ada), supaya tak kosong
+  // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
+  isiSidebarProfil(ambilProfilSidebar(currentUser.id))
 
   const { data: karyw, error: errK } = await sb.from('karyawan').select('*, jabatan(nama), divisi(nama)').eq('id', currentUser.id).single()
 
@@ -1011,6 +1014,7 @@ async function init () {
   }
 
   document.getElementById('sidebarName').textContent   = karyw.nama_lengkap
+  simpanProfilSidebar(currentUser.id, karyw)   // untuk pemuatan berikutnya
   document.getElementById('sidebarRole').textContent   = roleLabel(karyw.role)
   document.getElementById('sidebarAvatar').innerHTML = karyw.foto_url
     ? `<img src="${karyw.foto_url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block;">`
