@@ -63,9 +63,20 @@ COMMENT ON FUNCTION public.is_hr_admin() IS
 -- ============================================================
 -- LANGKAH 2 — PERIKSA HASILNYA
 -- ============================================================
--- Harus TRUE kalau Anda HR Admin aktif. Kalau FALSE, JANGAN tutup halaman
--- ini — langsung kembalikan dengan blok di bagian "CARA MEMBATALKAN" bawah.
-SELECT public.is_hr_admin() AS saya_hr_admin_aktif;
+-- JANGAN memeriksa dengan `SELECT public.is_hr_admin();` di SQL Editor.
+-- Di sini `auth.uid()` selalu kosong — Anda masuk sebagai pemilik database,
+-- bukan sebagai pengguna aplikasi — jadi hasilnya SELALU `false`, bahkan
+-- ketika semuanya baik-baik saja. Itu bukan tanda ada yang rusak.
+--
+-- Periksa dengan ini saja; tidak bergantung pada siapa yang sedang login:
+SELECT nama_lengkap, nik, status,
+       (role = 'hr_admin' AND status = 'aktif') AS masih_punya_akses_hr
+  FROM karyawan
+ WHERE role = 'hr_admin'
+ ORDER BY nama_lengkap;
+
+-- Yang paling meyakinkan tetap: BUKA APLIKASINYA. Kalau menu Payroll,
+-- Laporan & Log Aktivitas masih muncul dan datanya terbaca, akses HR utuh.
 
 -- Perlihatkan definisi barunya, untuk memastikan yang terpasang benar.
 SELECT prosrc AS isi_fungsi
