@@ -569,40 +569,86 @@ async function openAjuan () {
   openModal('modalAjukan')
 }
 
+// Sifat sebuah jenis cuti — memotong saldo atau tidak, ada batas lama atau
+// tidak — dibaca dari tabel `jenis_cuti`, BUKAN ditebak dari namanya. Dengan
+// begitu HR bisa mengubah aturannya lewat database tanpa menyentuh kode.
+function jenisTerpilih (jenisId) {
+  return jenisCutiList.find(function (j) { return j.id === jenisId }) || null
+}
+
+// "90" -> "3 bulan (90 hari kalender)". Batas cuti melahirkan diucapkan orang
+// dalam bulan, jadi angkanya ditampilkan begitu juga.
+function batasTerbaca (hariKalender) {
+  if (hariKalender % 30 === 0) return (hariKalender / 30) + ' bulan (' + hariKalender + ' hari kalender)'
+  return hariKalender + ' hari kalender'
+}
+
+var IKON_PERINGATAN = '<svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>'
+var IKON_CENTANG    = '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>'
+function kotakPeringatan (html) { return '<div class="warn-box">' + IKON_PERINGATAN + ' ' + html + '</div>' }
+function kotakInfo       (html) { return '<div class="info-box">' + IKON_CENTANG    + ' ' + html + '</div>' }
+
+// Berapa HARI KALENDER rentang ini (termasuk hari pertama dan terakhir).
+// Batas cuti melahirkan memakai satuan ini, bukan hari kerja — lihat
+// catatan di supabase-fase21.sql.
+function hariKalenderRentang (mulai, selesai) {
+  return selisihHari(mulai, selesai) + 1
+}
+// Melebihi batas jenis ini? false kalau jenisnya memang tak dibatasi.
+function lewatBatas (jenis, mulai, selesai) {
+  return !!(jenis && jenis.maks_hari_kalender &&
+            hariKalenderRentang(mulai, selesai) > jenis.maks_hari_kalender)
+}
+
 async function updateAjuanInfo () {
   const mulai   = document.getElementById('ajMulai').value
   const selesai = document.getElementById('ajSelesai').value
   const jenisId = document.getElementById('ajJenis').value
+  const infoEl  = document.getElementById('ajSaldoInfo')
 
-  if (mulai && selesai) {
-    if (selesai < mulai) {
-      document.getElementById('ajHariNum').textContent = 'Tanggal tidak valid'
-      return
-    }
-    const hari = hitungHariKerja(mulai, selesai)
-    document.getElementById('ajHariNum').textContent = hari + ' hari kerja'
+  if (!mulai || !selesai) return
+  if (selesai < mulai) {
+    document.getElementById('ajHariNum').textContent = 'Tanggal tidak valid'
+    infoEl.innerHTML = ''
+    return
+  }
 
-    // Cek saldo
-    if (jenisId) {
-      const { data: saldo } = await sb.from('saldo_cuti')
-        .select('saldo_awal, terpakai')
-        .eq('karyawan_id', myProfile.id)
-        .eq('jenis_cuti_id', jenisId)
-        .eq('tahun', TAHUN)
-        .single()
+  const hari = hitungHariKerja(mulai, selesai)
+  document.getElementById('ajHariNum').textContent = hari + ' hari kerja'
+  if (!jenisId) { infoEl.innerHTML = ''; return }
 
-      const infoEl = document.getElementById('ajSaldoInfo')
-      if (saldo) {
-        const sisa = saldo.saldo_awal - (saldo.terpakai || 0)
-        if (sisa < hari) {
-          infoEl.innerHTML = `<div class="warn-box"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Saldo cuti tidak cukup. Sisa: <strong>${sisa} hari</strong>, dibutuhkan: <strong>${hari} hari</strong>.</div>`
-        } else {
-          infoEl.innerHTML = `<div class="info-box"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Saldo cukup. Sisa setelah cuti ini: <strong>${sisa - hari} hari</strong>.</div>`
-        }
-      } else {
-        infoEl.innerHTML = `<div class="warn-box"><svg class="ic" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg> Saldo jenis cuti ini belum diatur. Pengajuan tetap bisa dikirim untuk diproses HR.</div>`
-      }
-    }
+  const jenis = jenisTerpilih(jenisId)
+
+  // 1. Melebihi batas lamanya (mis. cuti melahirkan > 3 bulan).
+  if (lewatBatas(jenis, mulai, selesai)) {
+    infoEl.innerHTML = kotakPeringatan(`Melebihi batas ${escHtml(jenis.nama)}: maksimal <strong>${batasTerbaca(jenis.maks_hari_kalender)}</strong>, yang diajukan <strong>${hariKalenderRentang(mulai, selesai)} hari kalender</strong>. Pengajuan tetap bisa dikirim, tetapi HR perlu menimbangnya secara khusus.`)
+    return
+  }
+
+  // 2. Jenis yang memang tidak memotong saldo — tak ada saldo untuk dicek.
+  // Dulu jenis seperti ini memunculkan peringatan "saldo belum diatur", yang
+  // terbaca seolah ada yang salah setelan, padahal memang disengaja.
+  if (jenis && jenis.pakai_saldo === false) {
+    const batas = jenis.maks_hari_kalender ? ` Batas: <strong>${batasTerbaca(jenis.maks_hari_kalender)}</strong>.` : ''
+    infoEl.innerHTML = kotakInfo(`<strong>${escHtml(jenis.nama)}</strong> tidak memotong saldo Cuti Tahunan.` + batas)
+    return
+  }
+
+  // 3. Jenis yang memotong saldo — periksa cukup atau tidak.
+  const { data: saldo } = await sb.from('saldo_cuti')
+    .select('saldo_awal, terpakai')
+    .eq('karyawan_id', myProfile.id)
+    .eq('jenis_cuti_id', jenisId)
+    .eq('tahun', TAHUN)
+    .single()
+
+  if (saldo) {
+    const sisa = saldo.saldo_awal - (saldo.terpakai || 0)
+    infoEl.innerHTML = (sisa < hari)
+      ? kotakPeringatan(`Saldo cuti tidak cukup. Sisa: <strong>${sisa} hari</strong>, dibutuhkan: <strong>${hari} hari</strong>.`)
+      : kotakInfo(`Saldo cukup. Sisa setelah cuti ini: <strong>${sisa - hari} hari</strong>.`)
+  } else {
+    infoEl.innerHTML = kotakPeringatan('Saldo jenis cuti ini belum diatur. Pengajuan tetap bisa dikirim untuk diproses HR.')
   }
 }
 
@@ -617,6 +663,19 @@ async function submitAjuan () {
 
   const hari = hitungHariKerja(mulai, selesai)
   if (hari === 0) { toast('Tidak ada hari kerja pada rentang tanggal tersebut','error'); return }
+
+  // Melebihi batas jenisnya (mis. cuti melahirkan > 3 bulan) TIDAK dikunci
+  // mati, hanya perlu ditegaskan. Alasannya: UU 4/2024 (KIA) membolehkan cuti
+  // melahirkan diperpanjang sampai 6 bulan untuk kondisi khusus dengan surat
+  // dokter — kalau dikunci di 3 bulan, sistemnya justru jadi salah menurut
+  // aturan. Keputusannya diserahkan ke HR lewat proses persetujuan biasa.
+  const jenis = jenisTerpilih(jenisId)
+  if (lewatBatas(jenis, mulai, selesai)) {
+    const pesan = jenis.nama + ' dibatasi ' + batasTerbaca(jenis.maks_hari_kalender) +
+      ', sedangkan yang Anda ajukan ' + hariKalenderRentang(mulai, selesai) + ' hari kalender.\n\n' +
+      'Tetap kirim untuk ditimbang HR?'
+    if (!confirm(pesan)) return
+  }
 
   const { error } = await sb.from('pengajuan_cuti').insert({
     karyawan_id: myProfile.id,
@@ -716,8 +775,19 @@ async function confirmAction () {
     .update(updateData).eq('id', id).select('*').single()
   if (error) { toast('Gagal update','error'); return }
 
-  // Jika disetujui, update terpakai di saldo_cuti
-  if (type === 'approve') {
+  // Jika disetujui, update terpakai di saldo_cuti — HANYA untuk jenis yang
+  // memang memotong saldo. Dulu baris ini selalu dijalankan untuk semua jenis,
+  // dan WFH/WFA/Melahirkan kebetulan tidak terpotong hanya karena barisnya
+  // tak ada di saldo_cuti. Itu rapuh: begitu HR tak sengaja mengatur saldo
+  // untuk WFH, WFH langsung mulai memotong. Sekarang sifatnya dibaca dari
+  // kolom `pakai_saldo`.
+  //
+  // Jenis yang tak dikenali (mis. sudah dinonaktifkan) diperlakukan seperti
+  // semula, yaitu tetap memotong — supaya perubahan ini tak pernah membuat
+  // potongan yang seharusnya terjadi jadi hilang diam-diam.
+  const jenisAju = jenisTerpilih(p.jenis_cuti_id)
+  const potongSaldo = !jenisAju || jenisAju.pakai_saldo !== false
+  if (type === 'approve' && potongSaldo) {
     const { error: rpcErr } = await sb.rpc('tambah_terpakai_cuti', {
       p_karyawan_id: p.karyawan_id,
       p_jenis_cuti_id: p.jenis_cuti_id,
@@ -754,8 +824,13 @@ async function openModalSaldo () {
   const selK = document.getElementById('saldoKaryawan')
   selK.innerHTML = allKaryawan.map(k => `<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
 
+  // Hanya jenis yang memang memotong saldo yang perlu diatur di sini.
+  // Menawarkan WFH/WFA/Izin cuma memancing HR mengisi angka yang tak pernah
+  // dipakai — dan angka itu justru berbahaya: kalau saldonya terisi, jenis
+  // yang seharusnya bebas jadi ikut terpotong.
   const selJ = document.getElementById('saldoJenis')
-  selJ.innerHTML = jenisCutiList.map(j => `<option value="${j.id}">${j.nama}</option>`).join('')
+  const jenisBersaldo = jenisCutiList.filter(j => j.pakai_saldo !== false)
+  selJ.innerHTML = jenisBersaldo.map(j => `<option value="${j.id}">${j.nama}</option>`).join('')
 
   document.getElementById('saldoTahun').value   = TAHUN
   document.getElementById('saldoJumlah').value  = '12'
