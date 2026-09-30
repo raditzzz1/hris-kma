@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Buka koneksi ke Supabase lebih awal: jabat tangan TCP+TLS berjalan
+       sambil HTML & skrip masih diurai, jadi query pertama tak menunggunya. -->
+  <link rel="preconnect" href="https://lguhgtzqcacqjkckcbth.supabase.co" crossorigin>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#004499">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -1012,7 +1015,18 @@ async function init () {
   // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
   isiSidebarProfil(ambilProfilSidebar(currentUser.id))
 
-  const { data: karyw, error: errK } = await sb.from('karyawan').select('*, jabatan(nama), divisi(nama)').eq('id', currentUser.id).single()
+  // Tiga muatan ini hanya butuh id pengguna dari sesi dan tidak saling memakai
+  // hasil — profil karyawan, absensi hari ini, dan izin absen luar yang
+  // berlaku hari ini. Dulu ditunggu satu per satu di tiga tempat berjauhan.
+  const hariIni = tanggalLokal()
+  const [karyRes, absenRes, izinRes] = await Promise.all([
+    sb.from('karyawan').select('*, jabatan(nama), divisi(nama)').eq('id', currentUser.id).single(),
+    sb.from('absensi').select('*').eq('karyawan_id', currentUser.id).eq('tanggal', hariIni).single(),
+    sb.from('izin_absen_luar').select('*')
+      .eq('karyawan_id', currentUser.id).eq('status', 'disetujui')
+      .lte('tanggal_mulai', hariIni).gte('tanggal_selesai', hariIni)
+  ])
+  const karyw = karyRes.data, errK = karyRes.error
 
   if (errK || !karyw) {
     document.getElementById('loadingOverlay').style.display = 'none'
@@ -1048,7 +1062,11 @@ async function init () {
     document.getElementById('navLokasi').style.display = ''
     document.getElementById('navLaporan').style.display = ''
     document.getElementById('navLog').style.display = ''
-    await renderStatsHRAdmin()
+    // Tidak ditunggu: isinya kartu statistik di atas, tak ada bagian lain yang
+    // membacanya. Menunggunya hanya menunda kartu absen — yang justru paling
+    // dibutuhkan orang saat membuka dashboard. Kalau gagal, kartunya saja yang
+    // kosong, halaman tetap jalan (pola yang sama dipakai loadPengingat).
+    renderStatsHRAdmin().catch(e => console.warn('Statistik HR gagal dimuat:', e))
     renderStatsSayaHR()   // HR juga karyawan: hari kerja & sisa cutinya sendiri
     loadSaldoCuti()
   } else {
@@ -1056,15 +1074,10 @@ async function init () {
     loadSaldoCuti()
   }
 
-  const today = tanggalLokal(now)
-  const { data: absenData } = await sb.from('absensi').select('*').eq('karyawan_id', currentUser.id).eq('tanggal', today).single()
-  absensiHariIni = absenData || null
-
+  // Keduanya sudah diambil bersamaan dengan profil di atas.
+  absensiHariIni = absenRes.data || null
   // Izin absen luar yang DISETUJUI mencakup hari ini (agar bisa absen dari luar radius)
-  const { data: izinList } = await sb.from('izin_absen_luar').select('*')
-    .eq('karyawan_id', currentUser.id).eq('status', 'disetujui')
-    .lte('tanggal_mulai', today).gte('tanggal_selesai', today)
-  izinLuarAktif = (izinList && izinList[0]) || null
+  izinLuarAktif  = (izinRes.data && izinRes.data[0]) || null
 
   renderAbsensi(absensiHariIni)
 

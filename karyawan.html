@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Buka koneksi ke Supabase lebih awal: jabat tangan TCP+TLS berjalan
+       sambil HTML & skrip masih diurai, jadi query pertama tak menunggunya. -->
+  <link rel="preconnect" href="https://lguhgtzqcacqjkckcbth.supabase.co" crossorigin>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#004499">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -2248,8 +2251,11 @@ async function init () {
       document.getElementById('profileView').style.display = kelola ? 'none' : 'block'
       if (kelola && !kelolaSiap) {
         kelolaSiap = true
-        await loadDivisi()
-        await loadKaryawan()
+        // Tidak saling memakai hasil: loadDivisi mengisi pilihan filter,
+        // loadKaryawan mengisi tabelnya. Saat tabel digambar, filter divisi
+        // masih kosong ("Semua") apa pun urutan selesainya, jadi hasil akhirnya
+        // sama — cuma lebih cepat.
+        await Promise.all([loadDivisi(), loadKaryawan()])
       } else if (!kelola && !sayaSiap) {
         sayaSiap = true
         await loadProfileKaryawan()

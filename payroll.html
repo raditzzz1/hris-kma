@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Buka koneksi ke Supabase lebih awal: jabat tangan TCP+TLS berjalan
+       sambil HTML & skrip masih diurai, jadi query pertama tak menunggunya. -->
+  <link rel="preconnect" href="https://lguhgtzqcacqjkckcbth.supabase.co" crossorigin>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#004499">
   <link rel="apple-touch-icon" href="icon-192.png">

@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Buka koneksi ke Supabase lebih awal: jabat tangan TCP+TLS berjalan
+       sambil HTML & skrip masih diurai, jadi query pertama tak menunggunya. -->
+  <link rel="preconnect" href="https://lguhgtzqcacqjkckcbth.supabase.co" crossorigin>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#004499">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -1475,7 +1478,21 @@ async function init () {
   // sambil menunggu jawaban server. Data asli di bawah akan menimpanya.
   isiSidebarProfil(ambilProfilSidebar(currentUser.id))
 
-  const { data: k } = await sb.from('karyawan').select('*,jabatan(nama),divisi(nama)').eq('id',currentUser.id).single()
+  // Tiga muatan ini tidak ada yang memakai hasil yang lain — profil karyawan,
+  // daftar lokasi kantor, dan daftar hari libur — jadi ditunggu bersamaan,
+  // bukan satu per satu. Waktunya jadi selama yang paling lambat saja.
+  //
+  // Urutan tetap dijaga di satu hal: `lokasiList` dan `HARI_LIBUR` menentukan
+  // boleh-tidaknya seseorang absen, jadi keduanya WAJIB sudah terisi sebelum
+  // startGPS() / updateAbsenButton() dipanggil di bawah. Promise.all ini
+  // menjamin itu karena ditunggu sampai selesai.
+  const [karyRes, lokasiRes] = await Promise.all([
+    sb.from('karyawan').select('*,jabatan(nama),divisi(nama)').eq('id',currentUser.id).single(),
+    sb.from('lokasi_kantor').select('*').eq('aktif',true),
+    loadHariLibur()
+  ])
+  lokasiList = lokasiRes.data || []
+  const k = karyRes.data
   currentKaryw = k; isAdmin = k?.role === 'hr_admin'
   if (!(await guardKaryawanAktif(sb, k?.status))) return
   if (typeof notifPermissionGranted === 'function' && notifPermissionGranted()) startNotifListener(sb, currentUser.id)
@@ -1496,12 +1513,8 @@ async function init () {
   // Header date
   document.getElementById('headerDate').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
 
-  // Load lokasi kantor untuk geofencing
-  const { data: lk } = await sb.from('lokasi_kantor').select('*').eq('aktif',true)
-  lokasiList = lk || []
-
-  // Muat daftar hari libur (dipakai banner libur & tombol absen)
-  await loadHariLibur()
+  // (lokasi kantor untuk geofencing & daftar hari libur sudah dimuat bersamaan
+  // dengan profil di atas)
 
   // Mulai GPS
   if (isAdmin) {
@@ -1531,10 +1544,14 @@ async function init () {
           { id: 'libur',   label: 'Hari Libur',      panel: 'panelLibur' }
         ])
         document.getElementById('filterTgl').value = tanggalLokal()
-        await loadAdminAbsensi()
-        await loadIzinAdmin()
-        await loadLemburAdmin()
-        await loadKoreksiAdmin()
+        // Empat panel ini mengisi tabel masing-masing dan tidak saling
+        // memakai hasil, jadi dimuat bersamaan.
+        await Promise.all([
+          loadAdminAbsensi(),
+          loadIzinAdmin(),
+          loadLemburAdmin(),
+          loadKoreksiAdmin()
+        ])
         renderHariLiburAdmin()
       } else {
         if (sayaSiap) return
@@ -1565,19 +1582,26 @@ async function muatAbsensiSaya () {
     banner.style.display = 'flex'
   }
 
-  // Absensi hari ini
-  const { data: ab } = await sb.from('absensi').select('*').eq('karyawan_id',currentUser.id).eq('tanggal',today).single()
-  absensiHariIni = ab || null
-  // Muat izin absen luar (set izinLuarAktif utk hari ini) + daftar pengajuan & lembur
-  await loadIzinLuar()
-  await loadLemburMy()
   document.getElementById('korTanggal').value = today
-  await loadKoreksiSaya()
+
+  // Ketujuh muatan di bawah masing-masing mengisi variabel atau tabelnya
+  // sendiri dan tidak ada yang membaca hasil yang lain. Dulu ditunggu satu per
+  // satu, jadi waktunya adalah jumlah ketujuhnya. Semuanya DIJALANKAN
+  // SEKARANG (tanpa await) supaya berangkat bersamaan.
+  const pAbsenHariIni = sb.from('absensi').select('*').eq('karyawan_id',currentUser.id).eq('tanggal',today).single()
+  const pIzinLuar     = loadIzinLuar()          // mengisi izinLuarAktif
+  const pSisanya      = Promise.all([loadLemburMy(), loadKoreksiSaya(), renderKalender(), loadRiwayat(), loadRekap()])
+
+  // Tapi yang DITUNGGU lebih dulu hanya dua: absensi hari ini & izin luar.
+  // Keduanya menentukan tombol absen boleh ditekan atau tidak, dan itu hal
+  // terpenting di halaman ini — jadi kartunya tampil begitu dua ini siap,
+  // tanpa ikut menunggu kalender/riwayat/rekap yang cuma untuk dibaca.
+  const [absRes] = await Promise.all([pAbsenHariIni, pIzinLuar])
+  absensiHariIni = absRes.data || null
   renderAbsenCard(absensiHariIni)
   updateAbsenButton()
-  await renderKalender()
-  await loadRiwayat()
-  await loadRekap()
+
+  await pSisanya
 }
 
 init()
