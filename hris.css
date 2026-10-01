@@ -365,3 +365,101 @@
   .quick-links { gap: 0.5rem !important; }
   .quick-link  { padding: 0.75rem 0.25rem !important; }
 }
+
+/* ============================================================
+   KERANGKA PEMUATAN (SKELETON)
+   ============================================================
+   Menggantikan layar putih + lingkaran berputar yang dulu mengisi
+   #lo / #loadingOverlay. Bedanya bukan sekadar hiasan: kerangka ini
+   memperlihatkan BENTUK halaman yang sedang datang, jadi menunggunya
+   terasa lebih singkat dan matanya sudah tahu harus melihat ke mana.
+
+   Sengaja TIDAK mengubah cara menyembunyikannya. Overlay-nya tetap
+   dimatikan dengan display:none di akhir init() seperti semula — jadi
+   tak ada kemungkinan halaman tersangkut karena perubahan ini.
+
+   Bentuknya meniru kerangka aplikasi (sidebar + kepala + kartu), BUKAN
+   isi tiap halaman. Satu bentuk untuk semua halaman: cukup mirip untuk
+   menolong, dan tak perlu dirawat tiap kali ada halaman baru.
+*/
+.sk-app { display: flex; width: 100%; height: 100%; overflow: hidden; }
+
+/* Sisi kiri meniru sidebar biru yang sebentar lagi muncul. */
+.sk-side {
+  /* Lebar & latarnya disamakan dengan .sidebar yang asli (--sidebar-w: 248px,
+     background: var(--hero)) supaya saat kerangka ini hilang, sidebar
+     sungguhan muncul di tempat yang persis sama — tidak ada yang bergeser. */
+  width: 248px; flex-shrink: 0; background: var(--hero);
+  padding: 1.5rem 1.25rem; display: flex; flex-direction: column; gap: .5rem;
+}
+.sk-brand { height: 46px; border-radius: 12px; margin-bottom: 1.75rem; }
+.sk-nav   { height: 34px; border-radius: 10px; }
+.sk-nav:nth-child(4)  { margin-top: 1.25rem; }
+.sk-nav:nth-child(8)  { margin-top: 1.25rem; }
+
+.sk-main { flex: 1; padding: 1.75rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.sk-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.sk-head-kiri { display: flex; flex-direction: column; gap: .55rem; flex: 1; min-width: 0; }
+.sk-judul { height: 26px; width: 240px; max-width: 60%; border-radius: 8px; }
+.sk-sub   { height: 14px; width: 330px; max-width: 80%; border-radius: 6px; }
+.sk-pil   { height: 38px; width: 180px; border-radius: 999px; flex-shrink: 0; }
+
+.sk-kartu-baris { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.sk-kartu { height: 96px; border-radius: var(--radius); }
+.sk-panel { flex: 1; min-height: 220px; border-radius: var(--radius); }
+
+/* Blok abu-abu + kilau yang bergerak pelan dari kiri ke kanan. */
+.sk-brand, .sk-nav, .sk-judul, .sk-sub, .sk-pil, .sk-kartu, .sk-panel {
+  background: #e8edf5;
+  background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.65) 50%, rgba(255,255,255,0) 100%);
+  background-size: 220px 100%;
+  background-repeat: no-repeat;
+  animation: sk-kilau 1.25s ease-in-out infinite;
+}
+/* Di dalam sidebar yang gelap, blok putih akan menyilaukan. */
+.sk-brand, .sk-nav {
+  background-color: rgba(255,255,255,.14);
+  background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.13) 50%, rgba(255,255,255,0) 100%);
+}
+@keyframes sk-kilau {
+  from { background-position: -220px 0; }
+  to   { background-position: calc(100% + 220px) 0; }
+}
+
+/* Teks untuk pembaca layar — kerangka ini tak berarti apa-apa bagi mereka. */
+.sk-baca { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 1024px) {
+  .sk-kartu-baris { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  /* Sidebar memang tersembunyi di HP, jadi kerangkanya pun tak usah ada. */
+  .sk-side { display: none; }
+  .sk-main { padding: 1.25rem 1rem; gap: 1rem; }
+  .sk-pil  { width: 120px; height: 32px; }
+}
+
+/* Kilau yang terus bergerak bisa mengganggu sebagian orang. Yang dimatikan
+   hanya geraknya; bentuk kerangkanya tetap tampil. */
+@media (prefers-reduced-motion: reduce) {
+  .sk-brand, .sk-nav, .sk-judul, .sk-sub, .sk-pil, .sk-kartu, .sk-panel {
+    animation: none; background-image: none;
+  }
+}
+
+/* Kalau pemuatannya tak kunjung selesai, kerangka ini akan diam selamanya dan
+   terlihat sama persis dengan "sedang memuat" — itu yang membuat halaman
+   Lokasi Kantor rusak berhari-hari tanpa ketahuan.
+   Sesudah 12 detik, muncul satu baris kecil. Sengaja TIDAK berbunyi "gagal":
+   di jaringan lambat pemuatannya memang bisa selama itu, dan menuduh gagal
+   padahal masih jalan justru menyesatkan. Murni CSS — tak ada kode yang bisa
+   ikut rusak kalau init() sendiri yang bermasalah. */
+.sk-lama {
+  position: absolute; left: 0; right: 0; bottom: 1.25rem;
+  text-align: center; font-size: .8rem; color: var(--muted);
+  opacity: 0; animation: sk-muncul .4s ease forwards; animation-delay: 12s;
+}
+@keyframes sk-muncul { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .sk-lama { animation-duration: .01s; }
+}
