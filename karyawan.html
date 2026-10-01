@@ -1113,16 +1113,16 @@ function renderTable (list) {
     <tr>
       <td>
         <div class="karyawan-cell">
-          <div class="avatar-tbl">${k.foto_url ? `<img src="${k.foto_url}" alt="">` : getInitial(k.nama_lengkap)}</div>
+          <div class="avatar-tbl">${k.foto_url ? `<img src="${escHtml(k.foto_url)}" alt="">` : escHtml(getInitial(k.nama_lengkap))}</div>
           <div>
-            <div class="karyawan-name">${k.nama_lengkap}</div>
-            <div class="karyawan-nik">${k.nik || '—'}</div>
+            <div class="karyawan-name">${escHtml(k.nama_lengkap)}</div>
+            <div class="karyawan-nik">${escHtml(k.nik || '—')}</div>
           </div>
         </div>
       </td>
       <td>
-        <div style="font-size:0.875rem;">${k.jabatan?.nama || '—'}</div>
-        <div style="font-size:0.75rem;color:var(--muted);">${k.divisi?.nama || '—'}</div>
+        <div style="font-size:0.875rem;">${escHtml(k.jabatan?.nama || '—')}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">${escHtml(k.divisi?.nama || '—')}</div>
       </td>
       <td>${kontrakBadge(k.tipe_kontrak)}</td>
       <td>${statusBadge(k.status)}</td>
@@ -1174,7 +1174,7 @@ function openDetail (id) {
 
   setAvatar('detailAvatar', k.nama_lengkap, k.foto_url)
   document.getElementById('detailName').textContent   = k.nama_lengkap
-  document.getElementById('detailSub').textContent    = `${k.jabatan?.nama || '—'} · ${k.divisi?.nama || '—'}`
+  document.getElementById('detailSub').textContent    = `${escHtml(k.jabatan?.nama || '—')} · ${escHtml(k.divisi?.nama || '—')}`
   document.getElementById('detailBadges').innerHTML   = statusBadge(k.status) + ' ' + kontrakBadge(k.tipe_kontrak)
   document.getElementById('btnDetailEdit').onclick    = () => { closeModal('modalDetail'); openEdit(id) }
   // Tombol "Buat Surat" hanya untuk HR Admin
@@ -2050,7 +2050,9 @@ let pendingFotoFile = null, editFotoUrl = null, editFotoRemoved = false
 function setAvatar (id, name, fotoUrl) {
   const el = typeof id === 'string' ? document.getElementById(id) : id
   if (!el) return
-  el.innerHTML = fotoUrl ? `<img src="${fotoUrl}" alt="">` : getInitial(name)
+  // foto_url & nama berasal dari baris karyawan LAIN saat HR membuka daftar,
+  // jadi keduanya harus dijinakkan dulu — lihat catatan di hris-shared.js.
+  el.innerHTML = fotoUrl ? `<img src="${escHtml(fotoUrl)}" alt="">` : escHtml(getInitial(name))
 }
 function selectFoto (input) {
   const f = input.files && input.files[0]
@@ -2186,7 +2188,7 @@ async function loadProfileKaryawan () {
 
   setAvatar('profileAvatar', k.nama_lengkap, k.foto_url)
   document.getElementById('profileName').textContent   = k.nama_lengkap
-  document.getElementById('profileSub').textContent    = `${k.jabatan?.nama || '—'} · ${k.divisi?.nama || '—'}`
+  document.getElementById('profileSub').textContent    = `${escHtml(k.jabatan?.nama || '—')} · ${escHtml(k.divisi?.nama || '—')}`
   document.getElementById('profileStatus').textContent  = k.status === 'aktif' ? 'Aktif' : k.status || '—'
   document.getElementById('profileKontrak').textContent = k.tipe_kontrak || '—'
 

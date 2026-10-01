@@ -631,8 +631,8 @@ function renderQuickLinks (isAdmin) {
 // ---- Render stats ----
 function renderStatsKaryawan (karyw) {
   document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card"><div class="stat-icon blue">${ic('building')}</div><div class="stat-info"><div class="stat-value txt">${karyw.divisi?.nama || '—'}</div><div class="stat-label">Divisi</div></div></div>
-    <div class="stat-card"><div class="stat-icon green">${ic('briefcase')}</div><div class="stat-info"><div class="stat-value txt">${karyw.jabatan?.nama || '—'}</div><div class="stat-label">Jabatan</div></div></div>
+    <div class="stat-card"><div class="stat-icon blue">${ic('building')}</div><div class="stat-info"><div class="stat-value txt">${escHtml(karyw.divisi?.nama || '—')}</div><div class="stat-label">Divisi</div></div></div>
+    <div class="stat-card"><div class="stat-icon green">${ic('briefcase')}</div><div class="stat-info"><div class="stat-value txt">${escHtml(karyw.jabatan?.nama || '—')}</div><div class="stat-label">Jabatan</div></div></div>
     <div class="stat-card"><div class="stat-icon yellow">${ic('calendar')}</div><div class="stat-info"><div class="stat-value txt" id="hariKerja">—</div><div class="stat-label">Hari Kerja Bulan Ini</div></div></div>
     <div class="stat-card"><div class="stat-icon blue">${ic('umbrella')}</div><div class="stat-info"><div class="stat-value txt" id="saldoCuti">—</div><div class="stat-label">Sisa Cuti</div></div></div>
   `
@@ -938,7 +938,7 @@ async function loadActivityList () {
     const s = statusMap[a.status] || { dot:'dot-gray', label:a.status }
     const name = isAdmin ? (a.karyawan?.nama_lengkap || 'Karyawan') : 'Anda'
     const tgl = new Date(a.tanggal).toLocaleDateString('id-ID', { day:'numeric', month:'short' })
-    return `<li class="activity-item"><div class="activity-dot ${s.dot}"></div><span class="activity-text"><strong>${name}</strong> — ${s.label} ${a.waktu_masuk ? `(${formatTime(a.waktu_masuk)})` : ''}</span><span class="activity-time">${tgl}</span></li>`
+    return `<li class="activity-item"><div class="activity-dot ${s.dot}"></div><span class="activity-text"><strong>${escHtml(name)}</strong> — ${escHtml(s.label)} ${a.waktu_masuk ? `(${formatTime(a.waktu_masuk)})` : ''}</span><span class="activity-time">${tgl}</span></li>`
   }).join('')
 }
 
@@ -1047,7 +1047,7 @@ async function init () {
   simpanProfilSidebar(currentUser.id, karyw)   // untuk pemuatan berikutnya
   document.getElementById('sidebarRole').textContent   = roleLabel(karyw.role)
   document.getElementById('sidebarAvatar').innerHTML = karyw.foto_url
-    ? `<img src="${karyw.foto_url}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block;">`
+    ? `<img src="${escHtml(karyw.foto_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px;display:block;">`
     : getInitial(karyw.nama_lengkap)
 
   const now = new Date()

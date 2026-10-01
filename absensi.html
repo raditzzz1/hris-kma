@@ -949,7 +949,7 @@ async function loadRiwayat () {
       <td>${fmt(a.waktu_keluar)}</td>
       <td>${durasi(a.durasi_kerja_menit)}</td>
       <td>${statusBadge(a.status, a.mode_kerja)}</td>
-      <td style="color:var(--muted);font-size:.8rem;">${a.keterangan||'—'}</td>
+      <td style="color:var(--muted);font-size:.8rem;">${escHtml(a.keterangan||'—')}</td>
     </tr>
   `).join('')
 }
@@ -1047,8 +1047,8 @@ function renderAdminTable (list) {
     <tr>
       <td>
         <div class="k-cell">
-          <div class="k-av">${getInit(a.karyawan?.nama_lengkap)}</div>
-          <div><div class="k-name">${a.karyawan?.nama_lengkap||'—'}</div><div class="k-nik">${a.karyawan?.nik||'—'}</div></div>
+          <div class="k-av">${escHtml(getInit(a.karyawan?.nama_lengkap))}</div>
+          <div><div class="k-name">${escHtml(a.karyawan?.nama_lengkap||'—')}</div><div class="k-nik">${escHtml(a.karyawan?.nik||'—')}</div></div>
         </div>
       </td>
       <td>${fmt(a.waktu_masuk)}</td>
@@ -1071,7 +1071,7 @@ async function openManualAbsen () {
     const { data } = await sb.from('karyawan').select('id,nama_lengkap,nik').eq('status','aktif').order('nama_lengkap')
     semua_karyawan = data || []
   }
-  sel.innerHTML = semua_karyawan.map(k => `<option value="${k.id}">${k.nama_lengkap} (${k.nik||'—'})</option>`).join('')
+  sel.innerHTML = semua_karyawan.map(k => `<option value="${k.id}">${escHtml(k.nama_lengkap)} (${escHtml(k.nik||'—')})</option>`).join('')
   document.getElementById('manTgl').value = tanggalLokal()
   document.getElementById('manMasuk').value = ''
   document.getElementById('manKeluar').value = ''
@@ -1104,7 +1104,7 @@ async function editAbsen (id) {
 
   const sel = document.getElementById('manKaryawan')
   sel.innerHTML = semua_karyawan.map(k =>
-    `<option value="${k.id}"${k.id===ab.karyawan_id?' selected':''}>${k.nama_lengkap} (${k.nik||'—'})</option>`
+    `<option value="${k.id}"${k.id===ab.karyawan_id?' selected':''}>${escHtml(k.nama_lengkap)} (${escHtml(k.nik||'—')})</option>`
   ).join('')
 
   // Pre-fill semua field
@@ -1171,8 +1171,8 @@ async function loadIzinLuar () {
   const body = document.getElementById('izinMyBody')
   if (body) body.innerHTML = list.length ? list.map(i => `
     <tr><td>${rentangTgl(i.tanggal_mulai, i.tanggal_selesai)}</td>
-    <td>${TIPE_LABEL[i.tipe]||i.tipe}</td>
-    <td style="color:var(--muted);font-size:.8rem;">${i.alasan||'—'}</td>
+    <td>${escHtml(TIPE_LABEL[i.tipe]||i.tipe)}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${escHtml(i.alasan||'—')}</td>
     <td>${izinBadge(i.status)}</td></tr>`).join('')
     : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan</td></tr>`
 }
@@ -1185,7 +1185,7 @@ async function loadLemburMy () {
   if (body) body.innerHTML = list.length ? list.map(l => `
     <tr><td>${fmtTgl(l.tanggal)}</td><td>${(l.jam_mulai||'').slice(0,5)}</td><td>${(l.jam_selesai||'').slice(0,5)}</td>
     <td>${l.durasi_jam!=null ? l.durasi_jam+' jam' : '—'}</td>
-    <td style="color:var(--muted);font-size:.8rem;">${l.alasan||'—'}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${escHtml(l.alasan||'—')}</td>
     <td><button class="btn-sec" style="font-size:.72rem;padding:.25rem .55rem;" onclick="deleteLembur('${l.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')
     : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada lembur</td></tr>`
 }
@@ -1255,10 +1255,10 @@ async function loadIzinAdmin () {
   const body = document.getElementById('izinAdminBody')
   if (!body) return
   body.innerHTML = list.length ? list.map(i => `
-    <tr><td><div class="k-cell"><div class="k-av">${getInit(i.karyawan?.nama_lengkap)}</div><div><div class="k-name">${i.karyawan?.nama_lengkap||'—'}</div><div class="k-nik">${i.karyawan?.nik||''}</div></div></div></td>
+    <tr><td><div class="k-cell"><div class="k-av">${escHtml(getInit(i.karyawan?.nama_lengkap))}</div><div><div class="k-name">${escHtml(i.karyawan?.nama_lengkap||'—')}</div><div class="k-nik">${escHtml(i.karyawan?.nik||'')}</div></div></div></td>
     <td>${rentangTgl(i.tanggal_mulai, i.tanggal_selesai)}</td>
-    <td>${TIPE_LABEL[i.tipe]||i.tipe}</td>
-    <td style="color:var(--muted);font-size:.8rem;">${i.alasan||'—'}</td>
+    <td>${escHtml(TIPE_LABEL[i.tipe]||i.tipe)}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${escHtml(i.alasan||'—')}</td>
     <td>${izinBadge(i.status)}</td>
     <td>${i.status==='pending' ? `<button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#16a34a;border-color:#bbf7d0;" onclick="approveIzin('${i.id}')">Setujui</button> <button class="btn-sec" style="font-size:.72rem;padding:.25rem .5rem;color:#dc2626;border-color:#fecaca;" onclick="rejectIzin('${i.id}')">Tolak</button>` : '—'}</td></tr>`).join('')
     : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada pengajuan</td></tr>`
@@ -1420,10 +1420,10 @@ async function loadLemburAdmin () {
   const body = document.getElementById('lemburAdminBody')
   if (!body) return
   body.innerHTML = list.length ? list.map(l => `
-    <tr><td><div class="k-cell"><div class="k-av">${getInit(l.karyawan?.nama_lengkap)}</div><div><div class="k-name">${l.karyawan?.nama_lengkap||'—'}</div><div class="k-nik">${l.karyawan?.nik||''}</div></div></div></td>
+    <tr><td><div class="k-cell"><div class="k-av">${escHtml(getInit(l.karyawan?.nama_lengkap))}</div><div><div class="k-name">${escHtml(l.karyawan?.nama_lengkap||'—')}</div><div class="k-nik">${escHtml(l.karyawan?.nik||'')}</div></div></div></td>
     <td>${fmtTgl(l.tanggal)}</td><td>${(l.jam_mulai||'').slice(0,5)}</td><td>${(l.jam_selesai||'').slice(0,5)}</td>
     <td>${l.durasi_jam!=null ? l.durasi_jam+' jam' : '—'}</td>
-    <td style="color:var(--muted);font-size:.8rem;">${l.alasan||'—'}</td>
+    <td style="color:var(--muted);font-size:.8rem;">${escHtml(l.alasan||'—')}</td>
     <td><button class="btn-sec" style="font-size:.72rem;padding:.25rem .55rem;" onclick="deleteLembur('${l.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')
     : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada data lembur</td></tr>`
 }
@@ -1436,7 +1436,7 @@ function renderHariLiburAdmin () {
   body.innerHTML = hariLiburList.length ? hariLiburList.map(h => `
     <tr><td>${fmtTgl(h.tanggal)}</td>
     <td>${NAMA_HARI[new Date(h.tanggal+'T00:00:00').getDay()]}</td>
-    <td>${h.nama}</td>
+    <td>${escHtml(h.nama)}</td>
     <td><button class="btn-sec" style="font-size:.72rem;padding:.25rem .55rem;" onclick="deleteHariLibur('${h.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td></tr>`).join('')
     : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.25rem;">Belum ada hari libur ditambahkan</td></tr>`
 }
@@ -1501,7 +1501,7 @@ async function init () {
   document.getElementById('sbName').textContent   = k?.nama_lengkap || currentUser.email
   simpanProfilSidebar(currentUser.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent   = ({hr_admin:'HR Admin',karyawan:'Karyawan'})[k?.role]||'—'
-  document.getElementById('sbAvatar').innerHTML = k?.foto_url ? `<img src="${k.foto_url}" alt="">` : getInit(k?.nama_lengkap)
+  document.getElementById('sbAvatar').innerHTML = k?.foto_url ? `<img src="${escHtml(k.foto_url)}" alt="">` : escHtml(getInit(k?.nama_lengkap))
 
   if (isAdmin) {
     document.getElementById('adminNavLbl').style.display = ''

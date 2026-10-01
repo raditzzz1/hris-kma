@@ -401,7 +401,7 @@ async function renderKaryawan () {
         const pct  = s.saldo_awal > 0 ? Math.max(0, Math.min(100, (sisa/s.saldo_awal)*100)) : 0
         return `
         <div class="saldo-card">
-          <div class="saldo-jenis">${s.jenis_cuti.nama}</div>
+          <div class="saldo-jenis">${escHtml(s.jenis_cuti.nama)}</div>
           <div class="saldo-num">${sisa}</div>
           <div class="saldo-unit">hari tersisa dari ${s.saldo_awal}</div>
           <div class="saldo-bar"><div class="saldo-fill" style="width:${pct}%"></div></div>
@@ -413,12 +413,12 @@ async function renderKaryawan () {
   const tblHtml = (pengajuan && pengajuan.length)
     ? pengajuan.map(p => `
       <tr>
-        <td>${p.jenis_cuti?.nama || '—'}</td>
+        <td>${escHtml(p.jenis_cuti?.nama || '—')}</td>
         <td>${fmtDate(p.tanggal_mulai)}</td>
         <td>${fmtDate(p.tanggal_selesai)}</td>
         <td style="text-align:center;">${p.jumlah_hari}</td>
         <td><span class="badge ${p.status}">${badgeLabel(p.status)}</span></td>
-        <td style="color:var(--muted);font-size:.8rem;">${p.catatan_hr || '—'}</td>
+        <td style="color:var(--muted);font-size:.8rem;">${escHtml(p.catatan_hr || '—')}</td>
         <td>
           ${p.status === 'pending' ? `<button class="btn-sm btn-cancel" onclick="batalkan('${p.id}')">Batalkan</button>` : '—'}
         </td>
@@ -491,10 +491,10 @@ async function renderHR (filter = {status:'', search:''}) {
     ? filtered.map(p => `
       <tr>
         <td>
-          <div style="font-weight:600">${p.karyawan?.nama_lengkap || '—'}</div>
-          <div style="font-size:.75rem;color:var(--muted)">${p.karyawan?.nik || ''}</div>
+          <div style="font-weight:600">${escHtml(p.karyawan?.nama_lengkap || '—')}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${escHtml(p.karyawan?.nik || '')}</div>
         </td>
-        <td>${p.jenis_cuti?.nama || '—'}</td>
+        <td>${escHtml(p.jenis_cuti?.nama || '—')}</td>
         <td>${fmtDate(p.tanggal_mulai)}</td>
         <td>${fmtDate(p.tanggal_selesai)}</td>
         <td style="text-align:center;">${p.jumlah_hari}</td>
@@ -552,7 +552,7 @@ async function renderHR (filter = {status:'', search:''}) {
 async function openAjuan () {
   // Populate jenis cuti
   const sel = document.getElementById('ajJenis')
-  sel.innerHTML = jenisCutiList.map(j => `<option value="${j.id}">${j.nama}</option>`).join('')
+  sel.innerHTML = jenisCutiList.map(j => `<option value="${j.id}">${escHtml(j.nama)}</option>`).join('')
   document.getElementById('ajMulai').value   = ''
   document.getElementById('ajSelesai').value = ''
   document.getElementById('ajHariNum').textContent = '—'
@@ -723,16 +723,16 @@ async function lihatDetail (id) {
   if (!p) return
   document.getElementById('detailTitle').textContent = `Detail Pengajuan — ${p.karyawan?.nama_lengkap}`
   document.getElementById('detailBody').innerHTML = `
-    <div class="detail-row"><div class="detail-lbl">Nama Karyawan</div><div class="detail-val">${p.karyawan?.nama_lengkap}</div></div>
-    <div class="detail-row"><div class="detail-lbl">NIK</div><div class="detail-val">${p.karyawan?.nik || '—'}</div></div>
-    <div class="detail-row"><div class="detail-lbl">Jenis Cuti</div><div class="detail-val">${p.jenis_cuti?.nama}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Nama Karyawan</div><div class="detail-val">${escHtml(p.karyawan?.nama_lengkap)}</div></div>
+    <div class="detail-row"><div class="detail-lbl">NIK</div><div class="detail-val">${escHtml(p.karyawan?.nik || '—')}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Jenis Cuti</div><div class="detail-val">${escHtml(p.jenis_cuti?.nama)}</div></div>
     <div class="detail-row"><div class="detail-lbl">Tanggal Mulai</div><div class="detail-val">${fmtDate(p.tanggal_mulai)}</div></div>
     <div class="detail-row"><div class="detail-lbl">Tanggal Selesai</div><div class="detail-val">${fmtDate(p.tanggal_selesai)}</div></div>
     <div class="detail-row"><div class="detail-lbl">Jumlah Hari</div><div class="detail-val">${p.jumlah_hari} hari kerja</div></div>
-    <div class="detail-row"><div class="detail-lbl">Alasan</div><div class="detail-val">${p.alasan || '—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Alasan</div><div class="detail-val">${escHtml(p.alasan || '—')}</div></div>
     <div class="detail-row"><div class="detail-lbl">Status</div><div class="detail-val"><span class="badge ${p.status}">${badgeLabel(p.status)}</span></div></div>
-    <div class="detail-row"><div class="detail-lbl">Diproses oleh</div><div class="detail-val">${p.approver?.nama_lengkap || '—'}</div></div>
-    <div class="detail-row"><div class="detail-lbl">Catatan HR</div><div class="detail-val">${p.catatan_hr || '—'}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Diproses oleh</div><div class="detail-val">${escHtml(p.approver?.nama_lengkap || '—')}</div></div>
+    <div class="detail-row"><div class="detail-lbl">Catatan HR</div><div class="detail-val">${escHtml(p.catatan_hr || '—')}</div></div>
     <div class="detail-row"><div class="detail-lbl">Diajukan</div><div class="detail-val">${fmtDate(p.created_at)}</div></div>`
 
   const footHtml = p.status === 'pending'
@@ -825,7 +825,7 @@ async function confirmAction () {
 async function openModalSaldo () {
   // Populate dropdowns
   const selK = document.getElementById('saldoKaryawan')
-  selK.innerHTML = allKaryawan.map(k => `<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
+  selK.innerHTML = allKaryawan.map(k => `<option value="${k.id}">${escHtml(k.nama_lengkap)}</option>`).join('')
 
   // Hanya jenis yang memang memotong saldo yang perlu diatur di sini.
   // Menawarkan WFH/WFA/Izin cuma memancing HR mengisi angka yang tak pernah
@@ -833,7 +833,7 @@ async function openModalSaldo () {
   // yang seharusnya bebas jadi ikut terpotong.
   const selJ = document.getElementById('saldoJenis')
   const jenisBersaldo = jenisCutiList.filter(j => j.pakai_saldo !== false)
-  selJ.innerHTML = jenisBersaldo.map(j => `<option value="${j.id}">${j.nama}</option>`).join('')
+  selJ.innerHTML = jenisBersaldo.map(j => `<option value="${j.id}">${escHtml(j.nama)}</option>`).join('')
 
   document.getElementById('saldoTahun').value   = TAHUN
   document.getElementById('saldoJumlah').value  = '12'
@@ -899,7 +899,7 @@ async function init () {
   simpanProfilSidebar(session.user.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent = k.role === 'hr_admin' ? 'HR Admin' : 'Karyawan'
   if (k.role === 'hr_admin') ['adminNavLbl','navLokasi','navLaporan','navLog'].forEach(function(id){var el=document.getElementById(id); if(el) el.style.display=''})
-  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase() || '?')
+  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${escHtml(k.foto_url)}" alt="">` : escHtml(k.nama_lengkap?.charAt(0).toUpperCase() || '?')
 
   await renderPage()
   document.getElementById('lo').style.display = 'none'

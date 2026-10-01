@@ -491,7 +491,7 @@ function isiSidebarProfil (p) {
   if (elRole && p.role) elRole.textContent = ({ hr_admin: 'HR Admin', karyawan: 'Karyawan' })[p.role] || p.role
   if (elAv) {
     elAv.innerHTML = p.foto
-      ? '<img src="' + p.foto + '" alt="">'
+      ? '<img src="' + escHtml(p.foto) + '" alt="">'
       : escHtml((p.nama || '?').trim().split(/\s+/).slice(0, 2).map(function (s) { return s[0] }).join('').toUpperCase())
   }
 }
