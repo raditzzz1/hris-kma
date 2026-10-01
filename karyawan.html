@@ -1464,7 +1464,7 @@ function blokTtd (p, judul) {
   // maupun tidak, supaya posisi nama & jabatan tak bergeser saat dicetak.
   return `<div>
       <div>${escHtml(judul)}</div>
-      <div class="ttd-slot">${p?.gambar ? `<img class="ttd-img" src="${p.gambar}" alt="">` : ''}</div>
+      <div class="ttd-slot">${p?.gambar ? `<img class="ttd-img" src="${escHtml(p.gambar)}" alt="">` : ''}</div>
       <div class="nama">${escHtml(nama)}</div>
       <div class="jab">${escHtml(jab)}</div>
     </div>`
@@ -1481,7 +1481,7 @@ function renderDaftarTtd () {
   wadah.innerHTML = daftarTtd.map(p => `
     <div style="display:flex;align-items:center;gap:.8rem;padding:.7rem 0;border-bottom:1px solid var(--border);">
       <div style="width:96px;height:44px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;overflow:hidden;background:#fff;flex-shrink:0;">
-        ${p.gambar ? `<img src="${p.gambar}" style="max-width:100%;max-height:100%;object-fit:contain;">`
+        ${p.gambar ? `<img src="${escHtml(p.gambar)}" style="max-width:100%;max-height:100%;object-fit:contain;">`
                    : '<span style="font-size:.68rem;color:var(--muted);">belum ada</span>'}
       </div>
       <div style="flex:1;min-width:0;">
@@ -1567,7 +1567,7 @@ function renderStempel () {
   if (!box) return
   box.innerHTML = `
     <div style="width:96px;height:44px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;overflow:hidden;background:#fff;flex-shrink:0;">
-      ${stempelGambar ? `<img src="${stempelGambar}" style="max-width:100%;max-height:100%;object-fit:contain;">`
+      ${stempelGambar ? `<img src="${escHtml(stempelGambar)}" style="max-width:100%;max-height:100%;object-fit:contain;">`
                  : '<span style="font-size:.68rem;color:var(--muted);">belum ada</span>'}
     </div>
     <div style="flex:1;min-width:0;font-size:.78rem;color:var(--muted);">
@@ -2067,7 +2067,7 @@ function selectFoto (input) {
   if (f.size > 2 * 1024 * 1024) { toast('Ukuran maksimal 2MB', 'error'); input.value = ''; return }
   pendingFotoFile = f; editFotoRemoved = false
   const reader = new FileReader()
-  reader.onload = ev => { document.getElementById('editFotoPreview').innerHTML = `<img src="${ev.target.result}" alt="">` }
+  reader.onload = ev => { document.getElementById('editFotoPreview').innerHTML = `<img src="${escHtml(ev.target.result)}" alt="">` }
   reader.readAsDataURL(f)
   document.getElementById('btnHapusFoto').style.display = ''
 }

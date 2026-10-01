@@ -623,7 +623,7 @@ async function buildBupot () {
 
   if (error) { area.innerHTML = `<p style="color:#dc2626;font-size:.85rem;">Gagal memuat: ${escHtml(error.message)}</p>`; return }
   if (!slip || !slip.length) {
-    area.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">Belum ada slip gaji untuk ${k.nama_lengkap} di tahun ${tahun}.</p>`
+    area.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">Belum ada slip gaji untuk ${escHtml(k.nama_lengkap)} di tahun ${tahun}.</p>`
     return
   }
   bupotSlip = slip.sort((a, b) => a.payroll_periode.bulan - b.payroll_periode.bulan)
@@ -717,7 +717,7 @@ async function buildBupot () {
         <div>${escHtml(BUPOT_PERUSAHAAN.kota)}, ${tglIndo(tanggalLokal(), { day:'numeric', month:'long', year:'numeric' })}</div>
         <div style="margin-top:.2rem;">Pemotong Pajak,</div>
         ${TTD_BUPOT?.gambar
-          ? `<img src="${TTD_BUPOT.gambar}" alt="" style="height:64px;object-fit:contain;display:block;margin:.3rem auto 0;">`
+          ? `<img src="${escHtml(TTD_BUPOT.gambar)}" alt="" style="height:64px;object-fit:contain;display:block;margin:.3rem auto 0;">`
           : '<div style="height:64px;"></div>'}
         <div style="font-weight:700;text-decoration:underline;margin-top:${TTD_BUPOT?.gambar ? '.2rem' : '3rem'};">${escHtml(BUPOT_PERUSAHAAN.penandatangan)}</div>
         <div style="font-style:italic;font-size:9pt;">${escHtml(BUPOT_PERUSAHAAN.jabatan)}</div>
@@ -834,7 +834,7 @@ async function renderHR() {
       <div class="periode-item" onclick="bukaDetailPeriode('${p.id}')">
         <div>
           <div class="periode-name"><svg class="ic" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg> ${BULAN_NAMA[p.bulan]} ${p.tahun}</div>
-          <div class="periode-meta">${p.catatan || 'Tanpa catatan'}</div>
+          <div class="periode-meta">${escHtml(p.catatan || 'Tanpa catatan')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:.75rem;">
           <span class="badge ${p.status}">${p.status==='final'?'Final':'Draft'}</span>
@@ -876,7 +876,7 @@ async function bukaDetailPeriode(periodeId) {
   const tblHtml = slips?.length
     ? slips.map(sl => `
       <tr>
-        <td><div style="font-weight:600">${sl.karyawan?.nama_lengkap||'—'}</div><div style="font-size:.75rem;color:var(--muted)">${sl.karyawan?.nik||''}</div></td>
+        <td><div style="font-weight:600">${escHtml(sl.karyawan?.nama_lengkap||'—')}</div><div style="font-size:.75rem;color:var(--muted)">${escHtml(sl.karyawan?.nik||'')}</div></td>
         <td style="text-align:right">${IDR(sl.gaji_pokok)}</td>
         <td style="text-align:right">${IDR(sl.total_tunjangan)}</td>
         <td style="text-align:right;color:#dc2626">${IDR(sl.total_potongan)}</td>
@@ -1026,9 +1026,9 @@ async function lihatSlip(slipId) {
     `Slip Gaji — ${sl.karyawan?.nama_lengkap} — ${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}`
 
   const tunjanganRows = (sl.detail_tunjangan||[]).map(t =>
-    `<div class="slip-row"><span>${t.nama}</span><span>${IDR(t.nilai)}</span></div>`).join('')
+    `<div class="slip-row"><span>${escHtml(t.nama)}</span><span>${IDR(t.nilai)}</span></div>`).join('')
   const potonganLainRows = (sl.detail_potongan||[]).map(p =>
-    `<div class="slip-row"><span>${p.nama}</span><span style="color:#dc2626">- ${IDR(p.nilai)}</span></div>`).join('')
+    `<div class="slip-row"><span>${escHtml(p.nama)}</span><span style="color:#dc2626">- ${IDR(p.nilai)}</span></div>`).join('')
 
   // Label persentase hanya benar bila angkanya memang dihitung dari tarif.
   // Dicek PER BARIS: baris yang ditetapkan manual tidak diberi persentase,
@@ -1075,12 +1075,12 @@ async function lihatSlip(slipId) {
       <div class="slip-doc-title">SLIP GAJI — ${(BULAN_NAMA[sl.periode?.bulan]||'').toUpperCase()} ${sl.periode?.tahun||''}</div>
       <div class="slip-info">
         <div>
-          <div class="slip-info-row"><span class="slip-info-lbl">Nama</span><span>${sl.karyawan?.nama_lengkap||'—'}</span></div>
-          <div class="slip-info-row"><span class="slip-info-lbl">NIK</span><span>${sl.karyawan?.nik||'—'}</span></div>
-          <div class="slip-info-row"><span class="slip-info-lbl">Jabatan</span><span>${sl.karyawan?.jabatan?.nama||'—'}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Nama</span><span>${escHtml(sl.karyawan?.nama_lengkap||'—')}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">NIK</span><span>${escHtml(sl.karyawan?.nik||'—')}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Jabatan</span><span>${escHtml(sl.karyawan?.jabatan?.nama||'—')}</span></div>
         </div>
         <div>
-          <div class="slip-info-row"><span class="slip-info-lbl">Divisi</span><span>${sl.karyawan?.divisi?.nama||'—'}</span></div>
+          <div class="slip-info-row"><span class="slip-info-lbl">Divisi</span><span>${escHtml(sl.karyawan?.divisi?.nama||'—')}</span></div>
           <div class="slip-info-row"><span class="slip-info-lbl">Status PTKP</span><span>${sl.status_ptkp||'—'}</span></div>
           <div class="slip-info-row"><span class="slip-info-lbl">Periode</span><span>${BULAN_NAMA[sl.periode?.bulan]} ${sl.periode?.tahun}</span></div>
         </div>
@@ -1120,8 +1120,8 @@ async function lihatSlip(slipId) {
       <div class="slip-sign">
         <p>Mengetahui,</p>
         <div class="slip-sign-area">
-          ${TTD_SLIP?.gambar ? `<img src="${TTD_SLIP.gambar}" class="slip-ttd" alt="">` : ''}
-          ${STEMPEL_SLIP ? `<img src="${STEMPEL_SLIP}" class="slip-stamp" alt="">` : ''}
+          ${TTD_SLIP?.gambar ? `<img src="${escHtml(TTD_SLIP.gambar)}" class="slip-ttd" alt="">` : ''}
+          ${STEMPEL_SLIP ? `<img src="${escHtml(STEMPEL_SLIP)}" class="slip-stamp" alt="">` : ''}
         </div>
         <p class="slip-sign-name">${escHtml(TTD_SLIP?.nama || '')}</p>
         <p class="slip-sign-title">${escHtml(TTD_SLIP?.jabatan || '')}</p>
@@ -1164,14 +1164,14 @@ async function loadKompModal(karyawanId=null) {
     ? `<div class="fg" style="margin-bottom:1rem;">
         <label>Karyawan</label>
         <select class="inp inp-full" id="kompKary" onchange="loadKompModal(this.value)">
-          ${allKaryawan.map(k=>`<option value="${k.id}"${k.id===kid?' selected':''}>${k.nama_lengkap}</option>`).join('')}
+          ${allKaryawan.map(k=>`<option value="${k.id}"${k.id===kid?' selected':''}>${escHtml(k.nama_lengkap)}</option>`).join('')}
         </select>
       </div>`
     : `<div class="fg" style="margin-bottom:1rem;">
         <label>Pilih Karyawan</label>
         <select class="inp inp-full" id="kompKary" onchange="loadKompModal(this.value)">
           <option value="">— Pilih Karyawan —</option>
-          ${allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')}
+          ${allKaryawan.map(k=>`<option value="${k.id}">${escHtml(k.nama_lengkap)}</option>`).join('')}
         </select>
       </div>`
 
@@ -1190,7 +1190,7 @@ async function loadKompModal(karyawanId=null) {
         <span class="komp-tipe ${komp.tipe==='tunjangan'?'tipe-t':'tipe-p'}" title="${komp.tipe==='tunjangan'?'Menambah':'Mengurangi'} gaji">${komp.tipe==='tunjangan'
           ? '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
           : '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>'}</span>
-        <span class="komp-name">${komp.nama} ${saklarPajak}</span>
+        <span class="komp-name">${escHtml(komp.nama)} ${saklarPajak}</span>
         ${inputRupiah(`data-komp="${komp.id}"`, ex?.nilai || 0)}
       </div>`
   }).join('')
@@ -1459,7 +1459,7 @@ async function init() {
   simpanProfilSidebar(session.user.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent = k.role==='hr_admin'?'HR Admin':'Karyawan'
   if (k.role === 'hr_admin') ['adminNavLbl','navLokasi','navLaporan','navLog'].forEach(function(id){var el=document.getElementById(id); if(el) el.style.display=''})
-  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase()||'?')
+  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${escHtml(k.foto_url)}" alt="">` : escHtml(k.nama_lengkap?.charAt(0).toUpperCase()||'?')
 
   // Set bulan default di modal periode ke bulan sekarang
   document.getElementById('pBulan').value = new Date().getMonth()+1

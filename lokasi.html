@@ -13,6 +13,10 @@
   <title>Lokasi Kantor — HRIS PT KMA</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth-guard.js"></script>
+  <!-- WAJIB: halaman ini memakai isiSidebarProfil/ambilProfilSidebar/
+       simpanProfilSidebar/hapusProfilSidebar DAN escHtml dari sini. Tanpa baris
+       ini, init() langsung melempar ReferenceError dan seluruh halaman mati. -->
+  <script src="hris-shared.js"></script>
   <script src="notify.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -362,10 +366,10 @@ function setMarkerAll (lok) {
   const lat = parseFloat(lok.latitude), lng = parseFloat(lok.longitude)
   const icon = L.divIcon({
     className:'',
-    html:`<div style="background:#1d4ed8;color:white;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);font-size:.75rem;font-weight:700;">${lok.nama.charAt(0)}</div>`,
+    html:`<div style="background:#1d4ed8;color:white;border-radius:50%;width:30px;height:30px;display:grid;place-items:center;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);font-size:.75rem;font-weight:700;">${escHtml(lok.nama.charAt(0))}</div>`,
     iconSize:[30,30], iconAnchor:[15,15]
   })
-  L.marker([lat,lng], { icon }).addTo(map).bindPopup(`<b>${lok.nama}</b><br>Radius: ${lok.radius_meter}m`)
+  L.marker([lat,lng], { icon }).addTo(map).bindPopup(`<b>${escHtml(lok.nama)}</b><br>Radius: ${lok.radius_meter}m`)
   L.circle([lat,lng], { radius:lok.radius_meter, color:'#1d4ed8', fillColor:'#3b82f6', fillOpacity:.1, weight:1.5 }).addTo(map)
 }
 
@@ -377,8 +381,8 @@ function renderLokasiList () {
   }
   el.innerHTML = lokasiData.map(lok => `
     <div class="lokasi-item" id="lok-${lok.id}">
-      <div class="lok-name">${lok.nama}</div>
-      <div class="lok-addr">${lok.alamat || '—'}</div>
+      <div class="lok-name">${escHtml(lok.nama)}</div>
+      <div class="lok-addr">${escHtml(lok.alamat || '—')}</div>
       <div class="lok-meta">
         <span class="lok-badge"><svg class="ic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> ${parseFloat(lok.latitude).toFixed(5)}, ${parseFloat(lok.longitude).toFixed(5)}</span>
         <span class="lok-badge"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg> ${lok.radius_meter}m</span>
@@ -495,7 +499,7 @@ async function init () {
   document.getElementById('sbName').textContent  = k.nama_lengkap
   simpanProfilSidebar(session.user.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent  = 'HR Admin'
-  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase() || '?')
+  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${escHtml(k.foto_url)}" alt="">` : escHtml(k.nama_lengkap?.charAt(0).toUpperCase() || '?')
 
   // Init map (default Jakarta)
   initMap(-6.2, 106.816)

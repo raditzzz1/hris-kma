@@ -319,6 +319,9 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 let myProfile = null, allKaryawan = [], allDivisi = [], allProgram = []
 let daftarProgramId = null
+// Daftar peserta yang sedang tampil. Disimpan di sini supaya tombol Update
+// cukup membawa ID-nya saja — lihat catatan di bukaUpdate().
+let pesertaTampil = []
 
 function toast(msg, t='success') {
   const el = document.getElementById('toast')
@@ -384,19 +387,19 @@ async function renderHR(tab=hrTab) {
       ? `<div class="program-grid">${allProgram.map(p => `
           <div class="program-card">
             <div><span class="prog-kat ${KAT_CLASS[p.kategori]}">${KAT_LABEL[p.kategori]}</span></div>
-            <div class="prog-nama">${p.nama}</div>
-            <div class="prog-desc">${p.deskripsi||'Tidak ada deskripsi'}</div>
+            <div class="prog-nama">${escHtml(p.nama)}</div>
+            <div class="prog-desc">${escHtml(p.deskripsi||'Tidak ada deskripsi')}</div>
             <div class="prog-meta">
               ${p.durasi_jam?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${p.durasi_jam} jam</span>`:''}
-              ${p.instruktur?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${p.instruktur}</span>`:''}
+              ${p.instruktur?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escHtml(p.instruktur)}</span>`:''}
               ${p.maks_peserta?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Maks ${p.maks_peserta}</span>`:'<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Tidak terbatas</span>'}
               ${p.divisi?.nama?`<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg> ${p.divisi.nama}</span>`:'<span class="prog-meta-item"><svg class="ic" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></svg> Semua Divisi</span>'}
             </div>
             <div class="prog-actions">
-              <button class="btn-sm" onclick="lihatPeserta('${p.id}','${p.nama}')"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Peserta</button>
-              <button class="btn-sm" onclick="daftarkanKaryawan('${p.id}','${p.nama}')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Daftarkan</button>
+              <button class="btn-sm" onclick="lihatPeserta('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Peserta</button>
+              <button class="btn-sm" onclick="daftarkanKaryawan('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg> Daftarkan</button>
               <button class="btn-sm" onclick="bukaProgram('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
-              <button class="btn-sm del" onclick="hapusProgram('${p.id}','${p.nama}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              <button class="btn-sm del" onclick="hapusProgram('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </div>
           </div>`).join('')}</div>`
       : '<div style="color:var(--muted);font-size:.875rem;padding:1rem;">Belum ada program pelatihan. Klik "Program Baru" untuk mulai.</div>'
@@ -424,9 +427,9 @@ async function renderHR(tab=hrTab) {
             else                                   expBadge = `<span class="sertif-expired exp-ok"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Aktif s/d ${fmtDate(s.tanggal_expired)}</span>`
           } else expBadge = `<span class="sertif-expired exp-ok"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Tidak expired</span>`
           return `<tr>
-            <td><div style="font-weight:600">${s.karyawan?.nama_lengkap||'—'}</div><div style="font-size:.75rem;color:var(--muted)">${s.karyawan?.nik||''}</div></td>
-            <td>${s.nama_sertifikat}</td>
-            <td>${s.lembaga_penerbit||'—'}</td>
+            <td><div style="font-weight:600">${escHtml(s.karyawan?.nama_lengkap||'—')}</div><div style="font-size:.75rem;color:var(--muted)">${escHtml(s.karyawan?.nik||'')}</div></td>
+            <td>${escHtml(s.nama_sertifikat)}</td>
+            <td>${escHtml(s.lembaga_penerbit||'—')}</td>
             <td>${fmtDate(s.tanggal_terbit)}</td>
             <td>${expBadge}</td>
             <td>
@@ -482,7 +485,7 @@ async function renderKaryawan() {
         <td>${fmtDate(p.tanggal_selesai)}</td>
         <td style="text-align:center">${p.nilai!=null?p.nilai:'—'}</td>
         <td><span class="badge ${p.status}">${STATUS_LABEL[p.status]||p.status}</span></td>
-        <td>${p.catatan||'—'}</td>
+        <td>${escHtml(p.catatan||'—')}</td>
       </tr>`).join('')
     : '<tr class="empty-row"><td colspan="6">Belum terdaftar di pelatihan apapun</td></tr>'
 
@@ -502,8 +505,8 @@ async function renderKaryawan() {
         <div class="sertif-card">
           <div class="sertif-icon"><svg class="ic" viewBox="0 0 24 24" style="width:2rem;height:2rem"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
           <div style="flex:1">
-            <div class="sertif-nama">${s.nama_sertifikat}</div>
-            <div class="sertif-meta">${s.lembaga_penerbit||'—'} · Terbit ${fmtDate(s.tanggal_terbit)}</div>
+            <div class="sertif-nama">${escHtml(s.nama_sertifikat)}</div>
+            <div class="sertif-meta">${escHtml(s.lembaga_penerbit||'—')} · Terbit ${fmtDate(s.tanggal_terbit)}</div>
             ${expBadge}
           </div>
           ${s.url_dokumen?`<a href="${s.url_dokumen}" target="_blank" class="btn-sm"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Lihat</a>`:''}
@@ -590,7 +593,8 @@ async function saveProgram() {
   cm('modalProgram'); renderHR('program')
 }
 
-async function hapusProgram(id, nama) {
+async function hapusProgram(id) {
+  const nama = namaProgram(id)
   if (!confirm(`Hapus program "${nama}"? Semua data peserta ikut terhapus.`)) return
   await sb.from('program_pelatihan').delete().eq('id',id)
   toast('Program dihapus'); renderHR('program')
@@ -599,21 +603,32 @@ async function hapusProgram(id, nama) {
 // ============================================================
 // PESERTA
 // ============================================================
-async function lihatPeserta(programId, namaProg) {
+// Nama program TIDAK lagi ditempelkan ke dalam onclick — teks bebas di dalam
+// string JavaScript bisa dipakai keluar dari string itu, dan escHtml tak
+// menolong karena entity-nya diterjemahkan HTML sebelum JS membacanya.
+// Yang dibawa hanya id; namanya dicari dari daftar yang sudah ada.
+function namaProgram (id) {
+  const p = allProgram.find(function (x) { return x.id === id })
+  return (p && p.nama) || 'Program'
+}
+
+async function lihatPeserta(programId) {
+  const namaProg = namaProgram(programId)
   const { data: peserta } = await sb.from('peserta_pelatihan')
     .select('*, karyawan:karyawan_id(nama_lengkap,nik)')
     .eq('program_id', programId).order('tanggal_daftar')
 
+  pesertaTampil = peserta || []
   document.getElementById('pesertaTitle').textContent = `Peserta — ${namaProg}`
   const tblHtml = peserta?.length
     ? peserta.map(p => `
       <tr>
-        <td><div style="font-weight:600">${p.karyawan?.nama_lengkap||'—'}</div></td>
+        <td><div style="font-weight:600">${escHtml(p.karyawan?.nama_lengkap||'—')}</div></td>
         <td>${fmtDate(p.tanggal_daftar)}</td>
         <td>${fmtDate(p.tanggal_selesai)}</td>
         <td style="text-align:center">${p.nilai!=null?p.nilai:'—'}</td>
         <td><span class="badge ${p.status}">${STATUS_LABEL[p.status]}</span></td>
-        <td><button class="btn-sm" onclick="bukaUpdate('${p.id}','${p.status}',${p.nilai||0},'${p.catatan||''}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Update</button></td>
+        <td><button class="btn-sm" onclick="bukaUpdate('${p.id}')"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Update</button></td>
       </tr>`).join('')
     : '<tr class="empty-row"><td colspan="6">Belum ada peserta terdaftar</td></tr>'
 
@@ -625,11 +640,12 @@ async function lihatPeserta(programId, namaProg) {
   om('modalPeserta')
 }
 
-async function daftarkanKaryawan(programId, namaProg) {
+async function daftarkanKaryawan(programId) {
+  const namaProg = namaProgram(programId)
   daftarProgramId = programId
   document.getElementById('daftarInfo').textContent = `Program: ${namaProg}`
   document.getElementById('daftarKary').innerHTML =
-    allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
+    allKaryawan.map(k=>`<option value="${k.id}">${escHtml(k.nama_lengkap)}</option>`).join('')
   document.getElementById('daftarTgl').value = tanggalLokal()
   om('modalDaftar')
 }
@@ -651,12 +667,20 @@ async function saveDaftar() {
   cm('modalDaftar')
 }
 
-function bukaUpdate(id, status, nilai, catatan) {
+// Dulu seluruh isi barisnya ditempelkan ke dalam onclick="bukaUpdate(...)".
+// Itu berbahaya: `catatan` adalah teks bebas, dan satu tanda kutip di dalamnya
+// cukup untuk keluar dari string JavaScript dan menjalankan perintah lain.
+// escHtml TIDAK menolong di sini — entity-nya diterjemahkan kembali oleh HTML
+// sebelum JavaScript membacanya. Jadi yang dibawa sekarang HANYA id-nya, dan
+// isinya dicari dari daftar yang sudah ada di memori.
+function bukaUpdate(id) {
+  const p = pesertaTampil.find(function (x) { return x.id === id })
+  if (!p) return
   document.getElementById('updatePesertaId').value  = id
-  document.getElementById('updateStatus').value     = status
-  document.getElementById('updateNilai').value      = nilai||''
-  document.getElementById('updateCatatan').value    = catatan
-  document.getElementById('updateTglSelesai').value = status==='selesai' ? tanggalLokal() : ''
+  document.getElementById('updateStatus').value     = p.status
+  document.getElementById('updateNilai').value      = p.nilai||''
+  document.getElementById('updateCatatan').value    = p.catatan||''
+  document.getElementById('updateTglSelesai').value = p.status==='selesai' ? tanggalLokal() : ''
   om('modalUpdate')
 }
 
@@ -681,7 +705,7 @@ async function bukaSertif(id=null) {
   document.getElementById('sertifId').value = id||''
   document.getElementById('sertifTitle').textContent = id ? 'Edit Sertifikasi' : 'Tambah Sertifikasi'
   document.getElementById('sertifKary').innerHTML =
-    allKaryawan.map(k=>`<option value="${k.id}">${k.nama_lengkap}</option>`).join('')
+    allKaryawan.map(k=>`<option value="${k.id}">${escHtml(k.nama_lengkap)}</option>`).join('')
   if (!id) {
     ['sertifNama','sertifLembaga','sertifNomor','sertifUrl'].forEach(f=>document.getElementById(f).value='')
     document.getElementById('sertifTerbit').value   = tanggalLokal()
@@ -747,7 +771,7 @@ async function init() {
   simpanProfilSidebar(session.user.id, k)   // untuk pemuatan berikutnya
   document.getElementById('sbRole').textContent = k.role==='hr_admin'?'HR Admin':'Karyawan'
   if (k.role === 'hr_admin') ['adminNavLbl','navLokasi','navLaporan','navLog'].forEach(function(id){var el=document.getElementById(id); if(el) el.style.display=''})
-  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${k.foto_url}" alt="">` : (k.nama_lengkap?.charAt(0).toUpperCase()||'?')
+  document.getElementById('sbAv').innerHTML = k.foto_url ? `<img src="${escHtml(k.foto_url)}" alt="">` : escHtml(k.nama_lengkap?.charAt(0).toUpperCase()||'?')
 
   await renderPage()
   document.getElementById('lo').style.display='none'
