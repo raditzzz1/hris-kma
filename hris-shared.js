@@ -130,20 +130,29 @@ function hitungStatusMasuk (karyw, waktu = new Date()) {
 // setelah disetujui, tak ada baris absensi yang tertinggal; (3) tidak ada
 // data turunan yang bisa menyimpang diam-diam.
 //
-// Mengembalikan Map: karyawan_id -> { jenis } (nama jenis cutinya).
+// Mengembalikan Map: karyawan_id -> { jenis, sampai }
+//   jenis  = nama jenis cutinya
+//   sampai = tanggal terakhir cuti itu ("YYYY-MM-DD"), untuk ditampilkan
+//            sebagai "s/d ...". Pemanggil lama yang hanya membaca `jenis`
+//            tidak terpengaruh.
 // Karyawan biasa hanya akan melihat barisnya sendiri (dibatasi RLS), jadi
 // pakai ini di konteks HR untuk angka satu perusahaan.
 async function ambilCutiTanggal (sb, tanggal) {
   const hasil = new Map()
   if (!tanggal) return hasil
   const { data, error } = await sb.from('pengajuan_cuti')
-    .select('karyawan_id, jenis_cuti(nama)')
+    .select('karyawan_id, tanggal_selesai, jenis_cuti(nama)')
     .eq('status', 'disetujui')
     .lte('tanggal_mulai', tanggal)
     .gte('tanggal_selesai', tanggal)
   if (error || !data) return hasil
   data.forEach(function (p) {
-    if (!hasil.has(p.karyawan_id)) hasil.set(p.karyawan_id, { jenis: (p.jenis_cuti && p.jenis_cuti.nama) || 'Cuti' })
+    if (!hasil.has(p.karyawan_id)) {
+      hasil.set(p.karyawan_id, {
+        jenis:  (p.jenis_cuti && p.jenis_cuti.nama) || 'Cuti',
+        sampai: p.tanggal_selesai || null
+      })
+    }
   })
   return hasil
 }
